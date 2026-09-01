@@ -12,11 +12,20 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, ProductRepositoryCustom {
 
-    /** Nap kem variant + anh + brand + category trong MOT query - chong N+1 o trang chi tiet. */
-    @EntityGraph(attributePaths = {"variants", "images", "brand", "category"})
+    /**
+     * Nap kem variant + brand + category cho trang chi tiet.
+     *
+     * <p><b>Co chu y khong nap kem {@code images}:</b> Hibernate khong JOIN FETCH duoc hai
+     * collection kieu List (bag) trong cung mot query - no nem MultipleBagFetchException,
+     * vi tich Descartes cua hai bag khong the tach nguoc ra duoc. Anh duoc nap lazy bang
+     * mot query rieng: trang chi tiet ton 2 query thay vi 1, doi lai khong phai doi
+     * mo hinh entity sang Set. Neu can gop that thi doi ca hai sang Set hoac dung
+     * @Fetch(SUBSELECT).
+     */
+    @EntityGraph(attributePaths = {"variants", "brand", "category"})
     Optional<Product> findBySlug(String slug);
 
-    @EntityGraph(attributePaths = {"variants", "images", "brand", "category"})
+    @EntityGraph(attributePaths = {"variants", "brand", "category"})
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findDetailById(@Param("id") Long id);
 

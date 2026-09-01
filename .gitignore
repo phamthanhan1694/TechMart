@@ -19,3 +19,9 @@ target/
 logs/
 
 docs/loadtest/*.html
+
+# Node - san pham build, khong bao gio commit
+node_modules/
+.next/
+*.tsbuildinfo
+next-dev.*.log
