@@ -37,4 +37,4 @@ Bộ lọc `spec.<key>` ở API được **whitelist key** trước khi dựng J
 
 ## Kiểm chứng
 
-`searchProducts_bySpecJsonb_returnsMatching`. Và phép đo ở `06-nfr-va-load-test.md`: trên 50.000 sản phẩm, GIN index đưa p95 từ 2.220ms xuống 234ms — chứng minh JSONB vẫn truy vấn nhanh được, đúng điểm mà EAV thua.
+`searchProducts_bySpecJsonb_returnsMatching`. Và phép đo ở `06-nfr-va-load-test.md`: trên 50.000 sản phẩm, GIN index đưa p95 từ 2.220ms xuống 279ms — chứng minh JSONB vẫn truy vấn nhanh được, đúng điểm mà EAV thua.
