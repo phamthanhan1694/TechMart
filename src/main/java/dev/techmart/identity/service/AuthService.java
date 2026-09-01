@@ -27,14 +27,17 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokens;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final TokenRevoker tokenRevoker;
     private final Clock clock;
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens,
-                       PasswordEncoder passwordEncoder, JwtService jwtService, Clock clock) {
+                       PasswordEncoder passwordEncoder, JwtService jwtService,
+                       TokenRevoker tokenRevoker, Clock clock) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.tokenRevoker = tokenRevoker;
         this.clock = clock;
     }
 
@@ -83,10 +86,11 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_INVALID));
 
         if (stored.isRevoked()) {
-            Long userId = stored.getUser().getId();
-            int revoked = refreshTokens.revokeAllForUser(userId, now);
-            log.warn("Phat hien tai su dung refresh token cua user {}. Da thu hoi {} token con song.",
-                    userId, revoked);
+            // Thu hoi phai chay o TRANSACTION RIENG: ngay sau day ta nem ngoai le, va
+            // ngoai le do se rollback transaction hien tai - cuon theo ca lenh thu hoi.
+            // Xem TokenRevoker.
+            tokenRevoker.revokeAllForUser(stored.getUser().getId(),
+                    "Phat hien tai su dung refresh token da bi thu hoi");
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_REUSED);
         }
         if (stored.isExpired(now)) {
@@ -112,9 +116,8 @@ public class AuthService {
         refreshTokens.findByTokenHash(hash).ifPresent(t -> t.revoke(clock.instant()));
     }
 
-    @Transactional
     public void logoutAllDevices(Long userId) {
-        refreshTokens.revokeAllForUser(userId, clock.instant());
+        tokenRevoker.revokeAllForUser(userId, "Nguoi dung dang xuat khoi moi thiet bi");
     }
 
     @Transactional(readOnly = true)
