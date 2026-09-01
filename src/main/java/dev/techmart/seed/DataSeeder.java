@@ -445,12 +445,26 @@ public class DataSeeder implements CommandLineRunner {
                 // Khoang mot nua don da giao co danh gia
                 if (random.nextBoolean() && reviewCount < 250) {
                     reviews.save(new Review(item.getVariant().getProduct(), order.getUser(), item,
-                            1 + random.nextInt(5), pick(REVIEW_COMMENTS)));
+                            randomRating(), pick(REVIEW_COMMENTS)));
                     reviewCount++;
                 }
             }
         }
         log.info("Da tao {} serial va {} danh gia", serials.count(), reviewCount);
+    }
+
+    /**
+     * Diem danh gia lech ve phia tich cuc, giong du lieu that: nguoi hai long thi cho
+     * 4-5 sao, nguoi rat khong hai long moi bo cong viet 1 sao. Phan bo deu 1-5 cho ra
+     * trung binh 3.0 - trong khong giong mot cua hang that dang hoat dong.
+     */
+    private int randomRating() {
+        int roll = random.nextInt(100);
+        if (roll < 55) return 5;
+        if (roll < 80) return 4;
+        if (roll < 92) return 3;
+        if (roll < 97) return 2;
+        return 1;
     }
 
     private static final List<String> REVIEW_COMMENTS = List.of(
