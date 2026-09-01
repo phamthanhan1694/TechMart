@@ -113,6 +113,9 @@ public class PaymentService {
 
         // Khong tin so tien webhook gui len. Thieu buoc nay, ai gui duoc webhook gia
         // voi amount=0 la mua hang mien phi.
+        // compareTo bo qua scale nen 45010000.0 va 45010000.00 duoc coi la bang nhau -
+        // dung o day la co y. Neu dung equals() thi hai gia tri nay khac nhau va webhook
+        // hop le se bi tu choi oan.
         if (payment.getAmount().compareTo(req.amount()) != 0) {
             log.error("So tien webhook ({}) khong khop don ({}) cho giao dich {}",
                     req.amount(), payment.getAmount(), req.transactionRef());

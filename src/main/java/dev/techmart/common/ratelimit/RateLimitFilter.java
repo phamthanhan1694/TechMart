@@ -41,9 +41,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private static final List<Rule> RULES = List.of(
-            // Chong do mat khau
-            new Rule("/api/v1/auth/login", "POST", 0, 5),
-            new Rule("/api/v1/auth/register", "POST", 0, 10),
+            // Chong do mat khau.
+            //
+            // 60/phut/IP nghe co ve long, nhung gioi han theo IP la cong cu cui: mot IP
+            // sau NAT (van phong, phong lab, mang di dong) co hang tram nguoi dung THAT
+            // phia sau. Dat 5/phut/IP se khoa nham ca nhom ho chi vi mot nguoi go sai.
+            //
+            // Cong cu dung cho brute force la gioi han THEO TAI KHOAN (khoa sau N lan sai),
+            // khong phai theo IP - va do la thu con thieu, ghi o docs/07-security-checklist.md
+            // muc 7. Gioi han IP o day chi de chan kieu quet tho thien.
+            new Rule("/api/v1/auth/login", "POST", 0, 60),
+            new Rule("/api/v1/auth/register", "POST", 0, 20),
             // Flash sale: hai tang
             new Rule("/api/v1/flash-sales", "POST", 10, 100),
             // Tran chung cho luong dat hang

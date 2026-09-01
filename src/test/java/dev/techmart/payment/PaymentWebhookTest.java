@@ -124,6 +124,29 @@ class PaymentWebhookTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("So tien cung gia tri nhung khac scale -> chu ky VAN hop le")
+    void webhook_amountWithDifferentScale_stillVerifies() {
+        var payment = initiate();
+
+        // Mo phong callback di qua mot lop trung gian parse JSON number thanh float:
+        // 45010000.00 tro thanh 45010000.0 - cung gia tri, khac cach bieu dien.
+        BigDecimal loosenedScale = new BigDecimal(amount.stripTrailingZeros().toPlainString());
+        assertThat(loosenedScale.toPlainString())
+                .as("Phai that su khac chuoi thi bai test moi co y nghia")
+                .isNotEqualTo(amount.toPlainString());
+
+        // Ky bang gia tri da mat scale, gui len cung bang gia tri do
+        String signature = gateway.sign(payment.transactionRef(), "SUCCEEDED", loosenedScale);
+        var result = paymentService.handleWebhook(new WebhookRequest(
+                payment.transactionRef(), PaymentStatus.SUCCEEDED, loosenedScale, signature));
+
+        assertThat(result.status())
+                .as("Chu ky phai phu thuoc GIA TRI so tien, khong phai cach bieu dien")
+                .isEqualTo(PaymentStatus.SUCCEEDED);
+        assertThat(orders.findByCode(orderCode).orElseThrow().getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
     @DisplayName("Thanh toan hai lan cung Idempotency-Key -> mot giao dich duy nhat")
     void initiate_sameIdempotencyKey_returnsSamePayment() {
         String key = UUID.randomUUID().toString();

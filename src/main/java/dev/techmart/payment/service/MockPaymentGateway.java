@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
@@ -42,9 +43,23 @@ public class MockPaymentGateway {
 
     /**
      * Chuoi duoc ky. Thu tu cac truong la mot phan cua giao uoc - doi thu tu la doi chu ky.
+     *
+     * <p><b>So tien duoc chuan hoa ve 2 chu so thap phan truoc khi ky.</b> Neu ky thang
+     * {@code amount.toPlainString()} thi chu ky phu thuoc vao <i>cach bieu dien</i> chu khong
+     * phai <i>gia tri</i>: cung mot so tien, ben ky ghi {@code 45010000.00} con ben goi lai
+     * gui {@code 45010000.0} (rat de xay ra khi callback di qua mot lop trung gian parse
+     * JSON number thanh float) thi chu ky truot du tien khong he sai.
+     *
+     * <p>Loi nay lo ra khi viet script demo: body callback di qua Python json roi quay lai,
+     * mat mot chu so 0 o cuoi, va webhook bi tu choi voi INVALID_WEBHOOK_SIGNATURE.
      */
     public String payloadToSign(String transactionRef, String status, BigDecimal amount) {
-        return transactionRef + "|" + status + "|" + amount.toPlainString();
+        return transactionRef + "|" + status + "|" + normalize(amount);
+    }
+
+    /** Moi so tien trong he thong deu la NUMERIC(15,2), nen 2 chu so la dang chinh tac. */
+    private static String normalize(BigDecimal amount) {
+        return amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     public String sign(String transactionRef, String status, BigDecimal amount) {

@@ -75,10 +75,10 @@ sold_quantity(DB)=50   tồn Redis=0   số đơn=50
 | Hủy đơn hai lần đồng thời | hoàn kho đúng một lần |
 | Đặt hàng / thanh toán hai lần cùng `Idempotency-Key` | một bản ghi duy nhất, trả cùng response |
 | Webhook sai chữ ký / sai số tiền | bị từ chối, đơn **không** chuyển sang PAID |
-| Rate limit `/auth/login` (5/phút/IP) | 4×`401` rồi `429` kèm `Retry-After` và `X-RateLimit-*` |
+| Rate limit `/auth/login` (60/phút/IP) | vượt ngưỡng trả `429` kèm `Retry-After` và `X-RateLimit-*` |
 | `GET /products` lọc JSONB, 50k sản phẩm, 100 VU | p95 **2.220ms → 234ms** (↓9,5×), throughput **58 → 163 req/s** (↑2,8×) sau khi thêm GIN index |
 | Seed dữ liệu demo | 345 sản phẩm / 850 variant / 504 user / 400 đơn / 3 phiên flash sale trong **11 giây** |
-| `mvn verify` | **17 test**, xanh toàn bộ (7 trong đó là test đồng thời trên PostgreSQL thật) |
+| `mvn verify` | **18 test**, xanh toàn bộ (7 trong đó là test đồng thời trên PostgreSQL thật) |
 
 > **Một lưu ý về phép đo index:** trên dữ liệu demo 345 sản phẩm, GIN index *không có tác dụng gì* — `EXPLAIN` cho thấy PostgreSQL chọn Seq Scan và bỏ qua index, vì quét cả bảng còn rẻ hơn. Đo "trước/sau index" ở quy mô đó ra chênh lệch bằng 0. Con số trong bảng đo trên **50.000 sản phẩm** (sinh bằng [`loadtest/bulk-data.sql`](loadtest/bulk-data.sql)) — quy mô của một catalog thật. Chi tiết từng lượt đo, kế hoạch truy vấn và lý do p95 dao động rộng ở [docs/06-nfr-va-load-test.md](docs/06-nfr-va-load-test.md).
 
@@ -109,6 +109,17 @@ Kèm Prometheus + Grafana: `docker compose --profile observability up -d`
 | STAFF | `staff@techmart.dev` | `Staff@123` | Xử lý đơn, không xem được doanh thu |
 | CUSTOMER | `customer@techmart.dev` | `Customer@123` | **Có sẵn ~17 đơn lịch sử** |
 | CUSTOMER | `new@techmart.dev` | `Customer@123` | Tài khoản trống, để demo luồng từ đầu |
+
+### Hai script demo — chạy được ngay, không cần Swagger
+
+```bash
+./demo.sh              # trọn luồng: đăng ký → tìm kiếm → giữ hàng → đặt → trả tiền → giao → hủy
+./flashsale-race.sh    # 150 người tranh 48 suất, rồi kiểm chứng bằng SQL
+```
+
+`demo.sh` mỗi lần chạy tự tạo tài khoản mới nên chạy lại bao nhiêu lần cũng được.
+`flashsale-race.sh` kết thúc bằng bốn phép kiểm chứng: không 5xx · `sold_quantity ≤ sale_quantity` ·
+sổ cái DB khớp số request thành công · bộ đếm Redis khớp DB. Đây là phần đáng quay lại nhất để gửi kèm CV.
 
 ### Thử luồng chính bằng Swagger
 
@@ -180,6 +191,10 @@ Ba metric cuối là các con số cho biết hệ thống **đang bảo vệ t�
 **Dashboard nhóm theo `placed_at`, không phải `created_at`.** `created_at` là cột kỹ thuật do `@CreationTimestamp` ghi lúc chèn dòng; `placed_at` mới là thời điểm nghiệp vụ. Dùng nhầm thì dữ liệu nhập từ hệ thống cũ sẽ dồn hết vào ngày import — triệu chứng đã gặp thật: 400 đơn rải 90 ngày mà biểu đồ chỉ có một cột.
 
 **`@Transactional` phải nằm trên chính method `@Scheduled`, và buộc phải tách bean khi cần cả trong lẫn ngoài transaction.** Spring AOP hoạt động qua proxy nên lời gọi nội bộ không đi qua proxy. Bẫy này xuất hiện hai lần: job nhả hàng ném `TransactionRequiredException` mỗi 30 giây, và flash sale cần gọi Redis *ngoài* transaction rồi ghi DB *trong* transaction — chỉ thỏa mãn được khi tách thành [`FlashSaleOrderWriter`](src/main/java/dev/techmart/flashsale/service/FlashSaleOrderWriter.java).
+
+**Rate limit đăng nhập theo IP đặt ở 60/phút, không phải 5/phút.** Giới hạn theo IP là công cụ cùn: một IP sau NAT (văn phòng, phòng lab, mạng di động) có hàng trăm người dùng thật phía sau, nên 5/phút sẽ khoá nhầm cả nhóm chỉ vì một người gõ sai. Công cụ đúng cho brute force là **khoá theo tài khoản** sau N lần sai — đó là thứ còn thiếu, ghi ở [docs/07](docs/07-security-checklist.md) §7. Giới hạn IP ở đây chỉ để chặn kiểu quét thô thiển.
+
+**Chữ ký webhook phải phụ thuộc giá trị, không phụ thuộc cách biểu diễn.** Ban đầu ký thẳng `amount.toPlainString()`, nên `45010000.00` và `45010000.0` cho ra hai chữ ký khác nhau dù cùng một số tiền — và rất nhiều client parse JSON number thành float đúng như vậy. Giờ số tiền được chuẩn hoá về 2 chữ số thập phân trước khi ký. Lỗi này lộ ra khi viết `demo.sh`, và đã có test hồi quy.
 
 **Xóa mềm cho product/variant.** Xóa cứng sẽ vi phạm khóa ngoại với `order_items` của đơn cũ. Đơn cũ vẫn đọc được vì `order_items` đã snapshot tên + SKU + giá tại lúc mua.
 
