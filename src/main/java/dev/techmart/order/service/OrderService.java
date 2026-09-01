@@ -17,6 +17,7 @@ import dev.techmart.order.domain.OrderStateMachine.Actor;
 import dev.techmart.order.dto.OrderDtos.*;
 import dev.techmart.order.repository.OrderRepository;
 import dev.techmart.promotion.service.CouponService;
+import dev.techmart.warranty.service.SerialService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,12 +46,14 @@ public class OrderService {
     private final OrderCodeGenerator codeGenerator;
     private final OutboxRecorder outbox;
     private final CouponService couponService;
+    private final SerialService serialService;
     private final Clock clock;
 
     public OrderService(OrderRepository orders, VariantLocker variantLocker,
                         ReservationService reservations, CartService cartService,
                         UserRepository users, OrderCodeGenerator codeGenerator,
-                        OutboxRecorder outbox, CouponService couponService, Clock clock) {
+                        OutboxRecorder outbox, CouponService couponService,
+                        SerialService serialService, Clock clock) {
         this.orders = orders;
         this.variantLocker = variantLocker;
         this.reservations = reservations;
@@ -59,6 +62,7 @@ public class OrderService {
         this.codeGenerator = codeGenerator;
         this.outbox = outbox;
         this.couponService = couponService;
+        this.serialService = serialService;
         this.clock = clock;
     }
 
@@ -242,6 +246,14 @@ public class OrderService {
             if (order.getCouponCode() != null) {
                 couponService.releaseForOrder(order.getId());
             }
+            // Hang quay ve kho: serial chuyen sang RETURNED, cho kho kiem tra
+            serialService.releaseForOrder(order);
+        }
+        // Dong goi la luc gan serial cho tung don vi hang - khong phai luc dat hang.
+        // Luc dat hang dang tranh chap nang nhat, gan serial o do se phai khoa N dong
+        // thay vi mot dong dem. Xem SerialService.assignForOrder.
+        if (from == OrderStatus.PAID && toStatus == OrderStatus.PACKED) {
+            serialService.assignForOrder(order);
         }
         order.applyStatus(toStatus, now);
         order.logTransition(from, toStatus, actorId, note, now);

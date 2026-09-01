@@ -19,6 +19,10 @@ import dev.techmart.flashsale.domain.FlashSaleItem;
 import dev.techmart.flashsale.repository.FlashSaleRepository;
 import dev.techmart.flashsale.service.FlashSaleStockCounter;
 import dev.techmart.promotion.repository.CouponRepository;
+import dev.techmart.review.domain.Review;
+import dev.techmart.review.repository.ReviewRepository;
+import dev.techmart.warranty.domain.ProductSerial;
+import dev.techmart.warranty.repository.ProductSerialRepository;
 import dev.techmart.seed.SeedCatalog.LaptopSeed;
 import dev.techmart.seed.SeedCatalog.PhoneSeed;
 import org.slf4j.Logger;
@@ -63,6 +67,8 @@ public class DataSeeder implements CommandLineRunner {
     private final CouponRepository coupons;
     private final FlashSaleRepository flashSales;
     private final FlashSaleStockCounter stockCounter;
+    private final ProductSerialRepository serials;
+    private final ReviewRepository reviews;
     private final PasswordEncoder passwordEncoder;
     private final AppProperties props;
     private final Clock clock;
@@ -72,6 +78,7 @@ public class DataSeeder implements CommandLineRunner {
     public DataSeeder(BrandRepository brands, CategoryRepository categories, ProductRepository products,
                       UserRepository users, OrderRepository orders, CouponRepository coupons,
                       FlashSaleRepository flashSales, FlashSaleStockCounter stockCounter,
+                      ProductSerialRepository serials, ReviewRepository reviews,
                       PasswordEncoder passwordEncoder, AppProperties props, Clock clock) {
         this.brands = brands;
         this.categories = categories;
@@ -81,6 +88,8 @@ public class DataSeeder implements CommandLineRunner {
         this.coupons = coupons;
         this.flashSales = flashSales;
         this.stockCounter = stockCounter;
+        this.serials = serials;
+        this.reviews = reviews;
         this.passwordEncoder = passwordEncoder;
         this.props = props;
         this.clock = clock;
@@ -106,12 +115,14 @@ public class DataSeeder implements CommandLineRunner {
         seedCoupons();
         seedFlashSales(allVariants);
         seedHistoricalOrders(customers, allVariants);
+        seedSerialsAndReviews(allVariants);
 
         verifyInvariants();
         log.info("Seed xong trong {} ms: {} san pham, {} variant, {} user, {} don hang, "
-                        + "{} ma giam gia, {} phien flash sale",
+                        + "{} ma giam gia, {} phien flash sale, {} serial, {} danh gia",
                 System.currentTimeMillis() - start, products.count(), allVariants.size(),
-                users.count(), orders.count(), coupons.count(), flashSales.count());
+                users.count(), orders.count(), coupons.count(), flashSales.count(),
+                serials.count(), reviews.count());
     }
 
     // ---------------------------------------------------------------- catalog
@@ -394,6 +405,63 @@ public class DataSeeder implements CommandLineRunner {
         if (roll < 95) return OrderStatus.CANCELLED;
         return OrderStatus.PENDING_PAYMENT;
     }
+
+    // ---------------------------------------------------------------- serial + danh gia
+
+    /**
+     * Serial cho mot phan variant, va danh gia cho cac don da giao.
+     *
+     * <p>Chi mot phan variant co serial - dung nhu thuc te: khong phai mat hang nao cung
+     * duoc theo doi theo tung don vi. Phan con lai chi quan ly theo so luong.
+     */
+    private void seedSerialsAndReviews(List<ProductVariant> allVariants) {
+        Instant now = clock.instant();
+
+        // 20 variant dau tien duoc theo doi theo serial
+        List<ProductVariant> tracked = allVariants.subList(0, Math.min(20, allVariants.size()));
+        Map<Long, List<ProductSerial>> pool = new LinkedHashMap<>();
+        for (ProductVariant variant : tracked) {
+            List<ProductSerial> created = new ArrayList<>();
+            for (int i = 1; i <= 15; i++) {
+                created.add(new ProductSerial(variant,
+                        "IMEI" + String.format("%06d", variant.getId()) + String.format("%04d", i), 12));
+            }
+            pool.put(variant.getId(), new ArrayList<>(serials.saveAll(created)));
+        }
+
+        // Gan serial cho cac don DA GIAO, va viet danh gia cho mot phan trong so do
+        int reviewCount = 0;
+        for (Order order : orders.findAll()) {
+            if (order.getStatus() != OrderStatus.DELIVERED) {
+                continue;
+            }
+            for (OrderItem item : order.getItems()) {
+                List<ProductSerial> available = pool.get(item.getVariant().getId());
+                if (available != null) {
+                    for (int i = 0; i < item.getQuantity() && !available.isEmpty(); i++) {
+                        available.remove(0).assignTo(item, order.getPlacedAt().plus(2, ChronoUnit.DAYS));
+                    }
+                }
+                // Khoang mot nua don da giao co danh gia
+                if (random.nextBoolean() && reviewCount < 250) {
+                    reviews.save(new Review(item.getVariant().getProduct(), order.getUser(), item,
+                            1 + random.nextInt(5), pick(REVIEW_COMMENTS)));
+                    reviewCount++;
+                }
+            }
+        }
+        log.info("Da tao {} serial va {} danh gia", serials.count(), reviewCount);
+    }
+
+    private static final List<String> REVIEW_COMMENTS = List.of(
+            "May dung tot, pin trau hon minh nghi.",
+            "Giao hang nhanh, dong goi can than.",
+            "Man hinh dep, nhung hoi nong khi choi game lau.",
+            "Dung duoc, gia hop ly so voi cau hinh.",
+            "Am thanh nho hon mong doi, con lai on.",
+            "Rat hai long, se quay lai mua lan sau.",
+            "Hang chinh hang, co day du phu kien.",
+            "Sac hoi cham nhung khong dang ke.");
 
     // ---------------------------------------------------------------- kiem tra
 

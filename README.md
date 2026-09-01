@@ -78,7 +78,7 @@ sold_quantity(DB)=50   tồn Redis=0   số đơn=50
 | Rate limit `/auth/login` (60/phút/IP) | vượt ngưỡng trả `429` kèm `Retry-After` và `X-RateLimit-*` |
 | `GET /products` lọc JSONB, 50k sản phẩm, 100 VU | p95 **2.220ms → 234ms** (↓9,5×), throughput **58 → 163 req/s** (↑2,8×) sau khi thêm GIN index |
 | Seed dữ liệu demo | 345 sản phẩm / 850 variant / 504 user / 400 đơn / 3 phiên flash sale trong **11 giây** |
-| `mvn verify` | **18 test**, xanh toàn bộ (7 trong đó là test đồng thời trên PostgreSQL thật) |
+| `mvn verify` | **44 test**, xanh toàn bộ (7 trong đó là test đồng thời trên PostgreSQL thật) |
 
 > **Một lưu ý về phép đo index:** trên dữ liệu demo 345 sản phẩm, GIN index *không có tác dụng gì* — `EXPLAIN` cho thấy PostgreSQL chọn Seq Scan và bỏ qua index, vì quét cả bảng còn rẻ hơn. Đo "trước/sau index" ở quy mô đó ra chênh lệch bằng 0. Con số trong bảng đo trên **50.000 sản phẩm** (sinh bằng [`loadtest/bulk-data.sql`](loadtest/bulk-data.sql)) — quy mô của một catalog thật. Chi tiết từng lượt đo, kế hoạch truy vấn và lý do p95 dao động rộng ở [docs/06-nfr-va-load-test.md](docs/06-nfr-va-load-test.md).
 
@@ -196,6 +196,8 @@ Ba metric cuối là các con số cho biết hệ thống **đang bảo vệ t�
 
 **Chữ ký webhook phải phụ thuộc giá trị, không phụ thuộc cách biểu diễn.** Ban đầu ký thẳng `amount.toPlainString()`, nên `45010000.00` và `45010000.0` cho ra hai chữ ký khác nhau dù cùng một số tiền — và rất nhiều client parse JSON number thành float đúng như vậy. Giờ số tiền được chuẩn hoá về 2 chữ số thập phân trước khi ký. Lỗi này lộ ra khi viết `demo.sh`, và đã có test hồi quy.
 
+**Tồn kho theo số lượng và tồn kho theo serial là hai thứ khác nhau, và hệ thống dùng cả hai.** `stock_quantity` trả lời "còn bao nhiêu cái" — đủ để bán, và rẻ vì chỉ cần khoá một dòng. Bảng `product_serials` trả lời "cái nào đang ở đâu" — bắt buộc khi cần bảo hành hay thu hồi theo lô. Serial chỉ được gán khi **đóng gói**, không phải lúc đặt hàng: gán lúc đặt hàng thì mỗi lần mua phải khoá N dòng serial thay vì một dòng đếm, đúng chỗ đang tranh chấp nặng nhất.
+
 **Xóa mềm cho product/variant.** Xóa cứng sẽ vi phạm khóa ngoại với `order_items` của đơn cũ. Đơn cũ vẫn đọc được vì `order_items` đã snapshot tên + SKU + giá tại lúc mua.
 
 ---
@@ -206,7 +208,6 @@ Ba metric cuối là các con số cho biết hệ thống **đang bảo vệ t�
 |---|---|
 | Redis cache-aside cho danh sách sản phẩm | Sẽ là lượt đo thứ ba của bảng hiệu năng |
 | Deploy | Cố ý chạy local — demo bằng script và bản ghi thay cho link |
-| Review, serial/IMEI, bảo hành | Schema đã có sẵn bảng, chưa làm API |
 | Frontend | Dự án tập trung vào backend; Swagger là giao diện sản phẩm |
 
 Và những thứ **cố ý không làm**: tích hợp cổng thanh toán thật (mock đã đủ để thể hiện luồng idempotency + webhook ký HMAC, tích hợp thật chỉ tốn thời gian thủ tục), microservices (nếu tách thì tách `inventory` trước, vì nó có ràng buộc đồng thời riêng biệt), thông báo realtime.

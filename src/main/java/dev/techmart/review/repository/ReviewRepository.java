@@ -1,0 +1,37 @@
+package dev.techmart.review.repository;
+
+import dev.techmart.review.domain.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    /** Nap kem user de hien thi ten nguoi danh gia - khong thi 20 review = 21 query. */
+    @EntityGraph(attributePaths = {"user"})
+    Page<Review> findByProductIdOrderByCreatedAtDesc(Long productId, Pageable pageable);
+
+    boolean existsByOrderItemId(Long orderItemId);
+
+    Optional<Review> findByOrderItemId(Long orderItemId);
+
+    /**
+     * Phan bo so sao, tinh bang mot query GROUP BY.
+     * Khong nap het review ve app roi dem - man hinh san pham hot co the co hang nghin review.
+     */
+    @Query("""
+            SELECT r.rating, COUNT(r) FROM Review r
+             WHERE r.product.id = :productId
+             GROUP BY r.rating
+            """)
+    List<Object[]> ratingDistribution(@Param("productId") Long productId);
+
+    @Query("SELECT COALESCE(AVG(r.rating), 0) FROM Review r WHERE r.product.id = :productId")
+    double averageRating(@Param("productId") Long productId);
+}
