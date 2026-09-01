@@ -188,34 +188,50 @@ Bitmap Heap Scan on products p  (cost=145.69..1987.97 rows=1018) (actual time=3.
 50.000 sản phẩm / 50.850 variant · 100 VU · 60 giây · truy vấn `keyword` + `spec.ram` + `sort` ngẫu nhiên mỗi lần.
 Mỗi cấu hình chạy nhiều lượt, lấy **trung vị** (lượt đầu luôn chậm hơn do JVM chưa warm-up).
 
-| Cấu hình | p95 `GET /products` | Throughput | Kế hoạch truy vấn |
+| Cấu hình | p95 `GET /products` | Throughput | Ghi chú |
 |---|---|---|---|
-| **Không có GIN index** (3 lượt) | **2.220 ms** | **58,0 req/s** | Seq Scan, loại bỏ 48.239 dòng mỗi truy vấn |
-| **Có GIN index** (4 lượt) | **234 ms** | **163,1 req/s** | BitmapAnd trên hai GIN index |
-| | **↓ 9,5 lần** | **↑ 2,8 lần** | |
+| **Không GIN index** | **2.220 ms** | 58,0 req/s | Seq Scan, loại 48.239 dòng mỗi truy vấn |
+| **+ GIN index** | **279 ms** | 162 req/s | BitmapAnd trên hai GIN index |
+| **+ Redis cache-aside** | **9,7 ms** | 180 req/s | Tỉ lệ cache hit **92,7%** |
+| | **↓ 229 lần** so với mốc nền | | |
 
-Số liệu từng lượt:
+Số liệu từng lượt (100 VU, 60 giây, lấy trung vị):
 
 | Cấu hình | p95 các lượt (ms) | Throughput các lượt (req/s) |
 |---|---|---|
 | Không index | 1.710 · 2.850 · 2.220 | 64,7 · 52,0 · 58,0 |
-| Có index | 98,9 · 210,9 · 400,3 · 256,6 | 170,1 · 165,2 · 153,1 · 160,9 |
+| Có index, không cache | 98,9 · 210,9 · 400,3 · 256,6 · 187,9 · 370,0 | 170,1 · 165,2 · 153,1 · 160,9 · 168,8 · 155,0 |
+| Có index + cache | 8,07 · 11,34 | 179,9 · 180,6 |
+
+### 5.3. Vì sao throughput gần như không đổi khi bật cache?
+
+Đây là câu hỏi phải tự đặt ra trước khi interviewer đặt — và câu trả lời cho thấy có hiểu phép đo hay không.
+
+p95 giảm 29 lần nhưng throughput chỉ tăng 11% (162 → 180 req/s). Không phải vì cache vô dụng, mà vì **throughput ở đây bị chặn bởi chính kịch bản đo, không phải bởi server**: `browse.js` có `sleep(0–2s)` mô phỏng thời gian người dùng đọc trang. Với 100 VU và think time trung bình ~1 giây, trần lý thuyết là ~100 vòng lặp/giây × ~1,8 request = ~180 req/s. Chúng ta đã chạm trần đó.
+
+Nói cách khác: **khi chưa có cache, server là nút thắt; khi có cache, bộ sinh tải mới là nút thắt.** Muốn đo năng lực thật của server sau khi có cache thì phải bỏ `sleep` hoặc tăng VU lên nhiều lần.
+
+Vì vậy trong ba con số của bảng trên, **p95 mới là con số phản ánh đúng tác dụng của cache**, còn throughput chỉ nói lên rằng server đã dư sức phục vụ mức tải này.
+
+### 5.4. Cache — điều gì thực sự khó
+
+Không phải đọc nhanh, mà là **xoá đúng lúc**. Trang danh sách có vô số biến thể khoá (từ khoá × bộ lọc spec × khoảng giá × sắp xếp × số trang); admin sửa một sản phẩm thì không thể biết phải xoá những khoá nào.
+
+Cách giải: **bộ đếm thế hệ**. Mỗi thay đổi catalog tăng `catalog:gen` lên một; khoá cache danh sách có chứa số thế hệ, nên toàn bộ cache cũ trở thành *không thể chạm tới* ngay lập tức — không cần `SCAN`, không cần xoá hàng loạt, các khoá cũ tự hết hạn theo TTL. Trang chi tiết đơn giản hơn: khoá là slug, xoá trực tiếp.
+
+Có 5 test cho phần này ([`CatalogCacheTest`](../src/test/java/dev/techmart/catalog/CatalogCacheTest.java)), trong đó quan trọng nhất là `afterPriceChange_readReturnsNewValue` — quên xoá cache ở đây thì khách thấy giá cũ, và lỗi đó không bao giờ lộ ra trong test đơn lẻ.
 
 **Vì sao p95 khi có index dao động rộng (99–400ms) còn throughput thì ổn định?** Ở 100 VU hệ thống đã gần bão hòa (~163 req/s là trần), nên p95 lúc này đo **thời gian xếp hàng** chứ không đo thời gian truy vấn. Throughput mới là con số phản ánh đúng năng lực. Muốn đo latency thuần thì phải hạ tải xuống dưới ngưỡng bão hòa.
 
 Tỉ lệ lỗi ở cả hai cấu hình: **0%** (`http_req_failed: 0.00%`). Không index thì chậm, nhưng không sai.
 
-### 5.3. Chưa đo
-
-Redis cache-aside cho danh sách sản phẩm **chưa làm** — Redis hiện phục vụ reservation fast-path, rate limit, bộ đếm flash sale và idempotency. Nếu thêm cache thì đây là lượt đo thứ ba của bảng trên.
-
 ## 6. Cách trình bày trong README (và cách không phóng đại)
 
 Viết như thế này:
 
-> **Kết quả đo (local, Ryzen 7 5800H / 16GB / Docker Desktop, 1 instance, dữ liệu 350 sản phẩm):**
-> `GET /products` với bộ lọc spec: p95 **380ms → 42ms** sau khi thêm GIN index và Redis cache-aside (200 VU).
-> Flash sale 50 suất / 500 request đồng thời: **đúng 50 đơn thành công**, 0 lỗi 5xx, `sold_quantity` trong DB khớp tuyệt đối. Trước khi dùng Redis Lua, cùng kịch bản cho ra 63 đơn — oversell 13 đơn.
+> **Kết quả đo (local, Intel i5-11320H / 16GB / Docker Desktop, 1 instance, 50.000 sản phẩm, 100 VU):**
+> `GET /products` với bộ lọc spec JSONB: p95 **2.220ms → 279ms** sau khi thêm GIN index, rồi **→ 9,7ms** sau khi thêm Redis cache-aside (tỉ lệ cache hit 92,7%).
+> Flash sale 50 suất / 500 request đồng thời: **đúng 50 đơn thành công**, 0 lỗi 5xx, `sold_quantity` trong DB khớp tuyệt đối.
 
 Ba nguyên tắc trung thực, và cả ba đều làm bạn *đáng tin hơn* chứ không yếu đi:
 

@@ -5,6 +5,7 @@ import dev.techmart.catalog.dto.CatalogDtos.*;
 import dev.techmart.catalog.repository.*;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
+import com.fasterxml.jackson.core.type.TypeReference;
 import dev.techmart.common.web.PageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,37 +27,63 @@ public class ProductService {
     private final ProductVariantRepository variants;
     private final CategoryRepository categories;
     private final BrandRepository brands;
+    private final CatalogCache cache;
     private final Clock clock;
 
     public ProductService(ProductRepository products, ProductVariantRepository variants,
-                          CategoryRepository categories, BrandRepository brands, Clock clock) {
+                          CategoryRepository categories, BrandRepository brands,
+                          CatalogCache cache, Clock clock) {
         this.products = products;
         this.variants = variants;
         this.categories = categories;
         this.brands = brands;
+        this.cache = cache;
         this.clock = clock;
     }
 
     // ------------------------------------------------------------------ doc
 
+    private static final TypeReference<PageResponse<ProductSummaryResponse>> LIST_TYPE =
+            new TypeReference<>() {};
+    private static final TypeReference<ProductDetailResponse> DETAIL_TYPE = new TypeReference<>() {};
+
     /**
-     * Tim kiem co phan trang.
+     * Tim kiem co phan trang, doc qua cache-aside.
      *
      * <p>Chong N+1: sau khi lay trang san pham, gom khoang gia va ton kho cua CA trang
      * bang mot query GROUP BY, thay vi de tung Product tu nap variants cua no.
      */
     @Transactional(readOnly = true)
     public PageResponse<ProductSummaryResponse> search(ProductSearchCriteria criteria, Pageable pageable) {
-        Page<Product> page = products.search(criteria, pageable);
-        Map<Long, VariantAggregate> aggregates = loadAggregates(page.getContent());
-        return PageResponse.from(page, p -> toSummary(p, aggregates.get(p.getId())));
+        return cache.listOrLoad(cacheKeyOf(criteria, pageable), LIST_TYPE, () -> {
+            Page<Product> page = products.search(criteria, pageable);
+            Map<Long, VariantAggregate> aggregates = loadAggregates(page.getContent());
+            return PageResponse.from(page, p -> toSummary(p, aggregates.get(p.getId())));
+        });
+    }
+
+    /**
+     * Khoa cache phai gom TOAN BO thu anh huong ket qua. Bo sot mot tham so la tra nham
+     * ket qua cua truy van khac - loai loi rat kho lan ra vi no chi xuat hien khi cache hit.
+     * Spec duoc sap xep de {ram,storage} va {storage,ram} ra cung mot khoa.
+     */
+    private static String cacheKeyOf(ProductSearchCriteria c, Pageable pageable) {
+        String spec = c.spec() == null ? "" : c.spec().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(java.util.stream.Collectors.joining(","));
+        return String.join("|",
+                String.valueOf(c.keyword()), String.valueOf(c.categoryId()), String.valueOf(c.brandId()),
+                String.valueOf(c.minPrice()), String.valueOf(c.maxPrice()), spec,
+                String.valueOf(c.inStock()),
+                pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort());
     }
 
     @Transactional(readOnly = true)
     public ProductDetailResponse getBySlug(String slug) {
-        return products.findBySlug(slug)
+        return cache.detailOrLoad(slug, DETAIL_TYPE, () -> products.findBySlug(slug)
                 .map(ProductDetailResponse::from)
-                .orElseThrow(() -> BusinessException.notFound(ErrorCode.PRODUCT_NOT_FOUND, slug));
+                .orElseThrow(() -> BusinessException.notFound(ErrorCode.PRODUCT_NOT_FOUND, slug)));
     }
 
     /** So sanh thong so 2-3 may. Dung dung the manh cua JSONB, chi phi gan bang khong. */
@@ -105,7 +132,9 @@ public class ProductService {
                 product.addImage(new ProductImage(url, order++));
             }
         }
-        return ProductDetailResponse.from(products.save(product));
+        Product saved = products.save(product);
+        cache.invalidate(saved.getSlug());
+        return ProductDetailResponse.from(saved);
     }
 
     @Transactional
@@ -114,8 +143,12 @@ public class ProductService {
         if (!product.getSlug().equals(req.slug()) && products.existsBySlug(req.slug())) {
             throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug da ton tai: " + req.slug());
         }
+        String previousSlug = product.getSlug();
         product.update(requireCategory(req.categoryId()), requireBrand(req.brandId()),
                 req.name(), req.slug(), req.description(), req.thumbnailUrl(), req.spec(), req.status());
+        // Doi slug thi phai xoa ca khoa cu, neu khong ban ghi cu con song toi het TTL
+        cache.invalidate(previousSlug);
+        cache.invalidate(product.getSlug());
         return ProductDetailResponse.from(product);
     }
 
@@ -130,6 +163,7 @@ public class ProductService {
     public void softDelete(Long id) {
         Product product = requireProduct(id);
         product.softDelete(clock.instant());
+        cache.invalidate(product.getSlug());
         log.info("Da xoa mem san pham {} ({})", id, product.getSlug());
     }
 
@@ -141,6 +175,7 @@ public class ProductService {
                 req.compareAtPrice(), req.stockQuantity(), req.attributes());
         product.addVariant(variant);
         products.save(product);
+        cache.invalidate(product.getSlug());
         return VariantResponse.from(variant);
     }
 
@@ -151,6 +186,7 @@ public class ProductService {
             requireSkuAvailable(req.sku());
         }
         variant.update(req.name(), req.price(), req.compareAtPrice(), req.attributes());
+        cache.invalidate(variant.getProduct().getSlug());
         return VariantResponse.from(variant);
     }
 
@@ -166,6 +202,8 @@ public class ProductService {
         } catch (IllegalStateException e) {
             throw new BusinessException(ErrorCode.INSUFFICIENT_STOCK, e.getMessage());
         }
+        // Ton kho doi thi availableQuantity tren trang danh sach cung doi -> phai xoa cache
+        cache.invalidate(variant.getProduct().getSlug());
         log.info("User {} dieu chinh ton kho variant {} ({}) delta={} ly do='{}'. Ton moi={}",
                 actorId, variantId, variant.getSku(), req.delta(), req.reason(), variant.getStockQuantity());
         return VariantResponse.from(variant);

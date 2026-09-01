@@ -76,9 +76,9 @@ sold_quantity(DB)=50   tồn Redis=0   số đơn=50
 | Đặt hàng / thanh toán hai lần cùng `Idempotency-Key` | một bản ghi duy nhất, trả cùng response |
 | Webhook sai chữ ký / sai số tiền | bị từ chối, đơn **không** chuyển sang PAID |
 | Rate limit `/auth/login` (60/phút/IP) | vượt ngưỡng trả `429` kèm `Retry-After` và `X-RateLimit-*` |
-| `GET /products` lọc JSONB, 50k sản phẩm, 100 VU | p95 **2.220ms → 234ms** (↓9,5×), throughput **58 → 163 req/s** (↑2,8×) sau khi thêm GIN index |
+| `GET /products` lọc JSONB, 50k sản phẩm, 100 VU | p95 **2.220ms → 279ms** sau GIN index, **→ 9,7ms** sau Redis cache-aside (hit 92,7%) |
 | Seed dữ liệu demo | 345 sản phẩm / 850 variant / 504 user / 400 đơn / 3 phiên flash sale trong **11 giây** |
-| `mvn verify` | **44 test**, xanh toàn bộ (7 trong đó là test đồng thời trên PostgreSQL thật) |
+| `mvn verify` | **49 test**, xanh toàn bộ (7 trong đó là test đồng thời trên PostgreSQL thật) |
 
 > **Một lưu ý về phép đo index:** trên dữ liệu demo 345 sản phẩm, GIN index *không có tác dụng gì* — `EXPLAIN` cho thấy PostgreSQL chọn Seq Scan và bỏ qua index, vì quét cả bảng còn rẻ hơn. Đo "trước/sau index" ở quy mô đó ra chênh lệch bằng 0. Con số trong bảng đo trên **50.000 sản phẩm** (sinh bằng [`loadtest/bulk-data.sql`](loadtest/bulk-data.sql)) — quy mô của một catalog thật. Chi tiết từng lượt đo, kế hoạch truy vấn và lý do p95 dao động rộng ở [docs/06-nfr-va-load-test.md](docs/06-nfr-va-load-test.md).
 
@@ -153,7 +153,7 @@ dev.techmart
 └── seed        dữ liệu demo
 ```
 
-Ngoài PostgreSQL chỉ thêm **một** hạ tầng là Redis — nó gánh reservation fast-path, rate limit, bộ đếm flash sale và idempotency. Một hạ tầng, bốn công dụng.
+Ngoài PostgreSQL chỉ thêm **một** hạ tầng là Redis — nó gánh reservation fast-path, rate limit, bộ đếm flash sale, idempotency và cache-aside cho catalog. Một hạ tầng, năm công dụng.
 
 Xử lý bất đồng bộ dùng **outbox pattern** thay message broker: event ghi trong cùng transaction nghiệp vụ, worker gửi sau khi đã commit. `FOR UPDATE SKIP LOCKED` cho phép chạy nhiều instance worker song song.
 
@@ -198,6 +198,8 @@ Ba metric cuối là các con số cho biết hệ thống **đang bảo vệ t�
 
 **Tồn kho theo số lượng và tồn kho theo serial là hai thứ khác nhau, và hệ thống dùng cả hai.** `stock_quantity` trả lời "còn bao nhiêu cái" — đủ để bán, và rẻ vì chỉ cần khoá một dòng. Bảng `product_serials` trả lời "cái nào đang ở đâu" — bắt buộc khi cần bảo hành hay thu hồi theo lô. Serial chỉ được gán khi **đóng gói**, không phải lúc đặt hàng: gán lúc đặt hàng thì mỗi lần mua phải khoá N dòng serial thay vì một dòng đếm, đúng chỗ đang tranh chấp nặng nhất.
 
+**Cache-aside dùng bộ đếm thế hệ để xoá cache, không dùng `SCAN`.** Phần khó của cache không phải đọc nhanh mà là xoá đúng lúc: trang danh sách có vô số biến thể khoá, sửa một sản phẩm thì không biết phải xoá những khoá nào. Mỗi thay đổi catalog tăng `catalog:gen` lên một, và số thế hệ nằm trong khoá cache — toàn bộ cache cũ trở thành *không thể chạm tới* ngay lập tức, không cần quét hay xoá hàng loạt.
+
 **Xóa mềm cho product/variant.** Xóa cứng sẽ vi phạm khóa ngoại với `order_items` của đơn cũ. Đơn cũ vẫn đọc được vì `order_items` đã snapshot tên + SKU + giá tại lúc mua.
 
 ---
@@ -206,7 +208,6 @@ Ba metric cuối là các con số cho biết hệ thống **đang bảo vệ t�
 
 | Hạng mục | Ghi chú |
 |---|---|
-| Redis cache-aside cho danh sách sản phẩm | Sẽ là lượt đo thứ ba của bảng hiệu năng |
 | Deploy | Cố ý chạy local — demo bằng script và bản ghi thay cho link |
 | Frontend | Dự án tập trung vào backend; Swagger là giao diện sản phẩm |
 

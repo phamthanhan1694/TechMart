@@ -67,6 +67,11 @@ app:
     webhook-secret: ${APP_PAYMENT_WEBHOOK_SECRET:mock-webhook-secret-doi-truoc-khi-deploy}
   cors:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
+  cache:
+    # Tat duoc bang bien moi truong de do hieu nang truoc/sau khi co cache
+    products-enabled: ${APP_CACHE_PRODUCTS_ENABLED:true}
+    list-ttl: PT60S
+    detail-ttl: PT10M
 
 management:
   endpoints:

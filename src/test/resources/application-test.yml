@@ -34,6 +34,10 @@ app:
     webhook-secret: test-webhook-secret
   cors:
     allowed-origins: http://localhost:3000
+  cache:
+    products-enabled: true
+    list-ttl: PT60S
+    detail-ttl: PT10M
 
 logging:
   level:

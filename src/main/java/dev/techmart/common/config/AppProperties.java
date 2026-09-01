@@ -15,7 +15,8 @@ public record AppProperties(
         Seed seed,
         Inventory inventory,
         Payment payment,
-        Cors cors
+        Cors cors,
+        Cache cache
 ) {
     public record Jwt(String secret, Duration accessTtl, Duration refreshTtl, String issuer) {}
 
@@ -26,4 +27,10 @@ public record AppProperties(
     public record Payment(String webhookSecret) {}
 
     public record Cors(List<String> allowedOrigins) {}
+
+    /**
+     * Bat/tat cache san pham. Can tat duoc de do hieu nang truoc/sau -
+     * mot co cong tac chi de do la thu dang co.
+     */
+    public record Cache(boolean productsEnabled, Duration listTtl, Duration detailTtl) {}
 }
