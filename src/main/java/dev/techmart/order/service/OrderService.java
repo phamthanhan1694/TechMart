@@ -16,6 +16,7 @@ import dev.techmart.order.domain.*;
 import dev.techmart.order.domain.OrderStateMachine.Actor;
 import dev.techmart.order.dto.OrderDtos.*;
 import dev.techmart.order.repository.OrderRepository;
+import dev.techmart.promotion.service.CouponService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,12 +44,13 @@ public class OrderService {
     private final UserRepository users;
     private final OrderCodeGenerator codeGenerator;
     private final OutboxRecorder outbox;
+    private final CouponService couponService;
     private final Clock clock;
 
     public OrderService(OrderRepository orders, VariantLocker variantLocker,
                         ReservationService reservations, CartService cartService,
                         UserRepository users, OrderCodeGenerator codeGenerator,
-                        OutboxRecorder outbox, Clock clock) {
+                        OutboxRecorder outbox, CouponService couponService, Clock clock) {
         this.orders = orders;
         this.variantLocker = variantLocker;
         this.reservations = reservations;
@@ -56,6 +58,7 @@ public class OrderService {
         this.users = users;
         this.codeGenerator = codeGenerator;
         this.outbox = outbox;
+        this.couponService = couponService;
         this.clock = clock;
     }
 
@@ -131,6 +134,15 @@ public class OrderService {
             return orders.findByIdempotencyKey(idempotencyKey)
                     .map(OrderResponse::from)
                     .orElseThrow(() -> new BusinessException(ErrorCode.IDEMPOTENCY_KEY_CONFLICT));
+        }
+
+        // Ap ma giam gia SAU khi don co id (coupon_redemptions tham chieu order_id).
+        // Tru luot o day, trong cung transaction, co khoa dong coupon - khong phai o
+        // buoc /coupons/validate (buoc do chi de hien thi truoc).
+        if (req.couponCode() != null && !req.couponCode().isBlank()) {
+            BigDecimal discount = couponService.redeem(
+                    req.couponCode(), saved.getSubtotal(), userId, saved);
+            saved.recalculateTotals(FLAT_SHIPPING_FEE, discount, req.couponCode().toUpperCase());
         }
 
         held.forEach(r -> r.commit(saved.getId()));
@@ -226,6 +238,10 @@ public class OrderService {
         Instant now = clock.instant();
         if (OrderStateMachine.restocks(from, toStatus)) {
             restock(order);
+            // Hoan luot ma giam gia: khong hoan thi ma se "boc hoi" theo cac don bi huy
+            if (order.getCouponCode() != null) {
+                couponService.releaseForOrder(order.getId());
+            }
         }
         order.applyStatus(toStatus, now);
         order.logTransition(from, toStatus, actorId, note, now);

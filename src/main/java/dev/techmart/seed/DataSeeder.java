@@ -12,6 +12,9 @@ import dev.techmart.order.domain.Order;
 import dev.techmart.order.domain.OrderItem;
 import dev.techmart.order.domain.OrderStatus;
 import dev.techmart.order.repository.OrderRepository;
+import dev.techmart.promotion.domain.Coupon;
+import dev.techmart.promotion.domain.DiscountType;
+import dev.techmart.promotion.repository.CouponRepository;
 import dev.techmart.seed.SeedCatalog.LaptopSeed;
 import dev.techmart.seed.SeedCatalog.PhoneSeed;
 import org.slf4j.Logger;
@@ -53,6 +56,7 @@ public class DataSeeder implements CommandLineRunner {
     private final ProductRepository products;
     private final UserRepository users;
     private final OrderRepository orders;
+    private final CouponRepository coupons;
     private final PasswordEncoder passwordEncoder;
     private final AppProperties props;
     private final Clock clock;
@@ -60,13 +64,14 @@ public class DataSeeder implements CommandLineRunner {
     private final Random random = new Random(20260901L);   // co dinh seed -> du lieu tai lap duoc
 
     public DataSeeder(BrandRepository brands, CategoryRepository categories, ProductRepository products,
-                      UserRepository users, OrderRepository orders,
+                      UserRepository users, OrderRepository orders, CouponRepository coupons,
                       PasswordEncoder passwordEncoder, AppProperties props, Clock clock) {
         this.brands = brands;
         this.categories = categories;
         this.products = products;
         this.users = users;
         this.orders = orders;
+        this.coupons = coupons;
         this.passwordEncoder = passwordEncoder;
         this.props = props;
         this.clock = clock;
@@ -89,12 +94,13 @@ public class DataSeeder implements CommandLineRunner {
         Map<String, Category> categoryBySlug = seedCategories();
         List<ProductVariant> allVariants = seedProducts(brandByName, categoryBySlug);
         List<User> customers = seedUsers();
+        seedCoupons();
         seedHistoricalOrders(customers, allVariants);
 
         verifyInvariants();
-        log.info("Seed xong trong {} ms: {} san pham, {} variant, {} user, {} don hang",
+        log.info("Seed xong trong {} ms: {} san pham, {} variant, {} user, {} don hang, {} ma giam gia",
                 System.currentTimeMillis() - start,
-                products.count(), allVariants.size(), users.count(), orders.count());
+                products.count(), allVariants.size(), users.count(), orders.count(), coupons.count());
     }
 
     // ---------------------------------------------------------------- catalog
@@ -218,6 +224,36 @@ public class DataSeeder implements CommandLineRunner {
                     "09" + String.format("%08d", i), Role.CUSTOMER)));
         }
         return customers;
+    }
+
+    // ---------------------------------------------------------------- coupon
+
+    /** Du moi tinh huong de demo va test duoc tung nhanh loi, khong chi nhanh hop le. */
+    private void seedCoupons() {
+        Instant now = clock.instant();
+        Instant past = now.minus(60, ChronoUnit.DAYS);
+        Instant future = now.plus(60, ChronoUnit.DAYS);
+
+        coupons.save(new Coupon("SALE10", DiscountType.PERCENT, new BigDecimal("10.00"),
+                new BigDecimal("5000000.00"), new BigDecimal("2000000.00"), 1000, 1, past, future));
+        coupons.save(new Coupon("GIAM500K", DiscountType.FIXED, new BigDecimal("500000.00"),
+                new BigDecimal("10000000.00"), null, 500, 2, past, future));
+        coupons.save(new Coupon("FREESHIP", DiscountType.FIXED, new BigDecimal("30000.00"),
+                BigDecimal.ZERO, null, null, 5, past, future));
+        coupons.save(new Coupon("NEWUSER20", DiscountType.PERCENT, new BigDecimal("20.00"),
+                BigDecimal.ZERO, new BigDecimal("1000000.00"), 200, 1, past, future));
+
+        // Cac ma "hong" co chu dich: de demo tung nhanh loi
+        Coupon expired = new Coupon("HETHAN", DiscountType.PERCENT, new BigDecimal("15.00"),
+                BigDecimal.ZERO, null, 100, 1, past, now.minus(1, ChronoUnit.DAYS));
+        coupons.save(expired);
+        coupons.save(new Coupon("CHUABATDAU", DiscountType.PERCENT, new BigDecimal("25.00"),
+                BigDecimal.ZERO, null, 100, 1, now.plus(7, ChronoUnit.DAYS), future));
+        // usageLimit = 1: dung cho test 50 nguoi tranh mot luot
+        coupons.save(new Coupon("CHIMOTLUOT", DiscountType.FIXED, new BigDecimal("1000000.00"),
+                BigDecimal.ZERO, null, 1, 1, past, future));
+        coupons.save(new Coupon("DONTOITHIEU50TR", DiscountType.PERCENT, new BigDecimal("30.00"),
+                new BigDecimal("50000000.00"), new BigDecimal("5000000.00"), 50, 1, past, future));
     }
 
     // ---------------------------------------------------------------- lich su don hang
