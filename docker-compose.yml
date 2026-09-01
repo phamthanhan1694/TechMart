@@ -57,6 +57,36 @@ services:
       retries: 12
       start_period: 40s
 
+  # --- Observability: chay bang `docker compose --profile observability up -d` ---
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: techmart-prometheus
+    profiles: ["observability"]
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: techmart-grafana
+    profiles: ["observability"]
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafanadata:/var/lib/grafana
+    ports:
+      - "3000:3000"
+
 volumes:
   pgdata:
   redisdata:
+  promdata:
+  grafanadata:

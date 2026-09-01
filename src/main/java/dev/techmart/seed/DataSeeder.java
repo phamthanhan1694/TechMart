@@ -14,6 +14,10 @@ import dev.techmart.order.domain.OrderStatus;
 import dev.techmart.order.repository.OrderRepository;
 import dev.techmart.promotion.domain.Coupon;
 import dev.techmart.promotion.domain.DiscountType;
+import dev.techmart.flashsale.domain.FlashSale;
+import dev.techmart.flashsale.domain.FlashSaleItem;
+import dev.techmart.flashsale.repository.FlashSaleRepository;
+import dev.techmart.flashsale.service.FlashSaleStockCounter;
 import dev.techmart.promotion.repository.CouponRepository;
 import dev.techmart.seed.SeedCatalog.LaptopSeed;
 import dev.techmart.seed.SeedCatalog.PhoneSeed;
@@ -57,6 +61,8 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository users;
     private final OrderRepository orders;
     private final CouponRepository coupons;
+    private final FlashSaleRepository flashSales;
+    private final FlashSaleStockCounter stockCounter;
     private final PasswordEncoder passwordEncoder;
     private final AppProperties props;
     private final Clock clock;
@@ -65,6 +71,7 @@ public class DataSeeder implements CommandLineRunner {
 
     public DataSeeder(BrandRepository brands, CategoryRepository categories, ProductRepository products,
                       UserRepository users, OrderRepository orders, CouponRepository coupons,
+                      FlashSaleRepository flashSales, FlashSaleStockCounter stockCounter,
                       PasswordEncoder passwordEncoder, AppProperties props, Clock clock) {
         this.brands = brands;
         this.categories = categories;
@@ -72,6 +79,8 @@ public class DataSeeder implements CommandLineRunner {
         this.users = users;
         this.orders = orders;
         this.coupons = coupons;
+        this.flashSales = flashSales;
+        this.stockCounter = stockCounter;
         this.passwordEncoder = passwordEncoder;
         this.props = props;
         this.clock = clock;
@@ -95,12 +104,14 @@ public class DataSeeder implements CommandLineRunner {
         List<ProductVariant> allVariants = seedProducts(brandByName, categoryBySlug);
         List<User> customers = seedUsers();
         seedCoupons();
+        seedFlashSales(allVariants);
         seedHistoricalOrders(customers, allVariants);
 
         verifyInvariants();
-        log.info("Seed xong trong {} ms: {} san pham, {} variant, {} user, {} don hang, {} ma giam gia",
-                System.currentTimeMillis() - start,
-                products.count(), allVariants.size(), users.count(), orders.count(), coupons.count());
+        log.info("Seed xong trong {} ms: {} san pham, {} variant, {} user, {} don hang, "
+                        + "{} ma giam gia, {} phien flash sale",
+                System.currentTimeMillis() - start, products.count(), allVariants.size(),
+                users.count(), orders.count(), coupons.count(), flashSales.count());
     }
 
     // ---------------------------------------------------------------- catalog
@@ -256,6 +267,50 @@ public class DataSeeder implements CommandLineRunner {
                 new BigDecimal("50000000.00"), new BigDecimal("5000000.00"), 50, 1, past, future));
     }
 
+    // ---------------------------------------------------------------- flash sale
+
+    /**
+     * Ba phien o ba trang thai khac nhau - de demo duoc ca /active lan /upcoming
+     * ma khong phai cho doi gio.
+     *
+     * <p>Phien dang chay duoc nap san ton kho vao Redis luon: neu de request dau tien
+     * tu nap thi dung giay mo ban se co hang nghin request cung nap - cache stampede.
+     */
+    private void seedFlashSales(List<ProductVariant> allVariants) {
+        Instant now = clock.instant();
+
+        FlashSale ended = new FlashSale("Flash Sale cuoi tuan truoc",
+                now.minus(9, ChronoUnit.DAYS), now.minus(8, ChronoUnit.DAYS));
+        addFlashItems(ended, allVariants, 0, 3, 50);
+        ended.markEnded();
+        flashSales.save(ended);
+
+        FlashSale running = new FlashSale("Flash Sale dang dien ra",
+                now.minus(1, ChronoUnit.HOURS), now.plus(6, ChronoUnit.HOURS));
+        addFlashItems(running, allVariants, 10, 4, 50);
+        running.markRunning();
+        FlashSale savedRunning = flashSales.save(running);
+        savedRunning.getItems().forEach(stockCounter::warmUp);
+
+        FlashSale upcoming = new FlashSale("Flash Sale 9/9 sap toi",
+                now.plus(2, ChronoUnit.DAYS), now.plus(2, ChronoUnit.DAYS).plus(6, ChronoUnit.HOURS));
+        addFlashItems(upcoming, allVariants, 30, 5, 100);
+        flashSales.save(upcoming);
+    }
+
+    private void addFlashItems(FlashSale sale, List<ProductVariant> allVariants,
+                               int offset, int count, int quantity) {
+        for (int i = 0; i < count; i++) {
+            ProductVariant variant = allVariants.get((offset + i * 7) % allVariants.size());
+            // Giam 30% so voi gia niem yet
+            BigDecimal salePrice = variant.getPrice()
+                    .multiply(new BigDecimal("0.70"))
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+            int saleQuantity = Math.min(quantity, Math.max(1, variant.availableQuantity()));
+            sale.addItem(new FlashSaleItem(variant, salePrice, saleQuantity, 2));
+        }
+    }
+
     // ---------------------------------------------------------------- lich su don hang
 
     /**
@@ -269,8 +324,10 @@ public class DataSeeder implements CommandLineRunner {
         User demoCustomer = customers.get(0);
 
         for (int i = 0; i < HISTORICAL_ORDERS; i++) {
-            // Mat do tang dan ve hien tai: binh phuong cua so ngau nhien keo phan bo ve gan
-            double bias = Math.pow(random.nextDouble(), 0.6);
+            // Mat do tang dan ve hien tai (shop dang lon).
+            // So mu > 1 keo gia tri ve 0 -> daysAgo nho -> don gan hien tai nhieu hon.
+            // (So mu < 1 se cho ket qua NGUOC lai: don don ve qua khu.)
+            double bias = Math.pow(random.nextDouble(), 2.2);
             int daysAgo = (int) (bias * HISTORY_DAYS);
             Instant placedAt = now.minus(daysAgo, ChronoUnit.DAYS)
                     .minus(random.nextInt(24 * 60), ChronoUnit.MINUTES);

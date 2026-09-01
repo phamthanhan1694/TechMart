@@ -7,6 +7,7 @@ import dev.techmart.catalog.domain.ProductVariant;
 import dev.techmart.common.config.AppProperties;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
+import dev.techmart.common.observability.BusinessMetrics;
 import dev.techmart.identity.repository.UserRepository;
 import dev.techmart.inventory.domain.InventoryReservation;
 import dev.techmart.inventory.dto.InventoryDtos.CheckoutSessionResponse;
@@ -45,6 +46,7 @@ public class ReservationService {
     private final CartRepository carts;
     private final UserRepository users;
     private final AppProperties props;
+    private final BusinessMetrics metrics;
     private final Clock clock;
 
     public ReservationService(InventoryReservationRepository reservations,
@@ -52,12 +54,14 @@ public class ReservationService {
                               CartRepository carts,
                               UserRepository users,
                               AppProperties props,
+                              BusinessMetrics metrics,
                               Clock clock) {
         this.reservations = reservations;
         this.variantLocker = variantLocker;
         this.carts = carts;
         this.users = users;
         this.props = props;
+        this.metrics = metrics;
         this.clock = clock;
     }
 
@@ -101,6 +105,7 @@ public class ReservationService {
             }
         }
         if (!shortages.isEmpty()) {
+            metrics.recordInsufficientStock();
             throw BusinessException.insufficientStock(shortages);
         }
 

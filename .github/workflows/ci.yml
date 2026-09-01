@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit + Integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      # Docker co san tren ubuntu-latest nen Testcontainers chay duoc,
+      # khong can dich vu phu tro nao khac.
+      - name: mvn test
+        run: mvn -B test
+
+  concurrency-test:
+    name: Concurrency (chay tren PostgreSQL that)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      # Cham hon nhieu nhung KHONG duoc bo: day la nhom test chung minh
+      # he thong khong ban qua ton kho.
+      - name: mvn verify
+        run: mvn -B verify
+
+      - name: Luu bao cao khi that bai
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failsafe-reports
+          path: target/failsafe-reports/
+
+  docker:
+    name: Build image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker build
+        run: docker build -t techmart-backend:${{ github.sha }} .

@@ -80,6 +80,17 @@ management:
   metrics:
     tags:
       application: techmart
+    # Bat histogram de Prometheus tinh duoc p95/p99. Khong bat thi chi co count/sum
+    # va moi truy van phan vi deu tra ve rong.
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s,2s
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 springdoc:
   swagger-ui:

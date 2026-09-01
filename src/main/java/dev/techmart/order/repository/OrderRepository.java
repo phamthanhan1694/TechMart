@@ -22,7 +22,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 20 don = 21 query - day la cho N+1 kinh dien nhat cua moi he thong e-commerce.
      */
     @EntityGraph(attributePaths = {"items"})
-    Page<Order> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    Page<Order> findByUserIdOrderByPlacedAtDesc(Long userId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"items"})
     Optional<Order> findByCode(String code);
@@ -39,9 +39,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("""
             SELECT o FROM Order o
              WHERE (:status IS NULL OR o.status = :status)
-               AND (CAST(:from AS timestamp) IS NULL OR o.createdAt >= :from)
-               AND (CAST(:to   AS timestamp) IS NULL OR o.createdAt <= :to)
-             ORDER BY o.createdAt DESC
+               AND (CAST(:from AS timestamp) IS NULL OR o.placedAt >= :from)
+               AND (CAST(:to   AS timestamp) IS NULL OR o.placedAt <= :to)
+             ORDER BY o.placedAt DESC
             """)
     Page<Order> findForAdmin(@Param("status") OrderStatus status,
                              @Param("from") Instant from,

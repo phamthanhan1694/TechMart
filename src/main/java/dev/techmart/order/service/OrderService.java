@@ -163,7 +163,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public PageResponse<OrderSummaryResponse> listMyOrders(Long userId, Pageable pageable) {
         return PageResponse.from(
-                orders.findByUserIdOrderByCreatedAtDesc(userId, pageable), OrderSummaryResponse::from);
+                orders.findByUserIdOrderByPlacedAtDesc(userId, pageable), OrderSummaryResponse::from);
     }
 
     @Transactional(readOnly = true)

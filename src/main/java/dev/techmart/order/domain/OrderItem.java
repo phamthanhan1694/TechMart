@@ -53,14 +53,22 @@ public class OrderItem {
     }
 
     public OrderItem(ProductVariant variant, int quantity) {
+        this(variant, quantity, variant.getPrice());
+    }
+
+    /**
+     * Dung khi gia ban khac gia niem yet cua variant - vd gia flash sale.
+     * Van la snapshot: don cu giu nguyen gia da ban, khong doc nguoc tu variant.
+     */
+    public OrderItem(ProductVariant variant, int quantity, BigDecimal unitPrice) {
         this.variant = variant;
         this.quantity = quantity;
         // Chep lai tai day - khong bao gio doc nguoc tu variant khi hien thi don cu
         this.productName = variant.getProduct().getName();
         this.variantName = variant.getName();
         this.sku = variant.getSku();
-        this.unitPrice = variant.getPrice();
-        this.lineTotal = variant.getPrice().multiply(BigDecimal.valueOf(quantity));
+        this.unitPrice = unitPrice;
+        this.lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 
     public Long getId() { return id; }
