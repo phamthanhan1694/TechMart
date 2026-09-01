@@ -76,10 +76,11 @@ sold_quantity(DB)=50   tồn Redis=0   số đơn=50
 | Đặt hàng / thanh toán hai lần cùng `Idempotency-Key` | một bản ghi duy nhất, trả cùng response |
 | Webhook sai chữ ký / sai số tiền | bị từ chối, đơn **không** chuyển sang PAID |
 | Rate limit `/auth/login` (5/phút/IP) | 4×`401` rồi `429` kèm `Retry-After` và `X-RateLimit-*` |
+| `GET /products` lọc JSONB, 50k sản phẩm, 100 VU | p95 **2.220ms → 234ms** (↓9,5×), throughput **58 → 163 req/s** (↑2,8×) sau khi thêm GIN index |
 | Seed dữ liệu demo | 345 sản phẩm / 850 variant / 504 user / 400 đơn / 3 phiên flash sale trong **11 giây** |
 | `mvn verify` | **17 test**, xanh toàn bộ (7 trong đó là test đồng thời trên PostgreSQL thật) |
 
-> Bảng p95 trước/sau khi thêm index và cache **chưa đo** — script k6 đã sẵn sàng ở [loadtest/](loadtest/), quy trình đo ở [docs/06-nfr-va-load-test.md](docs/06-nfr-va-load-test.md).
+> **Một lưu ý về phép đo index:** trên dữ liệu demo 345 sản phẩm, GIN index *không có tác dụng gì* — `EXPLAIN` cho thấy PostgreSQL chọn Seq Scan và bỏ qua index, vì quét cả bảng còn rẻ hơn. Đo "trước/sau index" ở quy mô đó ra chênh lệch bằng 0. Con số trong bảng đo trên **50.000 sản phẩm** (sinh bằng [`loadtest/bulk-data.sql`](loadtest/bulk-data.sql)) — quy mô của một catalog thật. Chi tiết từng lượt đo, kế hoạch truy vấn và lý do p95 dao động rộng ở [docs/06-nfr-va-load-test.md](docs/06-nfr-va-load-test.md).
 
 ---
 
@@ -188,8 +189,8 @@ Ba metric cuối là các con số cho biết hệ thống **đang bảo vệ t�
 
 | Hạng mục | Ghi chú |
 |---|---|
-| Đo p95 trước/sau tối ưu | Script k6 đã sẵn ở [loadtest/](loadtest/); cần chạy và điền bảng |
-| Deploy | Render/Railway + Neon + Upstash |
+| Redis cache-aside cho danh sách sản phẩm | Sẽ là lượt đo thứ ba của bảng hiệu năng |
+| Deploy | Cố ý chạy local — demo bằng script và bản ghi thay cho link |
 | Review, serial/IMEI, bảo hành | Schema đã có sẵn bảng, chưa làm API |
 | Frontend | Dự án tập trung vào backend; Swagger là giao diện sản phẩm |
 

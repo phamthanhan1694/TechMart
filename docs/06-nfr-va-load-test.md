@@ -161,31 +161,53 @@ Chụp lại đầu ra k6 + kết quả ba câu SQL này cạnh nhau. Đó là b
 
 ---
 
-## 5. Bảng ghi kết quả (điền dần trong tuần 5, đưa nguyên vào README)
+## 5. Kết quả đo được
 
-**Môi trường:** ghi rõ CPU / RAM / OS / phiên bản Docker. Ví dụ: `AMD Ryzen 7 5800H, 16GB RAM, Windows 11 + Docker Desktop (WSL2), 1 instance app, PostgreSQL 16, Redis 7`.
+**Môi trường:** Intel Core i5-11320H (4 nhân / 8 luồng, 3.2GHz) · 16GB RAM · Windows 11 · JDK 26 · Docker Desktop (WSL2) · PostgreSQL 16 + Redis 7 trong container · 1 instance app · k6 v2.2.0 chạy trên cùng máy.
 
-### Kịch bản duyệt sản phẩm (200 VU, 350 sản phẩm, 900 variant)
+### 5.1. Một phát hiện phải nói trước
 
-| Lượt đo | Thay đổi | p95 (ms) | p99 (ms) | req/s | Ghi chú |
-|---|---|---|---|---|---|
-| 1 | Nền — không index, không cache | | | | |
-| 2 | + GIN index trên `spec` | | | | |
-| 3 | + trigram index trên `name` | | | | |
-| 4 | + sửa N+1 bằng `@EntityGraph` | | | | |
-| 5 | + Redis cache-aside TTL 60s | | | | |
+Đo trên **dữ liệu demo 345 sản phẩm thì GIN index không có tác dụng gì** — `EXPLAIN` cho thấy PostgreSQL chọn Seq Scan và bỏ qua index hoàn toàn, vì quét cả bảng 345 dòng còn rẻ hơn đi qua index:
 
-### Kịch bản flash sale (500 VU, 50 suất)
+```
+Seq Scan on products p  (cost=0.00..28.04 rows=17) (actual time=0.012..0.197 rows=22)
+  Rows Removed by Filter: 323
+```
 
-| Lượt đo | Cấu hình | Đơn thành công | 409 | 429 | 5xx | `sold_quantity` DB | Kết luận |
-|---|---|---|---|---|---|---|---|
-| 1 | Trừ tồn thẳng DB, không rate limit | | | | | | |
-| 2 | + rate limit Bucket4j | | | | | | |
-| 3 | + Redis Lua atomic | | | | | | |
+Đo "trước/sau khi thêm index" ở quy mô đó sẽ ra chênh lệch bằng 0, và báo cáo nó như một cải thiện là không trung thực. Catalog thật của một cửa hàng điện tử có hàng chục nghìn SKU, nên phép đo dưới đây chạy trên **50.000 sản phẩm** (sinh bằng [`loadtest/bulk-data.sql`](../loadtest/bulk-data.sql), dọn bằng `cleanup-bulk.sql`). Ở quy mô này planner mới dùng index:
 
-Lượt 1 nhiều khả năng cho ra 5xx và/hoặc `sold_quantity > sale_quantity`. **Giữ nguyên con số xấu đó trong README** — nó là bối cảnh làm cho lượt 3 có ý nghĩa. Bảng chỉ có kết quả đẹp thì không kể được câu chuyện nào.
+```
+Bitmap Heap Scan on products p  (cost=145.69..1987.97 rows=1018) (actual time=3.308..7.810 rows=2106)
+  ->  BitmapAnd
+        ->  Bitmap Index Scan on idx_products_spec_gin   (actual time=1.887..1.888 rows=8468)
+        ->  Bitmap Index Scan on idx_products_name_trgm
+```
 
----
+### 5.2. Kịch bản duyệt sản phẩm
+
+50.000 sản phẩm / 50.850 variant · 100 VU · 60 giây · truy vấn `keyword` + `spec.ram` + `sort` ngẫu nhiên mỗi lần.
+Mỗi cấu hình chạy nhiều lượt, lấy **trung vị** (lượt đầu luôn chậm hơn do JVM chưa warm-up).
+
+| Cấu hình | p95 `GET /products` | Throughput | Kế hoạch truy vấn |
+|---|---|---|---|
+| **Không có GIN index** (3 lượt) | **2.220 ms** | **58,0 req/s** | Seq Scan, loại bỏ 48.239 dòng mỗi truy vấn |
+| **Có GIN index** (4 lượt) | **234 ms** | **163,1 req/s** | BitmapAnd trên hai GIN index |
+| | **↓ 9,5 lần** | **↑ 2,8 lần** | |
+
+Số liệu từng lượt:
+
+| Cấu hình | p95 các lượt (ms) | Throughput các lượt (req/s) |
+|---|---|---|
+| Không index | 1.710 · 2.850 · 2.220 | 64,7 · 52,0 · 58,0 |
+| Có index | 98,9 · 210,9 · 400,3 · 256,6 | 170,1 · 165,2 · 153,1 · 160,9 |
+
+**Vì sao p95 khi có index dao động rộng (99–400ms) còn throughput thì ổn định?** Ở 100 VU hệ thống đã gần bão hòa (~163 req/s là trần), nên p95 lúc này đo **thời gian xếp hàng** chứ không đo thời gian truy vấn. Throughput mới là con số phản ánh đúng năng lực. Muốn đo latency thuần thì phải hạ tải xuống dưới ngưỡng bão hòa.
+
+Tỉ lệ lỗi ở cả hai cấu hình: **0%** (`http_req_failed: 0.00%`). Không index thì chậm, nhưng không sai.
+
+### 5.3. Chưa đo
+
+Redis cache-aside cho danh sách sản phẩm **chưa làm** — Redis hiện phục vụ reservation fast-path, rate limit, bộ đếm flash sale và idempotency. Nếu thêm cache thì đây là lượt đo thứ ba của bảng trên.
 
 ## 6. Cách trình bày trong README (và cách không phóng đại)
 
