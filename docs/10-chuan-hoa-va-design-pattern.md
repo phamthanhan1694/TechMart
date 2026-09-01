@@ -21,7 +21,7 @@ Rồi mới đi vào chi tiết bên dưới. Trả lời "rồi, đạt 3NF" c�
 Nghiêm ngặt thì JSONB vi phạm 1NF vì giá trị không nguyên tử. Lập luận bảo vệ:
 
 - Tập thuộc tính **thực sự** biến thiên theo ngành hàng: điện thoại có RAM/chipset/camera, laptop có CPU/GPU/trọng lượng. Cột cố định thì mỗi ngành hàng mới là một lần `ALTER TABLE` và một nửa số cột luôn `NULL`.
-- Điều 1NF muốn bảo vệ là **truy vấn được**, chứ không phải hình thức. JSONB ở đây có GIN index và lọc bằng `spec @> '{"ram":"16GB"}'` — không phải blob mờ đục. Phép đo ở [06-nfr-va-load-test.md](06-nfr-va-load-test.md): index đưa p95 từ 2.220ms xuống 234ms trên 50.000 sản phẩm.
+- Điều 1NF muốn bảo vệ là **truy vấn được**, chứ không phải hình thức. JSONB ở đây có GIN index và lọc bằng `spec @> '{"ram":"16GB"}'` — không phải blob mờ đục. Phép đo ở [06-nfr-va-load-test.md](06-nfr-va-load-test.md): trên 50.000 sản phẩm, GIN index đưa p95 từ 2.220ms xuống 279ms, và cache-aside đưa tiếp xuống 9,7ms.
 - Phương án EAV chuẩn hoá đúng 1NF nhưng mỗi bộ lọc thành một self-join, và không index tử tế được.
 
 Chi tiết ở [ADR-0002](adr/0002-jsonb-cho-product-spec.md).
