@@ -39,9 +39,11 @@ Vào bước checkout, hệ thống giữ hàng 10 phút: `available = stock −
 
 Quyết định thiết kế: **DB là nguồn sự thật, Redis chỉ là đường nhanh** ([ADR-0004](docs/adr/0004-reservation-nguon-su-that.md)). Redis keyspace notification là *at-most-once* — mất một event là hàng bị giữ vĩnh viễn, và Redis restart là mất sạch reservation. Job quét DB mỗi 30 giây chậm hơn nhưng không bao giờ mất. Hàng nhả muộn 30 giây không hại ai; hàng kẹt vĩnh viễn thì có.
 
-### 3. Đặt hàng idempotent
+### 3. Đặt hàng và thanh toán idempotent
 
 `POST /orders` bắt buộc header `Idempotency-Key`. Đường nhanh là tra cứu theo key; **chốt chặn thật sự là ràng buộc `UNIQUE(orders.idempotency_key)` ở DB** — hai request song song cùng key thì cái thua vi phạm ràng buộc và đọc lại kết quả của cái thắng.
+
+Webhook thanh toán có **ba lớp bảo vệ**, thiếu bất kỳ lớp nào cũng thành lỗ hổng "mua hàng miễn phí": xác thực chữ ký HMAC (endpoint này không có token, ai cũng gọi được) → đối chiếu số tiền với tổng đơn (không bao giờ tin số tiền webhook gửi lên) → idempotent (cổng thật *sẽ* gửi lại callback khi không nhận được 200).
 
 Cùng triết lý ở mọi nơi: hạ tầng nhanh (Redis) có thể mất, nguồn sự thật (PostgreSQL) thì không.
 
@@ -54,10 +56,12 @@ Cùng triết lý ở mọi nơi: hạ tầng nhanh (Redis) có thể mất, ngu
 | Hạng mục | Kết quả |
 |---|---|
 | Concurrency test 200 thread / tồn kho 10 | đúng 10 đơn thành công, tồn kho về 0, không âm |
+| Coupon 1 lượt / 50 người tranh đồng thời | đúng 1 người được giảm giá, `used_count = 1` |
 | Hủy đơn hai lần đồng thời | hoàn kho đúng một lần |
 | Đặt hàng hai lần cùng `Idempotency-Key` | một đơn duy nhất, trả cùng response |
 | Seed dữ liệu demo | 345 sản phẩm / 850 variant / 504 user / 400 đơn trong **15,2 giây** |
-| `mvn verify` | 6 test, xanh toàn bộ (gồm 2 test đồng thời chạy trên PostgreSQL thật) |
+| Webhook thanh toán sai chữ ký / sai số tiền | bị từ chối, đơn **không** chuyển sang PAID |
+| `mvn verify` | **14 test**, xanh toàn bộ (gồm 4 test đồng thời chạy trên PostgreSQL thật) |
 
 > Load test k6 và bảng p95 trước/sau khi thêm cache **chưa làm** — xem mục "Chưa làm".
 
@@ -136,12 +140,10 @@ Toàn bộ ADR: [docs/adr/](docs/adr/)
 
 ## Chưa làm — có chủ đích và có kế hoạch
 
-Phần đã xong là **lõi**: auth, catalog, giỏ hàng, giữ hàng, đặt hàng, hủy đơn, outbox. Phần còn lại theo kế hoạch ở [docs/00-pham-vi-va-ke-hoach.md](docs/00-pham-vi-va-ke-hoach.md):
+Phần đã xong: auth, catalog, giỏ hàng, giữ hàng, đặt hàng, hủy đơn, outbox, thanh toán, coupon. Phần còn lại theo kế hoạch ở [docs/00-pham-vi-va-ke-hoach.md](docs/00-pham-vi-va-ke-hoach.md):
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Mock payment gateway + webhook ký HMAC | chưa làm (tuần 3) |
-| Coupon engine + test race giới hạn lượt dùng | chưa làm (tuần 3) |
 | Flash sale (Redis Lua atomic) + rate limit Bucket4j | chưa làm (tuần 4) |
 | Admin: quản lý đơn, dashboard doanh thu | chưa làm (tuần 4) |
 | Observability: Prometheus + Grafana | chưa làm (tuần 4) |
