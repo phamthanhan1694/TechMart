@@ -15,6 +15,8 @@ Mục "Khi nào nên đổi ý" là mục ăn điểm nhất khi phỏng vấn: 
 | [0003](0003-chien-luoc-khoa-ton-kho.md) | Pessimistic lock cho đơn thường, Redis atomic cho flash sale | ✅ | `02-luong-nghiep-vu.md` §3, §4 |
 | [0004](0004-reservation-nguon-su-that.md) | Reservation: DB là nguồn sự thật, Redis là đường nhanh | ✅ | `02-luong-nghiep-vu.md` §2 |
 | [0005](0005-outbox-thay-message-broker.md) | Outbox pattern thay message broker | ☐ chưa viết | `02-luong-nghiep-vu.md` §7 |
+| [0009](0009-rate-limit-tu-viet-bang-lua.md) | Rate limit tự viết bằng Lua thay vì Bucket4j | ☐ chưa viết | `README.md` — Quyết định đáng nói |
+| [0010](0010-flashsale-redis-la-cua-db-la-so-cai.md) | Flash sale: Redis là cửa, DB là sổ cái | ☐ chưa viết | `README.md` §3 |
 | [0006](0006-refresh-token-rotation.md) | Refresh token có rotation + revoke, lưu hash | ☐ chưa viết | `07-security-checklist.md` §1 |
 | [0007](0007-soft-delete.md) | Soft delete cho product/variant | ☐ chưa viết | `01-domain-v2.md` §1 |
 | [0008](0008-idempotency-key.md) | `Idempotency-Key` ở tầng API | ☐ chưa viết | `03-api-contract.md` §1 |
