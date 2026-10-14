@@ -21,6 +21,8 @@ Tồn kho được kiểm soát bằng khóa dữ liệu và ràng buộc Postgr
 
 - `backend/`: REST API, migration cơ sở dữ liệu và bộ kiểm thử.
 - `frontend/`: giao diện cửa hàng và quản trị.
+- `loadtest/`: kịch bản k6 và SQL chuẩn bị dữ liệu kiểm thử tải.
+- `observability/`: cấu hình Prometheus và dashboard Grafana.
 - `.github/workflows/`: kiểm thử, kiểm tra frontend và build Docker image.
 
 ## Chạy dự án
@@ -38,6 +40,14 @@ docker compose up -d --build
 
 Cấu hình mặc định bật dữ liệu demo. Tài khoản quản trị: `admin@techmart.dev` / `Admin@123`; khách hàng: `customer@techmart.dev` / `Customer@123`. Khi triển khai thực tế, tắt seed và thay các mật khẩu, secret mặc định.
 
+
+Khởi động Prometheus và Grafana:
+
+```bash
+docker compose --profile observability up -d
+```
+
+Prometheus: http://localhost:9090. Grafana: http://localhost:3001 (tài khoản mặc định `admin` / `admin`).
 
 ## Kiểm thử
 

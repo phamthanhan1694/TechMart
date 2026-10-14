@@ -1,8 +1,6 @@
 # Local documentation, tooling and notes
 /docs/
 /out/
-/loadtest/
-/observability/
 /README-old.md
 /note.md
 
@@ -37,6 +35,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .flashsale-tokens
+/loadtest/tokens.json
+/loadtest/results/
+/loadtest/reports/
 
 # IDE / editor
 .idea/
