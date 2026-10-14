@@ -31,7 +31,7 @@ services:
       retries: 10
 
   app:
-    build: .
+    build: ./backend
     container_name: techmart-app
     depends_on:
       postgres:
@@ -56,6 +56,27 @@ services:
       timeout: 5s
       retries: 12
       start_period: 40s
+
+  web:
+    build: ./frontend
+    container_name: techmart-web
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      # Browser goi /api/... roi server Next proxy sang backend qua mang noi bo
+      # cua compose. Khong di qua CORS, va khong lo dia chi backend ra ngoai.
+      BACKEND_URL: http://app:8080
+    ports:
+      - "3000:3000"
+    healthcheck:
+      # 127.0.0.1 chu khong phai localhost: server Next nghe 0.0.0.0 (chi IPv4),
+      # con busybox wget phan giai localhost ra ::1 truoc roi bao Connection refused.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   # --- Observability: chay bang `docker compose --profile observability up -d` ---
   prometheus:
@@ -83,7 +104,8 @@ services:
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafanadata:/var/lib/grafana
     ports:
-      - "3000:3000"
+      # 3000 da danh cho frontend, nen Grafana ra 3001
+      - "3001:3000"
 
 volumes:
   pgdata:

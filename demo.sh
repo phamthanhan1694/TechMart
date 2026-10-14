@@ -41,7 +41,7 @@ BANNER
 printf "${R}"
 info "Máy chủ: $BASE"
 
-curl -s -o /dev/null --max-time 5 "$BASE/actuator/health" || die "App chưa chạy. Khởi động bằng: SPRING_PROFILES_ACTIVE=demo mvn spring-boot:run"
+curl -s -o /dev/null --max-time 5 "$BASE/actuator/health" || die "App chưa chạy. Khởi động bằng: cd backend && SPRING_PROFILES_ACTIVE=demo mvn spring-boot:run"
 
 # ─────────────────────────────────────────────────────────── 1. Đăng ký + đăng nhập
 step "1. Đăng ký tài khoản mới rồi đăng nhập"

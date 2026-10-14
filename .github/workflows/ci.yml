@@ -11,8 +11,11 @@ concurrency:
 
 jobs:
   test:
-    name: Unit + Integration
+    name: Backend - Unit + Integration
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +24,7 @@ jobs:
           java-version: '21'
           distribution: temurin
           cache: maven
+          cache-dependency-path: backend/pom.xml
 
       # Docker co san tren ubuntu-latest nen Testcontainers chay duoc,
       # khong can dich vu phu tro nao khac.
@@ -28,8 +32,11 @@ jobs:
         run: mvn -B test
 
   concurrency-test:
-    name: Concurrency (chay tren PostgreSQL that)
+    name: Backend - Concurrency (chay tren PostgreSQL that)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -38,6 +45,7 @@ jobs:
           java-version: '21'
           distribution: temurin
           cache: maven
+          cache-dependency-path: backend/pom.xml
 
       # Cham hon nhieu nhung KHONG duoc bo: day la nhom test chung minh
       # he thong khong ban qua ton kho.
@@ -49,12 +57,41 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: failsafe-reports
-          path: target/failsafe-reports/
+          path: backend/target/failsafe-reports/
+
+  frontend:
+    name: Frontend - Lint + Typecheck + Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      - name: lint
+        run: npm run lint
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: build
+        run: npm run build
 
   docker:
-    name: Build image
+    name: Build images
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: docker build
-        run: docker build -t techmart-backend:${{ github.sha }} .
+      - name: docker build backend
+        run: docker build -t techmart-backend:${{ github.sha }} ./backend
+      - name: docker build frontend
+        run: docker build -t techmart-web:${{ github.sha }} ./frontend

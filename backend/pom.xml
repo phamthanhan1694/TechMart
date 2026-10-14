@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Spring Boot 4.1 = Spring Framework 7, Spring Security 7, Hibernate 7, Jackson 3.
+       Lý do và đánh đổi của lần nâng cấp: docs/adr/0017-java-21-spring-boot-4.md -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.1</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>dev.techmart</groupId>
+  <artifactId>techmart-backend</artifactId>
+  <version>0.1.0</version>
+  <name>techmart-backend</name>
+  <description>E-commerce backend cho thiet bi dien tu - tap trung vao ton kho duoi tai dong thoi</description>
+
+  <properties>
+    <!-- Java 21: bản LTS. Không dùng tính năng nào mới hơn 21. -->
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- springdoc 3.x là dòng dành cho Spring Boot 4 -->
+    <springdoc.version>3.1.1</springdoc.version>
+    <jjwt.version>0.13.0</jjwt.version>
+  </properties>
+
+  <dependencies>
+    <!-- Web / API. Boot 4 tách starter theo module: "web" giờ là "webmvc". -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <!-- Persistence -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- Boot 4: chỉ có flyway-core thì KHÔNG còn tự cấu hình migration nữa -
+         auto-configuration của Flyway nằm ở starter riêng. Thiếu dòng này, app vẫn
+         khởi động nhưng không chạy migration nào, và ddl-auto=validate sẽ báo thiếu bảng. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-flyway</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+
+    <!-- Redis: cache, rate limit, reservation fast-path, idempotency, khoá đăng nhập -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+
+    <!-- Security -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>${jjwt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>${jjwt.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- jjwt chưa có module cho Jackson 3, nên vẫn kéo Jackson 2 vào classpath - chỉ
+         dùng nội bộ để đọc/ghi claim của JWT. Ứng dụng dùng Jackson 3 (xem ADR-0017). -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>${jjwt.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- API docs -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
+
+    <!-- Observability -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Khai bao tuong minh (du da co bac cau) de surefire resolve duoc
+         ${org.mockito:mockito-core:jar} khi nap Mockito nhu mot java agent -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Testcontainers 2: artifact đổi tên, có tiền tố "testcontainers-" -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- Mockito phai duoc nap nhu mot java agent; JDK moi khong cho self-attach -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
+        </configuration>
+      </plugin>
+
+      <!-- Test concurrency chay rieng: cham, nhung khong duoc bo -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <argLine>-Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

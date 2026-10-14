@@ -1,8 +1,44 @@
+# Local documentation, tooling and notes
+/docs/
+/out/
+/loadtest/
+/observability/
+/README-old.md
+/note.md
+
+# Java / Maven
 target/
+*.class
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.nyc_output/
+.cache/
+*.tsbuildinfo
+
+# Environment files (keep templates)
+.env
+.env.*
+!.env.example
+*.local
+
+# Runtime files and token caches
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.flashsale-tokens
+
+# IDE / editor
 .idea/
 *.iws
 *.iml
@@ -11,21 +47,14 @@ target/
 .classpath
 .project
 .settings/
+*.swp
+*.swo
+*~
 
-.env
-*.local
-
-*.log
-logs/
-
-docs/loadtest/*.html
-
-# Node - san pham build, khong bao gio commit
-node_modules/
-.next/
-*.tsbuildinfo
-next-dev.*.log
-
-# token cache cua flashsale-race.sh
-.flashsale-tokens
-loadtest/tokens.json
+# Temporary files and OS metadata
+*.tmp
+*.temp
+*.bak
+.DS_Store
+Thumbs.db
+Desktop.ini

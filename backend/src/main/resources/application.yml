@@ -1,0 +1,145 @@
+spring:
+  application:
+    name: techmart-backend
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/techmart}
+    username: ${SPRING_DATASOURCE_USERNAME:techmart}
+    password: ${SPRING_DATASOURCE_PASSWORD:techmart}
+    hikari:
+      maximum-pool-size: 20
+      # Giữ ngắn để phát hiện sớm transaction bị kéo dài (xem docs/06-nfr-va-load-test.md mục 4)
+      connection-timeout: 5000
+      leak-detection-threshold: 20000
+
+  jpa:
+    open-in-view: false          # tắt: không để session sống toi tận tầng view, buộc nạp dữ liệu đúng chỗ
+    hibernate:
+      ddl-auto: validate         # schema do Flyway quản lý, Hibernate chỉ kiểm tra
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+        query:
+          in_clause_parameter_padding: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2s
+      lettuce:
+        pool:
+          max-active: 16
+
+  jackson:
+    default-property-inclusion: non_null
+    # Jackson 3 (Spring Boot 4) mặc định ghi ngày giờ dạng chuỗi ISO-8601, nên không còn
+    # dòng "serialization.write-dates-as-timestamps: false" - khoá đó đã chuyển sang
+    # DateTimeFeature và để ở đây thì Boot không bind được, app không khởi động.
+
+server:
+  port: 8080
+  error:
+    # Không bao giờ lộ chi tiết nội bộ ra response (docs/07-security-checklist.md mục 4)
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:doi-chuoi-nay-truoc-khi-deploy-toi-thieu-32-ky-tu-that-dai}
+    access-ttl: ${APP_JWT_ACCESS_TTL:PT15M}
+    refresh-ttl: ${APP_JWT_REFRESH_TTL:P7D}
+    issuer: techmart
+  seed:
+    enabled: ${APP_SEED_ENABLED:false}
+  inventory:
+    reservation-ttl: PT10M
+    release-job-batch-size: 500
+  payment:
+    webhook-secret: ${APP_PAYMENT_WEBHOOK_SECRET:mock-webhook-secret-doi-truoc-khi-deploy}
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
+  cache:
+    # Tat được bằng biến môi trường để đó hiệu năng trước/sau khi có cache
+    products-enabled: ${APP_CACHE_PRODUCTS_ENABLED:true}
+    list-ttl: PT60S
+    detail-ttl: PT10M
+  reporting:
+    zone: ${APP_REPORTING_ZONE:Asia/Ho_Chi_Minh}
+    # Chặn truy vấn báo cáo quét cả chục năm dữ liệu từ một request (ADR-0011)
+    max-range-days: 366
+    export-max-rows: 100000
+  login-lockout:
+    max-attempts: 5
+    window: PT15M
+    lock-duration: PT15M
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Chỉ mở health + prometheus. /env và /heapdump lộ secret.
+        include: health,prometheus,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: techmart
+    # Bật histogram để Prometheus tính được p95/p99. Không bật thì chỉ có count/sum
+    # và mọi truy vấn phân vị deu trả về rỗng.
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s,2s
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    dev.techmart: INFO
+    org.hibernate.SQL: WARN
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true    # để đếm số query trong test chống N+1
+logging:
+  level:
+    dev.techmart: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+---
+spring:
+  config:
+    activate:
+      on-profile: demo
+app:
+  seed:
+    enabled: true

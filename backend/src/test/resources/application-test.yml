@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    hikari:
+      # Phải LỚN HƠN số thread của concurrency test (32). Nếu nhỏ hơn, thread thua sẽ
+      # timeout khi xin connection và bài test đó nhầm "không bán được" thành "hết hàng" -
+      # che mat chính cai dạng cần đó. Đây là giới hạn của mọi truong test, không phải
+      # của hệ thống.
+      maximum-pool-size: 40
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      # Vẫn là validate: test phải kiểm được entity có khớp schema Flyway không.
+      # Đổi sang create-drop là mất luôn giá trị kiểm tra đó.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        generate_statistics: true   # để đếm số query trong test chống N+1
+  flyway:
+    enabled: true
+    clean-disabled: false
+
+app:
+  jwt:
+    secret: test-secret-chi-dung-trong-test-toi-thieu-32-ky-tu-that-dai
+    access-ttl: PT15M
+    refresh-ttl: P7D
+    issuer: techmart-test
+  seed:
+    enabled: false
+  inventory:
+    reservation-ttl: PT10M
+    release-job-batch-size: 500
+  payment:
+    webhook-secret: test-webhook-secret
+  cors:
+    allowed-origins: http://localhost:3000
+  cache:
+    products-enabled: true
+    list-ttl: PT60S
+    detail-ttl: PT10M
+
+logging:
+  level:
+    dev.techmart: INFO
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN
