@@ -4,10 +4,12 @@ WORKDIR /build
 
 # Tach buoc tai dependency ra rieng de Docker cache lai giua cac lan build
 COPY pom.xml .
-RUN mvn -B dependency:go-offline
+COPY .mvn ./.mvn
+COPY mvnw .
+RUN sh ./mvnw -B dependency:go-offline
 
 COPY src ./src
-RUN mvn -B clean package -DskipTests
+RUN sh ./mvnw -B clean package -DskipTests
 
 # --- Giai doan chay ---
 FROM eclipse-temurin:21-jre-alpine

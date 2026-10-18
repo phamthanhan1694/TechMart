@@ -51,10 +51,25 @@ Prometheus: http://localhost:9090. Grafana: http://localhost:3001 (tài khoản 
 
 ## Kiểm thử
 
-Yêu cầu JDK 21, Maven, Node.js 24 và Docker đang chạy để Testcontainers khởi tạo dịch vụ phụ thuộc.
+Yêu cầu JDK 21, Node.js 24 và Docker đang chạy để Testcontainers khởi tạo dịch vụ phụ thuộc. Backend dùng Maven Wrapper, tự tải Maven 3.9.16 trong lần chạy đầu tiên; không cần cài Maven riêng.
+
+Trên Windows (PowerShell), từ thư mục gốc:
+
+```powershell
+cd backend
+.\mvnw.cmd verify
+cd ..
+```
+
+Trên Linux/macOS, từ thư mục gốc:
 
 ```bash
-mvn -f backend/pom.xml verify
+sh backend/mvnw -f backend/pom.xml verify
+```
+
+Kiểm tra frontend, từ thư mục gốc:
+
+```bash
 npm --prefix frontend ci
 npm --prefix frontend run lint
 npm --prefix frontend run typecheck

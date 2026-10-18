@@ -28,8 +28,8 @@ jobs:
 
       # Docker co san tren ubuntu-latest nen Testcontainers chay duoc,
       # khong can dich vu phu tro nao khac.
-      - name: mvn test
-        run: mvn -B test
+      - name: Maven Wrapper test
+        run: sh ./mvnw -B test
 
   concurrency-test:
     name: Backend - Concurrency (chay tren PostgreSQL that)
@@ -49,8 +49,8 @@ jobs:
 
       # Cham hon nhieu nhung KHONG duoc bo: day la nhom test chung minh
       # he thong khong ban qua ton kho.
-      - name: mvn verify
-        run: mvn -B verify
+      - name: Maven Wrapper verify
+        run: sh ./mvnw -B verify
 
       - name: Luu bao cao khi that bai
         if: failure()
