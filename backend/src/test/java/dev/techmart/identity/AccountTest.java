@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Hồ sơ, đổi mật khẩu và sổ địa chỉ của khách. */
-@DisplayName("Tai khoan ca nhan")
+@DisplayName("Tài khoản cá nhân")
 class AccountTest extends IntegrationTestBase {
 
     private static final String PASSWORD = "Password@123";
@@ -49,7 +49,7 @@ class AccountTest extends IntegrationTestBase {
     // ------------------------------------------------------------------ mật khẩu
 
     @Test
-    @DisplayName("Sai mat khau hien tai -> 422, khong phai 401 (client coi 401 la het phien)")
+    @DisplayName("Sai mật khẩu hiện tại -> 422, không phải 401 (client coi 401 là hết phiên)")
     void changePassword_wrongCurrent() {
         assertThatThrownBy(() -> accountService.changePassword(user.getId(),
                 new ChangePasswordRequest("SaiRoi@123", "MatKhauMoi@1")))
@@ -62,20 +62,20 @@ class AccountTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Doi mat khau -> moi phien cu bi thu hoi, mat khau moi dung duoc")
+    @DisplayName("Đổi mật khẩu -> mọi phiên cũ bị thu hồi, mật khẩu mới dùng được")
     void changePassword_revokesAllSessions() {
         TokenResponse before = authService.login(new LoginRequest(user.getEmail(), PASSWORD));
 
         accountService.changePassword(user.getId(), new ChangePasswordRequest(PASSWORD, "MatKhauMoi@1"));
 
         assertThatThrownBy(() -> authService.refresh(new RefreshRequest(before.refreshToken())))
-                .as("Nguoi doi mat khau thuong vi nghi bi lo - phien cua ke gian phai chet")
+                .as("Người đổi mật khẩu thường vì nghi bị lộ - phiên của kẻ gian phải chết")
                 .isInstanceOf(BusinessException.class);
         assertThat(authService.login(new LoginRequest(user.getEmail(), "MatKhauMoi@1")).accessToken()).isNotBlank();
     }
 
     @Test
-    @DisplayName("Mat khau moi trung mat khau cu -> 422")
+    @DisplayName("Mật khẩu mới trùng mật khẩu cũ -> 422")
     void changePassword_sameAsCurrent() {
         assertThatThrownBy(() -> accountService.changePassword(user.getId(), new ChangePasswordRequest(PASSWORD, PASSWORD)))
                 .extracting(e -> ((BusinessException) e).code())
@@ -83,20 +83,20 @@ class AccountTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Cap nhat ho so: so dien thoai rong luu thanh null")
+    @DisplayName("Cập nhật hồ sơ: số điện thoại rỗng lưu thành null")
     void updateProfile() {
         var updated = accountService.updateProfile(user.getId(), new UpdateProfileRequest("  Ten Moi ", ""));
-        assertThat(updated.fullName()).isEqualTo("Ten Moi");
+        assertThat(updated.fullName()).isEqualTo("Tên Mới");
         assertThat(updated.phone()).isNull();
     }
 
     // ------------------------------------------------------------------ sổ địa chỉ
 
     @Test
-    @DisplayName("Dia chi dau tien tu thanh mac dinh; dat mac dinh moi thi cai cu tu bo co")
+    @DisplayName("Địa chỉ đầu tiên tự thành mặc định; đặt mặc định mới thì cái cũ tự bỏ cờ")
     void addresses_exactlyOneDefault() {
         AddressResponse home = addressService.create(user.getId(), address("Nha", false));
-        assertThat(home.isDefault()).as("Dia chi dau tien").isTrue();
+        assertThat(home.isDefault()).as("Địa chỉ đầu tiên").isTrue();
 
         AddressResponse office = addressService.create(user.getId(), address("Cong ty", true));
         assertThat(office.isDefault()).isTrue();
@@ -104,7 +104,7 @@ class AccountTest extends IntegrationTestBase {
         List<AddressResponse> all = addressService.list(user.getId());
         assertThat(all).filteredOn(AddressResponse::isDefault).singleElement()
                 .extracting(AddressResponse::id).isEqualTo(office.id());
-        assertThat(all.get(0).id()).as("Mac dinh dung dau danh sach").isEqualTo(office.id());
+        assertThat(all.get(0).id()).as("Mặc định đứng đầu danh sách").isEqualTo(office.id());
 
         addressService.setDefault(user.getId(), home.id());
         assertThat(addressService.list(user.getId())).filteredOn(AddressResponse::isDefault).singleElement()
@@ -112,7 +112,7 @@ class AccountTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Xoa dia chi mac dinh -> dia chi con lai len lam mac dinh")
+    @DisplayName("Xoá địa chỉ mặc định -> địa chỉ còn lại lên làm mặc định")
     void deleteDefault_promotesAnother() {
         AddressResponse first = addressService.create(user.getId(), address("Nha", false));
         AddressResponse second = addressService.create(user.getId(), address("Cong ty", false));
@@ -126,10 +126,10 @@ class AccountTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Toi da 10 dia chi")
+    @DisplayName("Tối đa 10 địa chỉ")
     void addresses_limit() {
         for (int i = 0; i < AddressService.MAX_ADDRESSES; i++) {
-            addressService.create(user.getId(), address("Dia chi " + i, false));
+            addressService.create(user.getId(), address("Địa chỉ " + i, false));
         }
         assertThatThrownBy(() -> addressService.create(user.getId(), address("Thu 11", false)))
                 .extracting(e -> ((BusinessException) e).code())
@@ -137,7 +137,7 @@ class AccountTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Dia chi cua nguoi khac -> 404, va khong dat mac dinh ho duoc")
+    @DisplayName("Địa chỉ của người khác -> 404, và không đặt mặc định hộ được")
     void addresses_ofAnotherUser_return404() {
         AddressResponse mine = addressService.create(user.getId(), address("Nha", false));
         User stranger = fixtures.createCustomer();
@@ -151,7 +151,7 @@ class AccountTest extends IntegrationTestBase {
     }
 
     private static AddressRequest address(String label, boolean makeDefault) {
-        return new AddressRequest(label, "Nguyen Van A", "0901234567", "12 Nguyen Trai",
-                "Ben Thanh", "Quan 1", "TP Ho Chi Minh", makeDefault);
+        return new AddressRequest(label, "Nguyễn Văn A", "0901234567", "12 Nguyen Trai",
+                "Ben Thanh", "Quận 1", "TP Hồ Chí Minh", makeDefault);
     }
 }

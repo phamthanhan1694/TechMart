@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Ngưỡng lấy từ application.yml: sai 5 lần trong 15 phút thì khoá 15 phút.
  */
-@DisplayName("Khoa dang nhap theo tai khoan")
+@DisplayName("Khoá đăng nhập theo tài khoản")
 class LoginLockoutTest extends IntegrationTestBase {
 
     private static final String EMAIL = "khoa@test.dev";
@@ -39,22 +39,22 @@ class LoginLockoutTest extends IntegrationTestBase {
     @BeforeEach
     void setUp() {
         cleaner.clean();
-        user = authService.register(new RegisterRequest(EMAIL, PASSWORD, "Nguoi dung", "0901234567"));
+        user = authService.register(new RegisterRequest(EMAIL, PASSWORD, "Người dùng", "0901234567"));
     }
 
     @Test
-    @DisplayName("Sai 5 lan -> bi khoa, ke ca khi lan sau go dung mat khau")
+    @DisplayName("Sai 5 lần -> bị khoá, kể cả khi lần sau gõ đúng mật khẩu")
     void fiveFailures_lockEvenCorrectPassword() {
         for (int i = 1; i <= 4; i++) {
             assertThat(codeOf(EMAIL, WRONG)).isEqualTo(ErrorCode.INVALID_CREDENTIALS);
         }
         assertThat(codeOf(EMAIL, WRONG))
-                .as("Lan sai thu 5 bao khoa ngay de nguoi dung biet vi sao")
+                .as("Lần sai thứ 5 báo khoá ngay để người dùng biết vì sao")
                 .isEqualTo(ErrorCode.LOGIN_TEMPORARILY_LOCKED);
 
         BusinessException locked = errorOf(EMAIL, PASSWORD);
         assertThat(locked.code())
-                .as("Dang bi khoa thi mat khau dung cung khong vao duoc - neu khong, khoa vo nghia")
+                .as("Đang bị khoá thì mật khẩu đúng cũng không vào được - nếu không, khoá vô nghĩa")
                 .isEqualTo(ErrorCode.LOGIN_TEMPORARILY_LOCKED);
         assertThat(((Map<?, ?>) locked.details()).get("retryAfterSeconds"))
                 .isInstanceOf(Long.class)
@@ -62,7 +62,7 @@ class LoginLockoutTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Email khong ton tai bi khoa y het - khong dung khoa de do email duoc")
+    @DisplayName("Email không tồn tại bị khoá y hệt - không dùng khoá để dò email được")
     void unknownEmail_isLockedTheSameWay() {
         String ghost = "khong-ton-tai@test.dev";
         for (int i = 1; i <= 4; i++) {
@@ -72,7 +72,7 @@ class LoginLockoutTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Dang nhap dung xoa bo dem: 4 lan sai hom qua khong cong don voi hom nay")
+    @DisplayName("Đăng nhập đúng xoá bộ đếm: 4 lần sai hôm qua không cộng dồn với hôm nay")
     void successfulLogin_resetsCounter() {
         for (int i = 1; i <= 4; i++) codeOf(EMAIL, WRONG);
         authService.login(new LoginRequest(EMAIL, PASSWORD));
@@ -83,14 +83,14 @@ class LoginLockoutTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Email khac hoa thuong van la cung mot bo dem")
+    @DisplayName("Email khác hoa thường vẫn là cùng một bộ đếm")
     void counterIsCaseInsensitive() {
         for (int i = 1; i <= 4; i++) codeOf(EMAIL.toUpperCase(), WRONG);
         assertThat(codeOf(EMAIL, WRONG)).isEqualTo(ErrorCode.LOGIN_TEMPORARILY_LOCKED);
     }
 
     @Test
-    @DisplayName("Admin go khoa -> dang nhap lai duoc ngay")
+    @DisplayName("Admin gỡ khoá -> đăng nhập lại được ngay")
     void adminCanClearLockout() {
         for (int i = 1; i <= 5; i++) codeOf(EMAIL, WRONG);
         assertThat(adminUsers.detail(user.id()).loginLockedSeconds()).isPositive();
@@ -107,7 +107,7 @@ class LoginLockoutTest extends IntegrationTestBase {
     private BusinessException errorOf(String email, String password) {
         try {
             authService.login(new LoginRequest(email, password));
-            throw new AssertionError("Mong doi BusinessException nhung dang nhap thanh cong");
+            throw new AssertionError("Mong đợi BusinessException nhưng đăng nhập thành công");
         } catch (BusinessException e) {
             return e;
         }

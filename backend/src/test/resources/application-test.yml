@@ -3,7 +3,7 @@ spring:
     hikari:
       # Phải LỚN HƠN số thread của concurrency test (32). Nếu nhỏ hơn, thread thua sẽ
       # timeout khi xin connection và bài test đó nhầm "không bán được" thành "hết hàng" -
-      # che mat chính cai dạng cần đó. Đây là giới hạn của mọi truong test, không phải
+      # che mất chính cái đáng cần đo. Đây là giới hạn của môi trường test, không phải
       # của hệ thống.
       maximum-pool-size: 40
       connection-timeout: 30000

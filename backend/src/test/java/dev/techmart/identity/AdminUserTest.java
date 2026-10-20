@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Quản lý người dùng cho ADMIN - và audit log đi kèm từng thao tác. */
-@DisplayName("Quan ly nguoi dung (admin)")
+@DisplayName("Quản lý người dùng (admin)")
 class AdminUserTest extends IntegrationTestBase {
 
     @Autowired AdminUserService adminUsers;
@@ -63,7 +63,7 @@ class AdminUserTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Khoa tai khoan -> thu hoi refresh token, dang nhap bi chan, audit log ghi ai khoa")
+    @DisplayName("Khoá tài khoản -> thu hồi refresh token, đăng nhập bị chặn, audit log ghi ai khoá")
     void lock_revokesTokens_blocksLogin_andIsAudited() {
         User customer = fixtures.createCustomer();
         TokenResponse tokens = authService.login(new LoginRequest(customer.getEmail(), "Password@123"));
@@ -73,7 +73,7 @@ class AdminUserTest extends IntegrationTestBase {
 
         assertThat(row.status()).isEqualTo(UserStatus.LOCKED);
         assertThatThrownBy(() -> authService.refresh(new RefreshRequest(tokens.refreshToken())))
-                .as("Phien cu phai chet ngay, khong doi refresh token het han 7 ngay")
+                .as("Phiên cũ phải chết ngay, không đổi refresh token hết hạn 7 ngay")
                 .isInstanceOf(BusinessException.class);
         assertThatThrownBy(() -> authService.login(new LoginRequest(customer.getEmail(), "Password@123")))
                 .isInstanceOf(BusinessException.class)
@@ -90,7 +90,7 @@ class AdminUserTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Khong the tu khoa minh hay tu doi vai tro cua minh")
+    @DisplayName("Không thể tự khoá mình hay tự đổi vai trò của mình")
     void cannotModifySelf() {
         assertThatThrownBy(() -> adminUsers.changeStatus(adminPrincipal, admin.getId(),
                 new ChangeStatusRequest(UserStatus.LOCKED, null)))
@@ -103,7 +103,7 @@ class AdminUserTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Khong duoc de he thong khong con ADMIN nao, ke ca qua access token con song cua admin da bi khoa")
+    @DisplayName("Không được để hệ thống không còn ADMIN nào, kể cả qua access token còn sống của admin đã bị khoá")
     void cannotRemoveLastActiveAdmin() {
         User other = fixtures.createUser(Role.ADMIN);
         AuthPrincipal otherPrincipal = new AuthPrincipal(other.getId(), other.getEmail(), Role.ADMIN);
@@ -112,7 +112,7 @@ class AdminUserTest extends IntegrationTestBase {
         actAs(otherPrincipal);
         adminUsers.changeStatus(otherPrincipal, admin.getId(), new ChangeStatusRequest(UserStatus.LOCKED, null));
 
-        // admin da bi khoá nhưng access token (tối đa 15 phút) vẫn mang role ADMIN
+        // admin đã bị khoá nhưng access token (tối đa 15 phút) vẫn mang role ADMIN
         actAs(adminPrincipal);
         assertThatThrownBy(() -> adminUsers.changeRole(adminPrincipal, other.getId(), new ChangeRoleRequest(Role.STAFF)))
                 .isInstanceOf(BusinessException.class)
@@ -121,7 +121,7 @@ class AdminUserTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Doi vai tro thu hoi token de lan lam moi sau phat token mang vai tro moi")
+    @DisplayName("Đổi vai trò thu hồi token để lần làm mới sau phát token mang vai trò mới")
     void changeRole_revokesTokens() {
         User staff = fixtures.createUser(Role.STAFF);
         TokenResponse tokens = authService.login(new LoginRequest(staff.getEmail(), "Password@123"));
@@ -135,30 +135,30 @@ class AdminUserTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Danh sach kem tong chi tieu; tu khoa '%' khong khop tat ca")
+    @DisplayName("Danh sách kèm tổng chi tiêu; từ khoá '%' không khớp tất cả")
     void search_withSpendingStats_andEscapedKeyword() {
         User buyer = fixtures.createCustomer();
         ProductVariant variant = fixtures.createVariantWithStock(10, "1000000.00");
-        fixtures.insertOrder(buyer.getId(), variant.getId(), OrderStatus.DELIVERED, Instant.now(), "2500000", "Ha Noi", null, 1);
-        fixtures.insertOrder(buyer.getId(), variant.getId(), OrderStatus.CANCELLED, Instant.now(), "9000000", "Ha Noi", null, 1);
+        fixtures.insertOrder(buyer.getId(), variant.getId(), OrderStatus.DELIVERED, Instant.now(), "2500000", "Hà Nội", null, 1);
+        fixtures.insertOrder(buyer.getId(), variant.getId(), OrderStatus.CANCELLED, Instant.now(), "9000000", "Hà Nội", null, 1);
 
         var page = adminUsers.search(buyer.getEmail().substring(0, 6), null, null,
                 PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "totalSpent")));
         AdminUserRow row = page.content().stream().filter(r -> r.id().equals(buyer.getId())).findFirst().orElseThrow();
-        assertThat(row.paidOrders()).as("Don huy khong tinh").isEqualTo(1);
+        assertThat(row.paidOrders()).as("Đơn huy không tính").isEqualTo(1);
         assertThat(row.totalSpent()).isEqualByComparingTo("2500000");
 
         assertThat(adminUsers.search("%", null, null, PageRequest.of(0, 20)).totalElements())
-                .as("'%' la ky tu thuong, khong phai ky tu dai dien")
+                .as("'%' là ký tự thường, không phải ký tự đại diện")
                 .isZero();
         assertThat(adminUsers.search(null, Role.ADMIN, null, PageRequest.of(0, 20)).totalElements()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Tao tai khoan nhan vien -> dang nhap duoc voi vai tro STAFF")
+    @DisplayName("Tạo tài khoản nhân viên -> đăng nhập được với vai trò STAFF")
     void createStaff() {
         AdminUserRow row = adminUsers.create(new CreateUserRequest("kho2@test.dev", "Staff@1234",
-                "Nhan vien kho 2", null, Role.STAFF));
+                "Nhân viên kho 2", null, Role.STAFF));
 
         assertThat(row.role()).isEqualTo(Role.STAFF);
         assertThat(authService.login(new LoginRequest("kho2@test.dev", "Staff@1234")).accessToken()).isNotBlank();

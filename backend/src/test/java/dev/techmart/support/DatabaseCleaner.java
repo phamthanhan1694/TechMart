@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Dọn dữ liệu giữa các test.
  *
- * <p>Dùng TRUNCATE thủ công thay vì {@code @Transactional} trên test class. Lý đó quan trọng:
+ * <p>Dùng TRUNCATE thủ công thay vì {@code @Transactional} trên test class. Lý do quan trọng:
  * {@code @Transactional} trên test làm mọi thread trong concurrency test chạy chung MỘT
  * transaction - test sẽ pass giả trong khi production vẫn oversell.
  * Xem docs/05-test-plan.md mục 2.
@@ -41,7 +41,7 @@ public class DatabaseCleaner {
     /**
      * Dọn cả Postgres và Redis.
      *
-     * <p><b>Phải đơn ca Redis</b>: {@code TRUNCATE ... RESTART IDENTITY} làm id bắt đầu lại từ 1,
+     * <p><b>Phải dọn cả Redis</b>: {@code TRUNCATE ... RESTART IDENTITY} làm id bắt đầu lại từ 1,
      * nên key Redis dạng {@code fs:{itemId}:user:{userId}} của test trước sẽ trùng với
      * cặp id của test sau. Triệu chứng đã gặp: một user hoàn toàn mới bị từ chối với
      * FLASH_SALE_LIMIT_EXCEEDED vì bộ đếm cũ còn sót lại.

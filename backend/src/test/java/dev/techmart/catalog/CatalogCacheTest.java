@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Phần khó của cache không phải đọc nhanh mà là <b>xoá đúng lúc</b>. Nhóm test này
  * chủ yếu kiểm chứng chỗ: sửa sản phẩm xong thì lần đọc tiếp theo phải thay dữ liệu mới,
- * kể cả o trang danh sách với vô số biến thể khoá.
+ * kể cả ở trang danh sách với vô số biến thể khoá.
  */
 @DisplayName("Cache catalog")
 class CatalogCacheTest extends IntegrationTestBase {
@@ -40,7 +40,7 @@ class CatalogCacheTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Doc lan hai lay tu cache, khong ban them truy van xuong DB")
+    @DisplayName("Đọc lần hai lấy từ cache, không bắn thêm truy vấn xuống DB")
     void secondRead_comesFromCache() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "20000000.00");
         String slug = variant.getProduct().getSlug();
@@ -54,7 +54,7 @@ class CatalogCacheTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Sua gia -> lan doc tiep theo thay gia MOI, khong phai gia cu trong cache")
+    @DisplayName("Sửa giá -> lần đọc tiếp theo thấy giá MỚI, không phải giá cũ trong cache")
     void afterPriceChange_readReturnsNewValue() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "20000000.00");
         String slug = variant.getProduct().getSlug();
@@ -64,7 +64,7 @@ class CatalogCacheTest extends IntegrationTestBase {
 
         productService.updateVariant(variant.getId(), new VariantRequest(
                 variant.getSku(), variant.getName(), new BigDecimal("31000000.00"),
-                null, 10, Map.of("color", "Den")));
+                null, 10, Map.of("color", "Đen")));
 
         assertThat(productService.getBySlug(slug).variants().get(0).price())
                 .as("Quen xoa cache o day la khach thay gia cu - loi khong bao gio lo ra trong test don le")
@@ -72,11 +72,11 @@ class CatalogCacheTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Bo dem the he: mot thay doi lam VO HIEU toan bo cache danh sach")
+    @DisplayName("Bộ đếm thế hệ: một thay đổi làm VÔ HIỆU toàn bộ cache danh sách")
     void generationCounter_invalidatesAllListVariants() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "20000000.00");
 
-        // Nhieu biến the khoá khác nhau của cùng một trang danh sách
+        // Nhiều biến thể khoá khác nhau của cùng một trang danh sách
         var byRam = criteria(Map.of("ram", "8GB"));
         var byStorage = criteria(Map.of("storage", "256GB"));
         assertThat(productService.search(byRam, PageRequest.of(0, 20)).totalElements()).isEqualTo(1);
@@ -84,22 +84,22 @@ class CatalogCacheTest extends IntegrationTestBase {
 
         long generationBefore = generation();
         assertThat(redis.keys("catalog:list:" + generationBefore + ":*"))
-                .as("Ca hai bien the khoa deu da duoc cache")
+                .as("Ca hai bien the khoa đều đã được cache")
                 .hasSize(2);
 
         productService.softDelete(variant.getProduct().getId());
 
         assertThat(generation())
-                .as("Moi thay doi catalog tang the he len mot")
+                .as("Mọi thay đổi catalog tăng thế hệ lên một")
                 .isEqualTo(generationBefore + 1);
         assertThat(productService.search(byRam, PageRequest.of(0, 20)).totalElements())
-                .as("Toan bo cache danh sach cu tro thanh khong the cham toi, khong can SCAN hay xoa hang loat")
+                .as("Toàn bộ cache danh sách cũ tro thanh không thể chậm toi, không cần SCAN hay xoá hang loat")
                 .isZero();
         assertThat(productService.search(byStorage, PageRequest.of(0, 20)).totalElements()).isZero();
     }
 
     @Test
-    @DisplayName("Khoa cache gom du moi tham so: bo loc khac nhau khong dung chung ket qua")
+    @DisplayName("Khoá cache gom đủ mọi tham số: bộ lọc khác nhau không dùng chung kết quả")
     void cacheKey_distinguishesDifferentQueries() {
         fixtures.createVariantWithStock(10, "20000000.00");
 
@@ -108,12 +108,12 @@ class CatalogCacheTest extends IntegrationTestBase {
 
         assertThat(matching.totalElements()).isEqualTo(1);
         assertThat(notMatching.totalElements())
-                .as("Bo sot tham so trong khoa cache la tra nham ket qua cua truy van khac")
+                .as("Bỏ sót tham số trong khoá cache là trả nhầm kết quả của truy vấn khác")
                 .isZero();
     }
 
     @Test
-    @DisplayName("Thu tu key trong bo loc spec khong tao ra hai khoa cache khac nhau")
+    @DisplayName("Thứ tự key trong bộ lọc spec không tạo ra hai khoá cache khác nhau")
     void cacheKey_isStableRegardlessOfSpecOrder() {
         fixtures.createVariantWithStock(10, "20000000.00");
 
@@ -130,7 +130,7 @@ class CatalogCacheTest extends IntegrationTestBase {
         productService.search(criteria(order2), PageRequest.of(0, 20));
 
         assertThat(redis.keys("catalog:list:*"))
-                .as("Cung mot truy van thi phai dung chung mot khoa, khong nhan doi cache")
+                .as("Cùng một truy vấn thì phải dùng chung một khoá, không nhân đôi cache")
                 .hasSize((int) keysAfterFirst);
     }
 

@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DisplayName("Danh sach yeu thich")
+@DisplayName("Danh sách yêu thích")
 class WishlistTest extends IntegrationTestBase {
 
     @Autowired WishlistService wishlist;
@@ -36,7 +36,7 @@ class WishlistTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Them hai lan = mot dong (PUT idempotent, khong 409)")
+    @DisplayName("Thêm hai lần = một dòng (PUT idempotent, không 409)")
     void add_isIdempotent() {
         wishlist.add(user.getId(), productId);
         wishlist.add(user.getId(), productId);
@@ -51,7 +51,7 @@ class WishlistTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Xoa thu khong co cung thanh cong; danh sach moi nguoi tach biet")
+    @DisplayName("Xoá thứ không có cũng thành công; danh sách mỗi người tách biệt")
     void remove_isIdempotent_andListsArePrivate() {
         User other = fixtures.createCustomer();
         wishlist.add(user.getId(), productId);
@@ -66,7 +66,7 @@ class WishlistTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("San pham ngung ban: khong them moi duoc, nhung van nam trong danh sach da co")
+    @DisplayName("Sản phẩm ngừng bán: không thêm mới được, nhưng vẫn nằm trong danh sách đã có")
     void discontinuedProduct() {
         wishlist.add(user.getId(), productId);
         productService.softDelete(productId);

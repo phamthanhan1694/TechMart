@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * <p>Điểm cần chứng minh: outbox giao at-least-once, nhưng khách không bao giờ nhận hai
  * thông báo cho cùng một sự kiện.
  */
-@DisplayName("Thong bao trong ung dung")
+@DisplayName("Thông báo trong ứng dụng")
 class NotificationTest extends IntegrationTestBase {
 
     @Autowired NotificationService notifications;
@@ -58,12 +58,12 @@ class NotificationTest extends IntegrationTestBase {
 
         var session = reservationService.hold(buyer.getId());
         order = orderService.placeOrder(buyer.getId(), new PlaceOrderRequest(session.sessionId(),
-                new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai", "Ben Thanh", "Quan 1", "TP HCM"),
+                new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai", "Ben Thanh", "Quận 1", "TP HCM"),
                 null, null), UUID.randomUUID().toString());
     }
 
     @Test
-    @DisplayName("Dat hang -> outbox -> mot thong bao cho chu don, co link toi don")
+    @DisplayName("Đặt hàng -> outbox -> một thông báo cho chủ đơn, có link tới đơn")
     void orderPlaced_createsNotification() {
         drainOutbox();
 
@@ -77,7 +77,7 @@ class NotificationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Cung mot event xu ly lai (at-least-once) -> van chi mot thong bao")
+    @DisplayName("Cùng một event xử lý lại (at-least-once) -> vẫn chỉ một thông báo")
     void redeliveredEvent_doesNotDuplicate() {
         drainOutbox();
         OutboxEvent event = outboxEvents.findAll().get(0);
@@ -90,7 +90,7 @@ class NotificationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Huy don -> them thong bao; danh dau da doc; nguoi khac khong doc duoc")
+    @DisplayName("Huỷ đơn -> thêm thông báo; đánh dấu đã đọc; người khác không đọc được")
     void cancel_markRead_andOwnership() {
         orderService.cancel(order.code(), principal, new CancelOrderRequest("Doi y"));
         drainOutbox();

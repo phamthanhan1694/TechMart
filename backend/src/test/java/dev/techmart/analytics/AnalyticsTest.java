@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * ngày trống bị mất, ranh giới ngày theo UTC, đơn huỷ lọt vào doanh thu, tỉ trọng không cộng
  * đủ 100%, và phễu đọc nhầm trạng thái hiện tại thay vì lịch sử.
  */
-@DisplayName("Thong ke admin")
+@DisplayName("Thống kê admin")
 class AnalyticsTest extends IntegrationTestBase {
 
     private static final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -54,7 +54,7 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Chuoi thoi gian du moi ngay, ngay khong co don = 0 chu khong bien mat")
+    @DisplayName("Chuỗi thời gian đủ mọi ngày, ngày không có đơn = 0 chứ không biến mất")
     void series_fillsEmptyDaysWithZero() {
         order(alice, OrderStatus.PAID, at(2026, 9, 1, 10), "1000000");
         order(alice, OrderStatus.PAID, at(2026, 9, 3, 10), "3000000");
@@ -66,20 +66,20 @@ class AnalyticsTest extends IntegrationTestBase {
         assertThat(series.points().get(1).revenue()).isEqualByComparingTo("0");
         assertThat(series.points().get(2).revenue()).isEqualByComparingTo("3000000");
         assertThat(series.previous())
-                .as("Ky truoc cung do dai de ve duong so sanh")
+                .as("Kỳ trước cùng độ dài để vẽ đường so sánh")
                 .hasSize(3);
     }
 
     @Test
-    @DisplayName("Ranh gioi ngay theo gio Viet Nam: 18:30 UTC la 01:30 sang hom sau")
+    @DisplayName("Ranh giới ngày theo giờ Việt Nam: 18:30 UTC là 01:30 sáng hôm sau")
     void dayBoundary_usesStoreTimeZone() {
         // 2026-09-01T18:30Z = 2026-09-02 01:30 giờ Việt Nam
         fixtures.insertOrder(alice.getId(), variant.getId(), OrderStatus.PAID,
-                Instant.parse("2026-09-01T18:30:00Z"), "2000000", "Ha Noi", null, 1);
+                Instant.parse("2026-09-01T18:30:00Z"), "2000000", "Hà Nội", null, 1);
 
         TimeSeries series = analytics.series(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 2), "day");
         assertThat(series.points().get(0).revenue())
-                .as("Ngay 01/09 theo gio Viet Nam khong co don nao")
+                .as("Ngay 01/09 theo giờ Việt Nam không có đơn nào")
                 .isEqualByComparingTo("0");
         assertThat(series.points().get(1).revenue()).isEqualByComparingTo("2000000");
 
@@ -88,7 +88,7 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("KPI: doanh thu bo don huy va chua thanh toan, so voi ky truoc, ti le huy, khach quay lai")
+    @DisplayName("KPI: doanh thu bỏ đơn huỷ và chưa thanh toán, so với kỳ trước, tỉ lệ huỷ, khách quay lại")
     void overview_excludesUnpaid_comparesPreviousPeriod() {
         // Kỳ trước (31/08 - 09/09): alice mua một đơn
         order(alice, OrderStatus.DELIVERED, at(2026, 9, 5, 9), "2000000");
@@ -109,15 +109,15 @@ class AnalyticsTest extends IntegrationTestBase {
         assertThat(o.paidOrders().current()).isEqualByComparingTo("2");
         assertThat(o.averageOrderValue().current()).isEqualByComparingTo("2000000");
         assertThat(o.cancelRate().current())
-                .as("1 don huy tren 4 don dat")
+                .as("1 đơn huỷ trên 4 đơn đặt")
                 .isEqualByComparingTo("25.0");
         assertThat(o.returningBuyerRate().current())
-                .as("alice da mua o ky truoc, bob thi chua")
+                .as("alice đã mua ở kỳ trước, bob thì chưa")
                 .isEqualByComparingTo("50.0");
     }
 
     @Test
-    @DisplayName("Ky truoc bang 0 thi changePercent = null, khong bia ra +100%")
+    @DisplayName("Kỳ trước bằng 0 thì changePercent = null, không bịa ra +100%")
     void overview_changePercentIsNullWhenPreviousIsZero() {
         order(alice, OrderStatus.PAID, at(2026, 9, 12, 9), "1000000");
         Overview o = analytics.overview(LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 19));
@@ -125,7 +125,7 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Co cau: phan duoi gop thanh 'Khac', ti trong cong lai du 100%")
+    @DisplayName("Cơ cấu: phần đuôi gộp thành 'Khác', tỉ trọng cộng lại đủ 100%")
     void breakdown_foldsTailIntoOther() {
         // Mỗi variant từ fixtures nằm ở một danh mục riêng -> 4 danh mục
         order(alice, OrderStatus.PAID, at(2026, 9, 12, 9), "4000000");
@@ -143,7 +143,7 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Chieu co cau la whitelist - gia tri la bi tu choi")
+    @DisplayName("Chiều cơ cấu là whitelist - giá trị lạ bị từ chối")
     void breakdown_rejectsUnknownDimension() {
         assertThatThrownBy(() -> analytics.breakdown("users; DROP TABLE orders", null, null, 8))
                 .isInstanceOf(BusinessException.class)
@@ -152,7 +152,7 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Pheu dung tu lich su: don REFUNDED van tinh la da tung thanh toan")
+    @DisplayName("Phễu dựng từ lịch sử: đơn REFUNDED vẫn tính là đã từng thanh toán")
     void funnel_readsHistoryNotCurrentStatus() {
         long delivered = order(alice, OrderStatus.DELIVERED, at(2026, 9, 12, 9), "1000000");
         Instant t = at(2026, 9, 12, 9);
@@ -176,11 +176,11 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Ban do nhiet theo gio dia phuong")
+    @DisplayName("Bản đồ nhiệt theo giờ địa phương")
     void heatmap_usesLocalHour() {
         // 13:00 UTC = 20:00 giờ Việt Nam
         fixtures.insertOrder(alice.getId(), variant.getId(), OrderStatus.PAID,
-                Instant.parse("2026-09-15T13:00:00Z"), "1000000", "Ha Noi", null, 1);
+                Instant.parse("2026-09-15T13:00:00Z"), "1000000", "Hà Nội", null, 1);
 
         Heatmap h = analytics.heatmap(LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 19));
 
@@ -191,7 +191,7 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Khoang ngay nguoc hoac qua dai bi tu choi")
+    @DisplayName("Khoảng ngày ngược hoặc quá dài bị từ chối")
     void invalidRange_isRejected() {
         assertThatThrownBy(() -> analytics.overview(LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 1)))
                 .isInstanceOf(BusinessException.class)
@@ -204,7 +204,7 @@ class AnalyticsTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Xuat CSV: dung so dong, co BOM cho Excel, va duoc ghi audit log")
+    @DisplayName("Xuất CSV: đúng số dòng, có BOM cho Excel, và được ghi audit log")
     void csvExport_writesRowsAndIsAudited() {
         order(alice, OrderStatus.PAID, at(2026, 9, 12, 9), "1000000");
         order(bob, OrderStatus.CANCELLED, at(2026, 9, 13, 9), "2000000");
@@ -216,28 +216,28 @@ class AnalyticsTest extends IntegrationTestBase {
         String csv = out.toString();
         assertThat(csv).startsWith("﻿");
         assertThat(csv.lines().count()).as("1 dong tieu de + 2 don").isEqualTo(3);
-        assertThat(csv).contains(alice.getEmail(), "CANCELLED", "Ha Noi");
+        assertThat(csv).contains(alice.getEmail(), "CANCELLED", "Hà Nội");
         assertThat(auditLogs.countByAction(AuditAction.ORDERS_EXPORTED)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("CSV injection: o bat dau bang = + - @ bi vo hieu hoa")
+    @DisplayName("CSV injection: ô bắt đầu bằng = + - @ bị vô hiệu hoá")
     void csvCell_neutralisesFormulas() {
         assertThat(OrderCsvExporter.cell("=HYPERLINK(\"http://x\",\"bam\")"))
                 .startsWith("\"'=HYPERLINK");
         assertThat(OrderCsvExporter.cell("+84901234567")).isEqualTo("'+84901234567");
-        assertThat(OrderCsvExporter.cell("Quan 1, TP HCM")).isEqualTo("\"Quan 1, TP HCM\"");
-        assertThat(OrderCsvExporter.cell("binh thuong")).isEqualTo("binh thuong");
+        assertThat(OrderCsvExporter.cell("Quận 1, TP HCM")).isEqualTo("\"Quan 1, TP HCM\"");
+        assertThat(OrderCsvExporter.cell("bình thường")).isEqualTo("bình thường");
     }
 
     // ------------------------------------------------------------------ tiện ích
 
     private long order(User user, OrderStatus status, Instant placedAt, String total) {
-        return fixtures.insertOrder(user.getId(), variant.getId(), status, placedAt, total, "Ha Noi", null, 1);
+        return fixtures.insertOrder(user.getId(), variant.getId(), status, placedAt, total, "Hà Nội", null, 1);
     }
 
     private void orderOn(ProductVariant v, String total) {
-        fixtures.insertOrder(alice.getId(), v.getId(), OrderStatus.PAID, at(2026, 9, 12, 9), total, "Ha Noi", null, 1);
+        fixtures.insertOrder(alice.getId(), v.getId(), OrderStatus.PAID, at(2026, 9, 12, 9), total, "Hà Nội", null, 1);
     }
 
     private static Instant at(int y, int m, int d, int hour) {

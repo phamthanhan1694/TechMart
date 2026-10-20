@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Xác thực và vòng đời refresh token - xem ADR-0006.
  *
  * <p>Nhóm test đáng giá nhất ở đây là phát hiện tái sử dụng refresh token: nó là thứ
- * biến "có refresh token" thanh "có thể phát hiện token bị đánh cắp".
+ * biến "có refresh token" thành "có thể phát hiện token bị đánh cắp".
  */
-@DisplayName("Xac thuc")
+@DisplayName("Xác thực")
 class AuthTest extends IntegrationTestBase {
 
     private static final String EMAIL = "nguoidung@test.dev";
@@ -34,21 +34,21 @@ class AuthTest extends IntegrationTestBase {
     @BeforeEach
     void setUp() {
         cleaner.clean();
-        authService.register(new RegisterRequest(EMAIL, PASSWORD, "Nguoi dung", "0901234567"));
+        authService.register(new RegisterRequest(EMAIL, PASSWORD, "Người dùng", "0901234567"));
     }
 
     @Test
-    @DisplayName("Dang ky trung email -> 409")
+    @DisplayName("Đăng ký trùng email -> 409")
     void register_duplicateEmail_isRejected() {
         assertThatThrownBy(() -> authService.register(
-                new RegisterRequest(EMAIL, PASSWORD, "Nguoi khac", "0909999999")))
+                new RegisterRequest(EMAIL, PASSWORD, "Người khác", "0909999999")))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).code())
                 .isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
 
     @Test
-    @DisplayName("Sai mat khau va email khong ton tai tra CUNG mot ma loi")
+    @DisplayName("Sai mật khẩu và email không tồn tại trả CÙNG một mã lỗi")
     void login_wrongPassword_returns401_withSameCodeAsUnknownEmail() {
         ErrorCode wrongPassword = codeOf(() ->
                 authService.login(new LoginRequest(EMAIL, "SaiRoi@123")));
@@ -57,12 +57,12 @@ class AuthTest extends IntegrationTestBase {
 
         assertThat(wrongPassword).isEqualTo(ErrorCode.INVALID_CREDENTIALS);
         assertThat(unknownEmail)
-                .as("Phan biet hai truong hop nay la de lo email nao ton tai trong he thong")
+                .as("Phân biệt hai trường hợp này là để lộ email nào tồn tại trong hệ thống")
                 .isEqualTo(wrongPassword);
     }
 
     @Test
-    @DisplayName("Refresh xoay vong: token cu mat hieu luc ngay")
+    @DisplayName("Refresh xoay vòng: token cũ mất hiệu lực ngay")
     void refresh_rotatesToken_oldTokenBecomesInvalid() {
         TokenResponse first = authService.login(new LoginRequest(EMAIL, PASSWORD));
         TokenResponse second = authService.refresh(new RefreshRequest(first.refreshToken()));
@@ -76,7 +76,7 @@ class AuthTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Dung lai refresh token da thu hoi -> thu hoi CA CHUOI token cua user")
+    @DisplayName("Dùng lại refresh token đã thu hồi -> thu hồi CẢ chuỗi token của user")
     void refresh_reusedToken_revokesEntireChain() {
         TokenResponse t1 = authService.login(new LoginRequest(EMAIL, PASSWORD));
         TokenResponse t2 = authService.refresh(new RefreshRequest(t1.refreshToken()));
@@ -91,16 +91,16 @@ class AuthTest extends IntegrationTestBase {
         // Cả chuỗi bị thu hồi: t3 - token còn đang hợp lệ của người dùng thật - cũng chết.
         // Đây là cố ý: không biết ai là nạn nhân nên buộc cả hai đăng nhập lại.
         assertThatThrownBy(() -> authService.refresh(new RefreshRequest(t3.refreshToken())))
-                .as("Token dang hop le cung phai bi thu hoi khi phat hien token bi danh cap")
+                .as("Token đang hợp lệ cũng phải bị thu hồi khi phát hiện token bị đánh cắp")
                 .isInstanceOf(BusinessException.class);
 
         assertThat(refreshTokens.findAll())
-                .as("Khong con token nao con song")
+                .as("Không còn token nào còn song")
                 .allMatch(t -> t.getRevokedAt() != null);
     }
 
     @Test
-    @DisplayName("Refresh token luu trong DB la HASH, khong phai gia tri tho")
+    @DisplayName("Refresh token lưu trong DB là HASH, không phải giá trị thô")
     void refreshToken_isStoredHashed() {
         TokenResponse tokens = authService.login(new LoginRequest(EMAIL, PASSWORD));
 
@@ -115,7 +115,7 @@ class AuthTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Logout thu hoi that o phia server")
+    @DisplayName("Logout thu hồi thật ở phía server")
     void logout_revokesTokenServerSide() {
         TokenResponse tokens = authService.login(new LoginRequest(EMAIL, PASSWORD));
         authService.logout(new RefreshRequest(tokens.refreshToken()));
@@ -127,7 +127,7 @@ class AuthTest extends IntegrationTestBase {
     private static ErrorCode codeOf(Runnable action) {
         try {
             action.run();
-            throw new AssertionError("Mong doi mot BusinessException nhung khong co");
+            throw new AssertionError("Mong đợi một BusinessException nhưng không có");
         } catch (BusinessException e) {
             return e.code();
         }

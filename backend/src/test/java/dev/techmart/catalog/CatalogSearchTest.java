@@ -47,7 +47,7 @@ class CatalogSearchTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Loc theo thong so ky thuat tren cot JSONB")
+    @DisplayName("Lọc theo thông số kỹ thuật trên cột JSONB")
     void searchProducts_bySpecJsonb_returnsMatching() {
         // TestDataFactory tạo sản phẩm với spec {"ram":"8GB","storage":"256GB"}
         fixtures.createVariantWithStock(10, "20000000.00");
@@ -60,12 +60,12 @@ class CatalogSearchTest extends IntegrationTestBase {
         var notMatching = productService.search(
                 criteria(Map.of("ram", "64GB")), PageRequest.of(0, 20));
         assertThat(notMatching.totalElements())
-                .as("Loc theo gia tri khong ton tai phai tra ve rong, khong phai tra ve tat ca")
+                .as("Lọc theo giá trị không tồn tại phải trả về rỗng, không phải trả về tất cả")
                 .isZero();
     }
 
     @Test
-    @DisplayName("Loc nhieu thong so cung luc phai thoa MOI dieu kien")
+    @DisplayName("Lọc nhiều thông số cùng lúc phải thoả MỌI điều kiện")
     void searchProducts_multipleSpecFilters_areAndedTogether() {
         fixtures.createVariantWithStock(10, "20000000.00");
 
@@ -76,12 +76,12 @@ class CatalogSearchTest extends IntegrationTestBase {
         assertThat(productService.search(
                 criteria(Map.of("ram", "8GB", "storage", "1TB")), PageRequest.of(0, 20))
                 .totalElements())
-                .as("Mot dieu kien sai thi khong khop, du dieu kien kia dung")
+                .as("Một điều kiện sai thì không khớp, dù điều kiện kia đúng")
                 .isZero();
     }
 
     @Test
-    @DisplayName("size vuot gioi han bi ep ve 100")
+    @DisplayName("size vượt giới hạn bị ép về 100")
     void pageSize_isCappedAt100() {
         var sanitized = PageableSanitizer.sanitize(PageRequest.of(0, 1_000_000));
         assertThat(sanitized.getPageSize())
@@ -90,7 +90,7 @@ class CatalogSearchTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Xoa san pham la xoa MEM va an khoi danh sach cong khai")
+    @DisplayName("Xoá sản phẩm là xoá mềm và ẩn khỏi danh sách công khai")
     void deleteProduct_softDeletes_andHidesFromPublicList() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "20000000.00");
         Long productId = variant.getProduct().getId();
@@ -102,14 +102,14 @@ class CatalogSearchTest extends IntegrationTestBase {
         productService.softDelete(productId);
 
         assertThat(productService.search(criteria(Map.of()), PageRequest.of(0, 20)).totalElements())
-                .as("San pham da xoa mem khong duoc hien o danh sach cong khai")
+                .as("Sản phẩm đã xoá mềm không được hiện ở danh sách công khai")
                 .isZero();
         assertThatThrownBy(() -> productService.getBySlug(slug))
                 .isInstanceOf(BusinessException.class);
     }
 
     @Test
-    @DisplayName("Xoa san pham da nam trong don hang KHONG lam hong lich su don")
+    @DisplayName("Xoá sản phẩm đã nằm trong đơn hàng KHÔNG làm hỏng lịch sử đơn")
     void deleteProduct_alreadyInOrder_doesNotBreakOrderHistory() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "20000000.00");
         User buyer = fixtures.createCustomerWithCart(variant.getId(), 2);
@@ -130,14 +130,14 @@ class CatalogSearchTest extends IntegrationTestBase {
 
         assertThat(reloaded.items()).hasSize(1);
         assertThat(reloaded.items().get(0).productName())
-                .as("Don cu doc duoc nho snapshot, khong join nguoc sang products")
+                .as("Đơn cũ đọc được nho snapshot, không join ngược sang products")
                 .isEqualTo(productName);
         assertThat(reloaded.items().get(0).unitPrice()).isEqualByComparingTo(unitPrice);
         assertThat(reloaded.totalAmount()).isEqualByComparingTo(order.totalAmount());
     }
 
     @Test
-    @DisplayName("Doi gia san pham KHONG lam doi gia cua don hang cu")
+    @DisplayName("Đổi giá sản phẩm KHÔNG làm đổi giá của đơn hàng cũ")
     void changingPrice_doesNotAffectExistingOrders() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "20000000.00");
         User buyer = fixtures.createCustomerWithCart(variant.getId(), 1);
@@ -150,16 +150,16 @@ class CatalogSearchTest extends IntegrationTestBase {
 
         productService.updateVariant(variant.getId(), new VariantRequest(
                 variant.getSku(), variant.getName(), new BigDecimal("99000000.00"),
-                null, 10, Map.of("color", "Den")));
+                null, 10, Map.of("color", "Đen")));
 
         var principal = new AuthPrincipal(buyer.getId(), buyer.getEmail(), Role.CUSTOMER);
         assertThat(orderService.getByCode(order.code(), principal).items().get(0).unitPrice())
-                .as("Don hang la ban ghi lich su bat bien")
+                .as("Đơn hàng là bản ghi lịch sử bất biến")
                 .isEqualByComparingTo(pricePaid);
     }
 
     @Test
-    @DisplayName("Dat hang hai lan cung Idempotency-Key -> chi mot don")
+    @DisplayName("Đặt hàng hai lần cùng Idempotency-Key -> chỉ một đơn")
     void placeOrder_sameIdempotencyKeyTwice_createsOneOrder() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "20000000.00");
         User buyer = fixtures.createCustomerWithCart(variant.getId(), 1);
@@ -174,7 +174,7 @@ class CatalogSearchTest extends IntegrationTestBase {
         assertThat(second.code()).isEqualTo(first.code());
         assertThat(second.id()).isEqualTo(first.id());
         assertThat(fixtures.reloadVariant(variant.getId()).getStockQuantity())
-                .as("Chi tru ton kho mot lan")
+                .as("Chi trừ tồn kho một lần")
                 .isEqualTo(9);
     }
 
@@ -183,7 +183,7 @@ class CatalogSearchTest extends IntegrationTestBase {
     }
 
     private static ShippingAddress address() {
-        return new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai",
-                "Ben Thanh", "Quan 1", "TP Ho Chi Minh");
+        return new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai",
+                "Ben Thanh", "Quận 1", "TP Hồ Chí Minh");
     }
 }

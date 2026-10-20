@@ -32,9 +32,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Đánh giá chỉ cho người đã mua và đã nhận hàng (verified purchase).
  *
  * <p>Điểm thiết kế: review gắn với {@code order_item} chứ không phải {@code product},
- * nên "mỗi lần mua đánh giá một lan" trở thành ràng buộc UNIQUE o DB thay vì một câu if.
+ * nên "mỗi lần mua đánh giá một lần" trở thành ràng buộc UNIQUE ở DB thay vì một câu if.
  */
-@DisplayName("Danh gia san pham")
+@DisplayName("Đánh giá sản phẩm")
 class ReviewTest extends IntegrationTestBase {
 
     @Autowired ReviewService reviewService;
@@ -66,7 +66,7 @@ class ReviewTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Don chua giao -> khong danh gia duoc")
+    @DisplayName("Đơn chưa giao -> không đánh giá được")
     void review_beforeDelivered_isRejected() {
         Long itemId = order.items().get(0).id();
 
@@ -77,7 +77,7 @@ class ReviewTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Don da giao -> danh gia duoc, va chi mot lan")
+    @DisplayName("Đơn đã giao -> đánh giá được, và chỉ một lần")
     void review_afterDelivered_worksOnce() {
         deliver();
         Long itemId = order.items().get(0).id();
@@ -86,10 +86,10 @@ class ReviewTest extends IntegrationTestBase {
         assertThat(review.rating()).isEqualTo(5);
         assertThat(review.verifiedPurchase()).isTrue();
         assertThat(review.reviewerName())
-                .as("Chi hien ten rut gon, khong lo email")
+                .as("Chỉ hiện tên rút gọn, không lộ email")
                 .doesNotContain("@");
 
-        // Lần hai bị chặn boi UNIQUE(order_item_id) o DB
+        // Lần hai bị chặn bởi UNIQUE(order_item_id) ở DB
         assertThatThrownBy(() -> reviewService.create(principal, new CreateReviewRequest(itemId, 1, "Doi y")))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).code())
@@ -97,7 +97,7 @@ class ReviewTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Danh gia dong don cua nguoi khac -> 404, khong phai 403")
+    @DisplayName("Đánh giá dòng đơn của người khác -> 404, không phải 403")
     void review_ofAnotherUsersOrderItem_returns404() {
         deliver();
         User stranger = fixtures.createCustomer();
@@ -108,12 +108,12 @@ class ReviewTest extends IntegrationTestBase {
                 reviewService.create(strangerPrincipal, new CreateReviewRequest(itemId, 5, "Chua mua")))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).code().status().value())
-                .as("Tra 403 la gian tiep xac nhan dong don do ton tai")
+                .as("Trả 403 là gián tiếp xác nhận dòng đơn đó tồn tại")
                 .isEqualTo(404);
     }
 
     @Test
-    @DisplayName("Tong hop diem: trung binh va phan bo so sao tinh bang GROUP BY")
+    @DisplayName("Tổng hợp điểm: trung bình và phân bố số sao tính bằng GROUP BY")
     void ratingSummary_isAggregatedInDatabase() {
         deliver();
         reviewService.create(principal, new CreateReviewRequest(order.items().get(0).id(), 4, "Kha"));
@@ -122,14 +122,14 @@ class ReviewTest extends IntegrationTestBase {
         assertThat(summary.total()).isEqualTo(1);
         assertThat(summary.average()).isEqualTo(4.0);
         assertThat(summary.distribution())
-                .as("Phan bo phai co du 5 muc, ke ca muc bang 0")
+                .as("Phân bố phải có đủ 5 mức, kể cả mức bằng 0")
                 .hasSize(5)
                 .containsEntry(4, 1L)
                 .containsEntry(5, 0L);
     }
 
     @Test
-    @DisplayName("ADMIN xoa duoc danh gia cua nguoi khac, khach thi khong")
+    @DisplayName("ADMIN xoá được đánh giá của người khác, khách thì không")
     void deleteReview_ownerOrAdminOnly() {
         deliver();
         var review = reviewService.create(principal, new CreateReviewRequest(order.items().get(0).id(), 3, "Tam"));
@@ -147,9 +147,9 @@ class ReviewTest extends IntegrationTestBase {
     /**
      * Đưa đơn qua PAID -> PACKED -> SHIPPED -> DELIVERED.
      *
-     * <p>Bước sang PAID chỉ SYSTEM được phép (bằng chuyen trạng thái), nên gọi thẳng
+     * <p>Bước sang PAID chỉ SYSTEM được phép (bảng chuyển trạng thái), nên gọi thẳng
      * transitionBySystem trong một transaction để entity còn được quản lý.
-     * Các buoc sau di đường bình thường của admin.
+     * Các bước sau đi đường bình thường của admin.
      */
     private void deliver() {
         txTemplate.executeWithoutResult(status -> orderService.transitionBySystem(
@@ -160,7 +160,7 @@ class ReviewTest extends IntegrationTestBase {
     }
 
     private static ShippingAddress address() {
-        return new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai",
-                "Ben Thanh", "Quan 1", "TP Ho Chi Minh");
+        return new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai",
+                "Ben Thanh", "Quận 1", "TP Hồ Chí Minh");
     }
 }

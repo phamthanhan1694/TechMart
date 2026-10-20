@@ -15,7 +15,7 @@ import org.testcontainers.utility.DockerImageName;
  * {@code @Container} của JUnit). Nếu mỗi test class khởi động lại container thì suite
  * chạy 8 phút và sẽ không ai chạy nó nữa - kể cả chính mình.
  *
- * <p><b>Không đặt {@code @Transactional} len test class</b>: nó khiến mọi thread trong
+ * <p><b>Không đặt {@code @Transactional} lên test class</b>: nó khiến mọi thread trong
  * concurrency test chạy chung một transaction, và test sẽ pass giả trong khi production
  * vẫn oversell. Xem docs/05-test-plan.md mục 2.
  */

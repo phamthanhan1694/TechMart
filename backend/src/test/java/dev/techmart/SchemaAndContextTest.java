@@ -13,8 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Test đầu tiên và quan trọng nhất của suite: ứng dụng khởi động được với PostgreSQL thật.
  *
- * <p>Vì {@code ddl-auto: validate}, test này thất bại ngay khi một entity lech với schema
- * Flyway - sai tên cột, sai kiểu, thiếu cột. Nó bắt được ca lớp lỗi mà unit test không thấy.
+ * <p>Vì {@code ddl-auto: validate}, test này thất bại ngay khi một entity lệch với schema
+ * Flyway - sai tên cột, sai kiểu, thiếu cột. Nó bắt được cả lớp lỗi mà unit test không thấy.
  */
 class SchemaAndContextTest extends IntegrationTestBase {
 
@@ -22,13 +22,13 @@ class SchemaAndContextTest extends IntegrationTestBase {
     EntityManager em;
 
     @Test
-    @DisplayName("Context khoi dong duoc va schema Flyway khop voi toan bo entity")
+    @DisplayName("Context khởi động được và schema Flyway khớp với toàn bộ entity")
     void contextLoadsAndSchemaMatchesEntities() {
         assertThat(em).isNotNull();
     }
 
     @Test
-    @DisplayName("Migration V1 tao du toan bo bang cua schema v2")
+    @DisplayName("Migration V1 tạo đủ toàn bộ bảng của schema v2")
     void allTablesExist() {
         @SuppressWarnings("unchecked")
         List<String> tables = em.createNativeQuery("""
@@ -48,7 +48,7 @@ class SchemaAndContextTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Chot chan cuoi cung o DB: khong the de ton kho am hay giu qua ton")
+    @DisplayName("Chốt chặn cuối cùng ở DB: không thể để tồn kho âm hay giữ quá tồn")
     void databaseEnforcesStockInvariants() {
         @SuppressWarnings("unchecked")
         List<String> constraints = em.createNativeQuery("""
@@ -63,7 +63,7 @@ class SchemaAndContextTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Cac index quan trong deu ton tai (GIN cho JSONB, trigram cho ten, partial cho job quet)")
+    @DisplayName("Các index quan trọng đều tồn tại (GIN cho JSONB, trigram cho tên, partial cho job quét)")
     void criticalIndexesExist() {
         @SuppressWarnings("unchecked")
         List<String> indexes = em.createNativeQuery(

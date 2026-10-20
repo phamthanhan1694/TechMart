@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Dùng lại đúng cơ chế khoá đã viết cho tồn kho, nên gần như miễn phí về công sức
  * nhưng là một câu chuyện kỹ thuật riêng khi phỏng vấn.
  */
-@DisplayName("Ma giam gia dong thoi")
+@DisplayName("Mã giảm giá đồng thời")
 class CouponConcurrencyIT extends IntegrationTestBase {
 
     private static final Logger log = LoggerFactory.getLogger(CouponConcurrencyIT.class);
@@ -59,7 +59,7 @@ class CouponConcurrencyIT extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("50 nguoi cung dung ma con 1 luot -> dung 1 nguoi duoc giam gia")
+    @DisplayName("50 người cùng dùng mã còn 1 lượt -> đúng 1 người được giảm giá")
     void redeemCoupon_concurrent_shouldRespectUsageLimit() throws Exception {
         // Tồn kho đủ rộng để không lẫn với bài toán oversell
         ProductVariant variant = fixtures.createVariantWithStock(RACERS * 2, "10000000.00");
@@ -102,24 +102,24 @@ class CouponConcurrencyIT extends IntegrationTestBase {
         pool.shutdown();
 
         Coupon after = coupons.findByCodeIgnoreCase("CHIMOTLUOT").orElseThrow();
-        log.info(">>> Duoc giam gia={} Bi tu choi={} | usedCount={} | so ban ghi redemption={}",
+        log.info(">>> Được giảm giá={} Bị từ chối={} | usedCount={} | so bản ghi redemption={}",
                 discounted.get(), rejected.get(), after.getUsedCount(), redemptions.count());
 
-        assertThat(discounted.get()).as("Dung mot nguoi duoc dung ma").isEqualTo(1);
+        assertThat(discounted.get()).as("Đúng một người được dùng mã").isEqualTo(1);
         assertThat(rejected.get()).isEqualTo(RACERS - 1);
-        assertThat(after.getUsedCount()).as("Bo dem luot dung phai bang 1").isEqualTo(1);
-        assertThat(redemptions.count()).as("Chi mot ban ghi su dung ma").isEqualTo(1);
+        assertThat(after.getUsedCount()).as("Bộ đếm lượt dùng phải bằng 1").isEqualTo(1);
+        assertThat(redemptions.count()).as("Chi một bản ghi sử dụng ma").isEqualTo(1);
 
         // Quyết định thiết kế: mã hết lượt làm HỎNG CẢ ĐƠN, không phải đặt đơn với giá gốc.
         // Khách gửi mã lên là có ý định được giảm giá; lặng lẽ tính giá đầy rồi trừ tiền
         // tệ hơn nhiều so với báo lỗi 409 COUPON_USED_UP để khách đặt lại.
         assertThat(orders.count())
-                .as("49 nguoi kia bi rollback ca don, khong bi tinh gia goc mot cach lang le")
+                .as("49 người kia bị rollback cả đơn, không bị tính giá gốc một cách lặng lẽ")
                 .isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Huy don co ma giam gia -> hoan lai luot")
+    @DisplayName("Huỷ đơn có mã giảm giá -> hoàn lại lượt")
     void cancelOrderWithCoupon_shouldReleaseUsage() {
         ProductVariant variant = fixtures.createVariantWithStock(10, "10000000.00");
         coupons.save(new Coupon("HOANLUOT", DiscountType.FIXED, new BigDecimal("500000.00"),
@@ -140,13 +140,13 @@ class CouponConcurrencyIT extends IntegrationTestBase {
         orderService.cancel(order.code(), principal, null);
 
         assertThat(coupons.findByCodeIgnoreCase("HOANLUOT").orElseThrow().getUsedCount())
-                .as("Huy don phai hoan lai luot, neu khong ma se boc hoi theo don bi huy")
+                .as("Huỷ đơn phải hoàn lại lượt, nếu không mã sẽ bốc hơi theo đơn bị huỷ")
                 .isZero();
         assertThat(redemptions.count()).isZero();
     }
 
     private ShippingAddress address() {
-        return new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai",
-                "Ben Thanh", "Quan 1", "TP Ho Chi Minh");
+        return new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai",
+                "Ben Thanh", "Quận 1", "TP Hồ Chí Minh");
     }
 }

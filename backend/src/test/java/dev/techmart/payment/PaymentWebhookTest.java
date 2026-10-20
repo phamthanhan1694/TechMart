@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Ba lớp bảo vệ của webhook thanh toán. Thiếu bất kỳ lớp nào cũng thành lỗ hổng
  * "mua hàng miễn phí" - đây là nhóm test đáng giá nhất của module thanh toán.
  */
-@DisplayName("Webhook thanh toan")
+@DisplayName("Webhook thanh toán")
 class PaymentWebhookTest extends IntegrationTestBase {
 
     @Autowired PaymentService paymentService;
@@ -67,7 +67,7 @@ class PaymentWebhookTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Chu ky sai -> 401, va don KHONG duoc danh dau da tra")
+    @DisplayName("Chữ ký sai -> 401, và đơn KHÔNG được đánh dấu đã trả")
     void webhook_withInvalidSignature_isRejected() {
         var payment = initiate();
 
@@ -82,11 +82,11 @@ class PaymentWebhookTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("So tien khong khop -> 422, don KHONG duoc danh dau da tra")
+    @DisplayName("Số tiền không khớp -> 422, đơn KHÔNG được đánh dấu đã trả")
     void webhook_withMismatchedAmount_isRejected() {
         var payment = initiate();
         BigDecimal fakeAmount = new BigDecimal("1.00");
-        // Kẻ tấn công ký ĐÚNG chuỗi của minh, nhưng số tiền khác tổng đơn
+        // Kẻ tấn công ký ĐÚNG chuỗi của mình, nhưng số tiền khác tổng đơn
         String signature = gateway.sign(payment.transactionRef(), "SUCCEEDED", fakeAmount);
 
         assertThatThrownBy(() -> paymentService.handleWebhook(new WebhookRequest(
@@ -96,12 +96,12 @@ class PaymentWebhookTest extends IntegrationTestBase {
                 .isEqualTo(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
 
         assertThat(orders.findByCode(orderCode).orElseThrow().getStatus())
-                .as("Chu ky hop le nhung so tien sai thi van khong duoc tra hang")
+                .as("Chữ ký hợp lệ nhưng số tiền sai thi vẫn không được tra hang")
                 .isEqualTo(OrderStatus.PENDING_PAYMENT);
     }
 
     @Test
-    @DisplayName("Webhook hop le -> don chuyen sang PAID")
+    @DisplayName("Webhook hợp lệ -> đơn chuyển sang PAID")
     void webhook_valid_marksOrderPaid() {
         var payment = initiate();
         var result = paymentService.handleWebhook(signedWebhook(payment.transactionRef(), PaymentStatus.SUCCEEDED));
@@ -112,7 +112,7 @@ class PaymentWebhookTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Webhook gui trung -> idempotent, khong doi trang thai lan hai")
+    @DisplayName("Webhook gửi trùng -> idempotent, không đổi trạng thái lần hai")
     void webhook_deliveredTwice_isIdempotent() {
         var payment = initiate();
         var first = paymentService.handleWebhook(signedWebhook(payment.transactionRef(), PaymentStatus.SUCCEEDED));
@@ -124,11 +124,11 @@ class PaymentWebhookTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("So tien cung gia tri nhung khac scale -> chu ky VAN hop le")
+    @DisplayName("Số tiền cùng giá trị nhưng khác scale -> chữ ký VẪN hợp lệ")
     void webhook_amountWithDifferentScale_stillVerifies() {
         var payment = initiate();
 
-        // Mô phỏng callback đi qua một lớp trung gian parse JSON number thanh float:
+        // Mô phỏng callback đi qua một lớp trung gian parse JSON number thành float:
         // 45010000.00 trở thành 45010000.0 - cùng giá trị, khác cách biểu diễn.
         BigDecimal loosenedScale = new BigDecimal(amount.stripTrailingZeros().toPlainString());
         assertThat(loosenedScale.toPlainString())
@@ -141,13 +141,13 @@ class PaymentWebhookTest extends IntegrationTestBase {
                 payment.transactionRef(), PaymentStatus.SUCCEEDED, loosenedScale, signature));
 
         assertThat(result.status())
-                .as("Chu ky phai phu thuoc GIA TRI so tien, khong phai cach bieu dien")
+                .as("Chữ ký phải phu thuoc GIÁ TRỊ số tiền, không phải cách biểu diễn")
                 .isEqualTo(PaymentStatus.SUCCEEDED);
         assertThat(orders.findByCode(orderCode).orElseThrow().getStatus()).isEqualTo(OrderStatus.PAID);
     }
 
     @Test
-    @DisplayName("Thanh toan hai lan cung Idempotency-Key -> mot giao dich duy nhat")
+    @DisplayName("Thanh toán hai lần cùng Idempotency-Key -> một giao dịch duy nhất")
     void initiate_sameIdempotencyKey_returnsSamePayment() {
         String key = UUID.randomUUID().toString();
         var first = paymentService.initiate(principal,
@@ -160,7 +160,7 @@ class PaymentWebhookTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Thanh toan don da tra -> 409")
+    @DisplayName("Thanh toán đơn đã trả -> 409")
     void initiate_alreadyPaidOrder_isRejected() {
         var payment = initiate();
         paymentService.handleWebhook(signedWebhook(payment.transactionRef(), PaymentStatus.SUCCEEDED));
@@ -183,7 +183,7 @@ class PaymentWebhookTest extends IntegrationTestBase {
     }
 
     private ShippingAddress address() {
-        return new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai",
-                "Ben Thanh", "Quan 1", "TP Ho Chi Minh");
+        return new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai",
+                "Ben Thanh", "Quận 1", "TP Hồ Chí Minh");
     }
 }

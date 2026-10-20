@@ -28,14 +28,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Test then chốt của cả dự án: nhiều người mua cùng lúc không bao giờ bán quá tồn kho.
  *
  * <p>Đây là thứ chứng minh phần "chống oversell" hoạt động, thay vì chỉ tuyên bố trong README.
- * Chạy bằng {@code mvn verify} (failsafe), không chay trong {@code mvn test}.
+ * Chạy bằng {@code mvn verify} (failsafe), không chạy trong {@code mvn test}.
  *
  * <p><b>Lưu ý kỹ thuật:</b> lớp này KHÔNG có {@code @Transactional}. Nếu có, mọi thread sẽ
- * chạy chung một transaction của test và bài test mat het y nghia - no sẽ pass kể cả khi
- * không hề có khoá nao.
+ * chạy chung một transaction của test và bài test mất hết ý nghĩa - nó sẽ pass kể cả khi
+ * không hề có khoá nào.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DisplayName("Dat hang dong thoi")
+@DisplayName("Đặt hàng đồng thời")
 class PlaceOrderConcurrencyIT extends IntegrationTestBase {
 
     private static final Logger log = LoggerFactory.getLogger(PlaceOrderConcurrencyIT.class);
@@ -56,7 +56,7 @@ class PlaceOrderConcurrencyIT extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("200 nguoi cung mua san pham con 10 cai -> dung 10 don thanh cong, ton kho ve 0")
+    @DisplayName("200 người cùng mua sản phẩm còn 10 cái -> đúng 10 đơn thành công, tồn kho về 0")
     void placeOrder_concurrent_shouldNeverOversell() throws Exception {
         ProductVariant variant = fixtures.createVariantWithStock(STOCK, "25000000.00");
         Long variantId = variant.getId();
@@ -78,20 +78,20 @@ class PlaceOrderConcurrencyIT extends IntegrationTestBase {
         for (User buyer : buyers) {
             pool.submit(() -> {
                 try {
-                    startGate.await();                       // tha tắt ca cùng một lúc
+                    startGate.await();                       // thả tất cả cùng một lúc
                     var session = reservationService.hold(buyer.getId());
                     orderService.placeOrder(buyer.getId(), request(session.sessionId()),
                             UUID.randomUUID().toString());
                     succeeded.incrementAndGet();
                 } catch (BusinessException e) {
-                    rejected.incrementAndGet();              // hết hàng / xung dot -> dùng nhu mong đổi
+                    rejected.incrementAndGet();              // hết hàng / xung đột -> dùng như mong đổi
                     reasons.merge(e.code() + ": " + e.getMessage(), 1, Integer::sum);
                 } catch (Exception e) {
                     // Khoá bi quan có thể ném lỗi hạ tầng khi tranh chấp cao; vẫn là "không bán được"
                     rejected.incrementAndGet();
                     reasons.merge(e.getClass().getSimpleName(), 1, Integer::sum);
                     if (firstFailureLogged.compareAndSet(false, true)) {
-                        log.error(">>> NGOAI LE DAU TIEN", e);
+                        log.error(">>> NGOÀI LE ĐẦU TIÊN", e);
                     }
                     if (!isLockContention(e)) {
                         unexpected.incrementAndGet();
@@ -105,37 +105,37 @@ class PlaceOrderConcurrencyIT extends IntegrationTestBase {
 
         startGate.countDown();
         assertThat(finished.await(120, TimeUnit.SECONDS))
-                .as("Tat ca thread phai ket thuc trong 120 giay").isTrue();
+                .as("Tất cả thread phải kết thúc trong 120 giây").isTrue();
         pool.shutdown();
 
         ProductVariant after = fixtures.reloadVariant(variantId);
         long ordersCreated = orders.count();
 
-        log.info(">>> Ly do that bai: {}", reasons);
-        log.info(">>> Thanh cong={} Bi tu choi={} | ton kho con={} dang giu={} | so don={}",
+        log.info(">>> Lý do thất bại: {}", reasons);
+        log.info(">>> Thành công={} Bị từ chối={} | tồn kho còn={} đang giữ={} | số đơn={}",
                 succeeded.get(), rejected.get(),
                 after.getStockQuantity(), after.getReservedQuantity(), ordersCreated);
 
-        // Ba goc nhin khác nhau của cùng một su thật. Assert một cai là chưa du chat.
+        // Ba góc nhìn khác nhau của cùng một sự thật. Assert một cái là chưa đủ chặt.
         assertThat(succeeded.get())
-                .as("So don thanh cong phai dung bang ton kho ban dau")
+                .as("Số đơn thành công phải đúng bằng tồn kho ban đầu")
                 .isEqualTo(STOCK);
         assertThat(succeeded.get() + rejected.get()).isEqualTo(CONCURRENT_BUYERS);
-        assertThat(unexpected.get()).as("Khong duoc co ngoai le ngoai du kien").isZero();
+        assertThat(unexpected.get()).as("Không được có ngoại lệ ngoài dự kiến").isZero();
 
         assertThat(after.getStockQuantity())
-                .as("Ton kho phai ve dung 0, khong am")
+                .as("Tồn kho phải về đúng 0, không âm")
                 .isZero();
         assertThat(after.getReservedQuantity())
-                .as("Khong con hang nao bi giu treo")
+                .as("Không còn hàng nào bị giữ treo")
                 .isZero();
         assertThat(ordersCreated)
-                .as("So ban ghi don hang trong DB phai khop so lan thanh cong")
+                .as("Số bản ghi đơn hàng trong DB phải khớp số lần thành công")
                 .isEqualTo(STOCK);
     }
 
     @Test
-    @DisplayName("Huy don hai lan dong thoi -> chi hoan kho mot lan")
+    @DisplayName("Huỷ đơn hai lần đồng thời -> chỉ hoàn kho một lần")
     void cancelTwiceConcurrently_shouldRestockOnlyOnce() throws Exception {
         ProductVariant variant = fixtures.createVariantWithStock(5, "1000000.00");
         User buyer = fixtures.createCustomerWithCart(variant.getId(), 2);
@@ -159,7 +159,7 @@ class PlaceOrderConcurrencyIT extends IntegrationTestBase {
                     gate.await();
                     orderService.cancel(order.code(), principal, null);
                 } catch (Exception ignored) {
-                    // Một trong hai có thể thua optimistic lock -> dùng nhu thiet ke
+                    // Một trong hai có thể thua optimistic lock -> đúng như thiết kế
                 } finally {
                     done.countDown();
                 }
@@ -171,7 +171,7 @@ class PlaceOrderConcurrencyIT extends IntegrationTestBase {
 
         ProductVariant after = fixtures.reloadVariant(variant.getId());
         assertThat(after.getStockQuantity())
-                .as("Hoan kho dung MOT lan: 3 + 2 = 5, khong phai 7")
+                .as("Hoàn kho đúng một lan: 3 + 2 = 5, không phải 7")
                 .isEqualTo(5);
         assertThat(orders.findByCode(order.code()).orElseThrow().getStatus())
                 .isEqualTo(OrderStatus.CANCELLED);
@@ -179,8 +179,8 @@ class PlaceOrderConcurrencyIT extends IntegrationTestBase {
 
     private PlaceOrderRequest request(String sessionId) {
         return new PlaceOrderRequest(sessionId,
-                new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai",
-                        "Ben Thanh", "Quan 1", "TP Ho Chi Minh"),
+                new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai",
+                        "Ben Thanh", "Quận 1", "TP Hồ Chí Minh"),
                 "Giao gio hanh chinh", null);
     }
 

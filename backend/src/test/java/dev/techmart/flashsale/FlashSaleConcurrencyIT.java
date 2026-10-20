@@ -39,9 +39,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Flash sale dưới tải đột ngột.
  *
  * <p>Đây là kiến trúc hai tầng: cửa Redis quyết định ai được mua (chịu được vài nghìn
- * request/giây trên cùng một suất), con DB chỉ ghi sổ cái cho những người đã thắng.
+ * request/giây trên cùng một suất), còn DB chỉ ghi sổ cái cho những người đã thắng.
  */
-@DisplayName("Flash sale dong thoi")
+@DisplayName("Flash sale đồng thời")
 class FlashSaleConcurrencyIT extends IntegrationTestBase {
 
     private static final Logger log = LoggerFactory.getLogger(FlashSaleConcurrencyIT.class);
@@ -66,7 +66,7 @@ class FlashSaleConcurrencyIT extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("500 nguoi tranh 50 suat -> dung 50 don, sold_quantity khop tuyet doi")
+    @DisplayName("500 người tranh 50 suất -> đúng 50 đơn, sold_quantity khớp tuyệt đối")
     void flashSalePurchase_underThunderingHerd_neverOversells() throws Exception {
         ProductVariant variant = fixtures.createVariantWithStock(SALE_QUANTITY * 2, "30000000.00");
 
@@ -126,12 +126,12 @@ class FlashSaleConcurrencyIT extends IntegrationTestBase {
         int redisRemaining = stockCounter.remaining(itemId).orElseThrow();
         ProductVariant variantAfter = fixtures.reloadVariant(variant.getId());
 
-        log.info(">>> Ly do that bai khac: {}", reasons);
-        log.info(">>> Ban duoc={} Het suat={} Khac={} | sold_quantity(DB)={} ton Redis={} | so don={}",
+        log.info(">>> Lý do thất bại khac: {}", reasons);
+        log.info(">>> Bán được={} Hết suất={} Khác={} | sold_quantity(DB)={} tồn Redis={} | số đơn={}",
                 sold.get(), soldOut.get(), other.get(),
                 after.getSoldQuantity(), redisRemaining, orders.count());
 
-        assertThat(sold.get()).as("Dung bang so suat mo ban").isEqualTo(SALE_QUANTITY);
+        assertThat(sold.get()).as("Đúng bằng số suất mở bán").isEqualTo(SALE_QUANTITY);
         assertThat(sold.get() + soldOut.get() + other.get()).isEqualTo(BUYERS);
 
         // Một số ít request có thể thua tranh chấp khi ghi DB (lock timeout, xung đột version).
@@ -139,14 +139,14 @@ class FlashSaleConcurrencyIT extends IntegrationTestBase {
         // vẫn đúng bằng SALE_QUANTITY. Người đó nhận lỗi và có thể thử lại.
         // Vì vậy không assert other == 0 (sẽ làm test flaky), mà assert nó phải hiếm.
         assertThat(other.get())
-                .as("Loi do tranh chap phai hiem, va khong duoc lam sai tong so ban ra")
+                .as("Loi do tranh chap phải hiem, và không được lam sai tổng số bán ra")
                 .isLessThanOrEqualTo(BUYERS / 50);
 
         assertThat(after.getSoldQuantity())
-                .as("sold_quantity o DB phai khop so lan ban thanh cong")
+                .as("sold_quantity ở DB phải khớp số lần bán thành công")
                 .isEqualTo(SALE_QUANTITY);
         assertThat(redisRemaining)
-                .as("Bo dem Redis phai ve 0, khong am")
+                .as("Bộ đếm Redis phải về 0, không âm")
                 .isZero();
         assertThat(orders.count()).isEqualTo(SALE_QUANTITY);
 
@@ -155,11 +155,11 @@ class FlashSaleConcurrencyIT extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Vuot gioi han moi nguoi -> 409, khong tru them suat")
+    @DisplayName("Vượt giới hạn mỗi người -> 409, không trừ thêm suất")
     void purchase_beyondPerUserLimit_isRejected() {
         ProductVariant variant = fixtures.createVariantWithStock(100, "10000000.00");
         Long itemId = txTemplate.execute(status -> {
-            FlashSale sale = new FlashSale("Gioi han 2 suat",
+            FlashSale sale = new FlashSale("Giới hạn 2 suất",
                     clock.instant().minus(1, ChronoUnit.MINUTES),
                     clock.instant().plus(1, ChronoUnit.HOURS));
             sale.addItem(new FlashSaleItem(fixtures.reloadVariant(variant.getId()),
@@ -183,12 +183,12 @@ class FlashSaleConcurrencyIT extends IntegrationTestBase {
                 .isEqualTo(ErrorCode.FLASH_SALE_LIMIT_EXCEEDED);
 
         assertThat(stockCounter.remaining(itemId).orElseThrow())
-                .as("Bi tu choi thi khong duoc tru suat")
+                .as("Bị từ chối thi không được trừ suất")
                 .isEqualTo(remainingBefore);
     }
 
     @Test
-    @DisplayName("Redis chua warmup -> fail-closed, tu choi ban chu khong ban bua")
+    @DisplayName("Redis chưa warmup -> fail-closed, từ chối bán chứ không bán bừa")
     void purchase_withoutWarmUp_failsClosed() {
         ProductVariant variant = fixtures.createVariantWithStock(100, "10000000.00");
         Long itemId = txTemplate.execute(status -> {
@@ -199,7 +199,7 @@ class FlashSaleConcurrencyIT extends IntegrationTestBase {
                     new BigDecimal("7000000.00"), 100, 5));
             return sales.save(sale).getItems().get(0).getId();
         });
-        stockCounter.clear(itemId);   // mo phong Redis mất dữ liệu
+        stockCounter.clear(itemId);   // mô phỏng Redis mất dữ liệu
 
         User buyer = fixtures.createCustomer();
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
@@ -209,11 +209,11 @@ class FlashSaleConcurrencyIT extends IntegrationTestBase {
                 .extracting(e -> ((BusinessException) e).code())
                 .isEqualTo(ErrorCode.SERVICE_UNAVAILABLE);
 
-        assertThat(orders.count()).as("Khong duoc tao don nao khi khong dam bao duoc ton kho").isZero();
+        assertThat(orders.count()).as("Không được tạo đơn nào khi không dam bao được tồn kho").isZero();
     }
 
     private ShippingAddress address() {
-        return new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai",
-                "Ben Thanh", "Quan 1", "TP Ho Chi Minh");
+        return new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai",
+                "Ben Thanh", "Quận 1", "TP Hồ Chí Minh");
     }
 }

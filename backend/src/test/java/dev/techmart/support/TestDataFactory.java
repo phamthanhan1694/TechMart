@@ -55,7 +55,7 @@ public class TestDataFactory {
     public User createUser(Role role) {
         long n = SEQ.incrementAndGet();
         return users.save(new User("user" + n + "@test.dev",
-                passwordEncoder.encode("Password@123"), "Nguoi dung " + n, "0900000000", role));
+                passwordEncoder.encode("Password@123"), "Người dùng " + n, "0900000000", role));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -72,26 +72,26 @@ public class TestDataFactory {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Category createCategory() {
         long n = SEQ.incrementAndGet();
-        return categories.save(new Category("Danh muc " + n, "danh-muc-" + n, null));
+        return categories.save(new Category("Danh mục " + n, "danh-muc-" + n, null));
     }
 
-    /** Sản phẩm một phiên ban, tồn kho theo tham so. Dùng cho phần lớn test. */
+    /** Sản phẩm một phiên bản, tồn kho theo tham số. Dùng cho phần lớn test. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProductVariant createVariantWithStock(int stock, String price) {
         long n = SEQ.incrementAndGet();
         Brand brand = brands.save(new Brand("Brand " + n, "brand-" + n));
-        Category category = categories.save(new Category("Danh muc " + n, "danh-muc-" + n, null));
+        Category category = categories.save(new Category("Danh mục " + n, "danh-muc-" + n, null));
 
-        Product product = new Product(category, brand, "San pham " + n, "san-pham-" + n,
-                "Mo ta", "https://example.test/img.png",
+        Product product = new Product(category, brand, "Sản phẩm " + n, "san-pham-" + n,
+                "Mô tả", "https://example.test/img.png",
                 Map.of("ram", "8GB", "storage", "256GB"));
-        product.addVariant(new ProductVariant("SKU-" + n, "Ban tieu chuan",
-                new BigDecimal(price), null, stock, Map.of("color", "Den")));
+        product.addVariant(new ProductVariant("SKU-" + n, "Bản tiêu chuẩn",
+                new BigDecimal(price), null, stock, Map.of("color", "Đen")));
 
         return products.save(product).getVariants().get(0);
     }
 
-    /** Tạo user có sẵn giỏ hàng chưa {@code quantity} đơn vị của variant. */
+    /** Tạo user có sẵn giỏ hàng chứa {@code quantity} đơn vị của variant. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public User createCustomerWithCart(Long variantId, int quantity) {
         User user = createUserInline();
@@ -143,7 +143,7 @@ public class TestDataFactory {
         jdbc.update("""
                 INSERT INTO order_items (order_id, variant_id, product_name, variant_name, sku,
                                          unit_price, quantity, line_total)
-                VALUES (:orderId, :variantId, 'San pham', 'Ban test', 'SKU-T', :unit, :qty, :total)
+                VALUES (:orderId, :variantId, 'Sản phẩm', 'Bản test', 'SKU-T', :unit, :qty, :total)
                 """, new MapSqlParameterSource()
                 .addValue("orderId", orderId)
                 .addValue("variantId", variantId)

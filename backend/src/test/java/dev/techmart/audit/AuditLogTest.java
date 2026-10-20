@@ -54,7 +54,7 @@ class AuditLogTest extends IntegrationTestBase {
         User buyer = fixtures.createCustomerWithCart(variant.getId(), 1);
         var session = reservationService.hold(buyer.getId());
         order = orderService.placeOrder(buyer.getId(), new PlaceOrderRequest(session.sessionId(),
-                new ShippingAddress("Nguyen Van A", "0901234567", "12 Nguyen Trai", "Ben Thanh", "Quan 1", "TP HCM"),
+                new ShippingAddress("Nguyễn Văn A", "0901234567", "12 Nguyen Trai", "Ben Thanh", "Quận 1", "TP HCM"),
                 null, null), UUID.randomUUID().toString());
 
         User staffUser = fixtures.createUser(Role.STAFF);
@@ -69,11 +69,11 @@ class AuditLogTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Nhan vien doi trang thai don -> ghi ai, doi tu gi sang gi")
+    @DisplayName("Nhân viên đổi trạng thái đơn -> ghi ai, đổi từ gì sang gì")
     void staffStatusChange_isAudited() {
         tx.executeWithoutResult(s -> orderService.transitionBySystem(
                 orders.findByCode(order.code()).orElseThrow(), OrderStatus.PAID, "test"));
-        orderService.updateStatus(order.code(), staff, new UpdateStatusRequest(OrderStatus.PACKED, "Da dong goi"));
+        orderService.updateStatus(order.code(), staff, new UpdateStatusRequest(OrderStatus.PACKED, "Đã đóng gói"));
 
         assertThat(auditLogs.findAll()).singleElement().satisfies(log -> {
             assertThat(log.getAction()).isEqualTo(AuditAction.ORDER_STATUS_CHANGED);
@@ -83,21 +83,21 @@ class AuditLogTest extends IntegrationTestBase {
             assertThat(log.getDetail())
                     .containsEntry("from", "PAID")
                     .containsEntry("to", "PACKED")
-                    .containsEntry("note", "Da dong goi");
+                    .containsEntry("note", "Đã đóng gói");
         });
     }
 
     @Test
-    @DisplayName("Chuyen trang thai khong hop le -> rollback ca nhat ky, khong ghi dong nao")
+    @DisplayName("Chuyển trạng thái không hợp lệ -> rollback cả nhật ký, không ghi dòng nào")
     void failedAction_leavesNoAuditRow() {
         assertThatThrownBy(() -> orderService.updateStatus(order.code(), staff,
                 new UpdateStatusRequest(OrderStatus.DELIVERED, null)))
                 .isInstanceOf(RuntimeException.class);
-        assertThat(auditLogs.count()).as("Nhat ky chi ton tai khi hanh dong da commit").isZero();
+        assertThat(auditLogs.count()).as("Nhật ký chi tồn tại khi hành động đã commit").isZero();
     }
 
     @Test
-    @DisplayName("Trigger DB chan UPDATE va DELETE tren audit_logs")
+    @DisplayName("Trigger DB chặn UPDATE và DELETE trên audit_logs")
     void auditRows_areImmutableInDatabase() {
         tx.executeWithoutResult(s -> orderService.transitionBySystem(
                 orders.findByCode(order.code()).orElseThrow(), OrderStatus.PAID, "test"));
