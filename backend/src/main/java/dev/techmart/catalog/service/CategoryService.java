@@ -7,21 +7,18 @@ import dev.techmart.catalog.repository.CategoryRepository;
 import dev.techmart.catalog.repository.ProductRepository;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categories;
     private final ProductRepository products;
-
-    public CategoryService(CategoryRepository categories, ProductRepository products) {
-        this.categories = categories;
-        this.products = products;
-    }
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> findAll() {

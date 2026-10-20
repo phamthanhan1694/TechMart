@@ -3,6 +3,7 @@ package dev.techmart.promotion.web;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.promotion.dto.CouponDtos.*;
 import dev.techmart.promotion.service.CouponService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,13 +18,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/coupons")
 @Tag(name = "Promotion", description = "Mã giảm giá")
+@RequiredArgsConstructor
 public class CouponController {
 
     private final CouponService couponService;
-
-    public CouponController(CouponService couponService) {
-        this.couponService = couponService;
-    }
 
     @PostMapping("/validate")
     @PreAuthorize("hasRole('CUSTOMER')")

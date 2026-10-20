@@ -15,6 +15,7 @@ import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.order.domain.RevenueStatuses;
 import dev.techmart.order.dto.OrderDtos.OrderSummaryResponse;
 import dev.techmart.order.repository.OrderRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -34,6 +35,7 @@ import java.util.*;
  * khoản nhân viên, gỡ khoá đăng nhập tạm thời. Mọi thao tác ghi đều vào audit log.
  */
 @Service
+@RequiredArgsConstructor
 public class AdminUserService {
 
     /**
@@ -55,20 +57,6 @@ public class AdminUserService {
     private final LoginAttemptGuard loginAttempts;
     private final AuditLogger audit;
     private final Clock clock;
-
-    public AdminUserService(NamedParameterJdbcTemplate jdbc, UserRepository users,
-                            RefreshTokenRepository refreshTokens, OrderRepository orders,
-                            PasswordEncoder passwordEncoder, LoginAttemptGuard loginAttempts,
-                            AuditLogger audit, Clock clock) {
-        this.jdbc = jdbc;
-        this.users = users;
-        this.refreshTokens = refreshTokens;
-        this.orders = orders;
-        this.passwordEncoder = passwordEncoder;
-        this.loginAttempts = loginAttempts;
-        this.audit = audit;
-        this.clock = clock;
-    }
 
     // =================================================================== đọc
 

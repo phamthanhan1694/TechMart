@@ -3,6 +3,7 @@ package dev.techmart.notification;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
 import dev.techmart.common.web.PageResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -26,15 +27,11 @@ import java.util.Objects;
  * outbox (5 giây) - chấp nhận được cho "đơn đã giao", không chấp nhận được cho chat.
  */
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final Clock clock;
-
-    public NotificationService(NamedParameterJdbcTemplate jdbc, Clock clock) {
-        this.jdbc = jdbc;
-        this.clock = clock;
-    }
 
     public record NotificationResponse(
             Long id, String type, String title, String body, String link, boolean read, Instant createdAt) {}

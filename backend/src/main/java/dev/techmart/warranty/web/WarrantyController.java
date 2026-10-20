@@ -7,6 +7,7 @@ import dev.techmart.warranty.domain.WarrantyStatus;
 import dev.techmart.warranty.dto.WarrantyDtos.*;
 import dev.techmart.warranty.service.SerialService;
 import dev.techmart.warranty.service.WarrantyService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,15 +25,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Warranty", description = "Tồn kho theo serial/IMEI và bảo hành")
+@RequiredArgsConstructor
 public class WarrantyController {
 
     private final SerialService serialService;
     private final WarrantyService warrantyService;
-
-    public WarrantyController(SerialService serialService, WarrantyService warrantyService) {
-        this.serialService = serialService;
-        this.warrantyService = warrantyService;
-    }
 
     // ------------------------------------------------------------------ serial
 

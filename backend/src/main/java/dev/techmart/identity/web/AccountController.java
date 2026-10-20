@@ -6,6 +6,7 @@ import dev.techmart.identity.dto.AuthDtos.UserResponse;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.identity.service.AccountService;
 import dev.techmart.identity.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -16,15 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/account")
 @Tag(name = "Account", description = "Hồ sơ cá nhân và mật khẩu")
+@RequiredArgsConstructor
 public class AccountController {
 
     private final AccountService accountService;
     private final AuthService authService;
-
-    public AccountController(AccountService accountService, AuthService authService) {
-        this.accountService = accountService;
-        this.authService = authService;
-    }
 
     @GetMapping("/profile")
     @Operation(summary = "Hồ sơ của tôi")

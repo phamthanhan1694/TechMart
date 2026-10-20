@@ -6,6 +6,7 @@ import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.payment.domain.PaymentStatus;
 import dev.techmart.payment.dto.PaymentDtos.*;
 import dev.techmart.payment.service.PaymentService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -20,13 +21,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/payments")
 @Tag(name = "Payment", description = "Thanh toán qua cổng giả, có webhook ký HMAC")
+@RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
-
-    public PaymentController(PaymentService paymentService) {
-        this.paymentService = paymentService;
-    }
 
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")

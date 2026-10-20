@@ -12,6 +12,7 @@ import dev.techmart.promotion.domain.CouponRedemption;
 import dev.techmart.promotion.dto.CouponDtos.*;
 import dev.techmart.promotion.repository.CouponRedemptionRepository;
 import dev.techmart.promotion.repository.CouponRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CouponService {
 
     private static final Logger log = LoggerFactory.getLogger(CouponService.class);
@@ -32,15 +34,6 @@ public class CouponService {
     private final UserRepository users;
     private final AuditLogger audit;
     private final Clock clock;
-
-    public CouponService(CouponRepository coupons, CouponRedemptionRepository redemptions,
-                         UserRepository users, AuditLogger audit, Clock clock) {
-        this.audit = audit;
-        this.coupons = coupons;
-        this.redemptions = redemptions;
-        this.users = users;
-        this.clock = clock;
-    }
 
     /**
      * Kiểm tra mã để hiển thị trước cho khách.

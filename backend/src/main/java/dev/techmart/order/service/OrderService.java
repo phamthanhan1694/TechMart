@@ -21,6 +21,7 @@ import dev.techmart.order.dto.OrderDtos.*;
 import dev.techmart.order.repository.OrderRepository;
 import dev.techmart.promotion.service.CouponService;
 import dev.techmart.warranty.service.SerialService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,6 +35,7 @@ import java.time.Instant;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
@@ -52,24 +54,6 @@ public class OrderService {
     private final SerialService serialService;
     private final AuditLogger audit;
     private final Clock clock;
-
-    public OrderService(OrderRepository orders, VariantLocker variantLocker,
-                        ReservationService reservations, CartService cartService,
-                        UserRepository users, OrderCodeGenerator codeGenerator,
-                        OutboxRecorder outbox, CouponService couponService,
-                        SerialService serialService, AuditLogger audit, Clock clock) {
-        this.audit = audit;
-        this.orders = orders;
-        this.variantLocker = variantLocker;
-        this.reservations = reservations;
-        this.cartService = cartService;
-        this.users = users;
-        this.codeGenerator = codeGenerator;
-        this.outbox = outbox;
-        this.couponService = couponService;
-        this.serialService = serialService;
-        this.clock = clock;
-    }
 
     // =================================================================== đặt hàng
 

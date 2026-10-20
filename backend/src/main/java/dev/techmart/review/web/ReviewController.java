@@ -5,6 +5,7 @@ import dev.techmart.common.web.PageableSanitizer;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.review.dto.ReviewDtos.*;
 import dev.techmart.review.service.ReviewService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,13 +21,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Review", description = "Đánh giá sản phẩm - chỉ người đã mua và đã nhận hàng")
+@RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
-
-    public ReviewController(ReviewService reviewService) {
-        this.reviewService = reviewService;
-    }
 
     @GetMapping("/products/{productId}/reviews")
     @SecurityRequirements

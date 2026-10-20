@@ -1,6 +1,7 @@
 package dev.techmart.payment.service;
 
 import dev.techmart.common.config.AppProperties;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -26,16 +27,13 @@ import java.util.UUID;
  * từ đầu, (2) để không tạo thói quen tin webhook không xác thực.
  */
 @Component
+@RequiredArgsConstructor
 public class MockPaymentGateway {
 
     private static final Logger log = LoggerFactory.getLogger(MockPaymentGateway.class);
     private static final String HMAC_ALGORITHM = "HmacSHA256";
 
     private final AppProperties props;
-
-    public MockPaymentGateway(AppProperties props) {
-        this.props = props;
-    }
 
     public String createTransactionRef() {
         return "MOCK-" + UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();

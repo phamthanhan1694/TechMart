@@ -4,6 +4,7 @@ import dev.techmart.catalog.domain.ProductVariant;
 import dev.techmart.common.config.AppProperties;
 import dev.techmart.inventory.domain.InventoryReservation;
 import dev.techmart.inventory.repository.InventoryReservationRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Limit;
@@ -28,6 +29,7 @@ import java.util.Map;
  * {@code status = HELD} được kiểm lại ngay trước khi đổi, nên job chạy chồng vẫn đúng.
  */
 @Component
+@RequiredArgsConstructor
 public class ReservationExpiryJob {
 
     private static final Logger log = LoggerFactory.getLogger(ReservationExpiryJob.class);
@@ -36,15 +38,6 @@ public class ReservationExpiryJob {
     private final VariantLocker variantLocker;
     private final AppProperties props;
     private final Clock clock;
-
-    public ReservationExpiryJob(InventoryReservationRepository reservations,
-                                VariantLocker variantLocker,
-                                AppProperties props, Clock clock) {
-        this.reservations = reservations;
-        this.variantLocker = variantLocker;
-        this.props = props;
-        this.clock = clock;
-    }
 
     /**
      * <b>Chú ý {@code @Transactional} ở đây.</b> Trước đó method này không có annotation và

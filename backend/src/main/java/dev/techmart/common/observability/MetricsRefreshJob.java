@@ -1,5 +1,6 @@
 package dev.techmart.common.observability;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,15 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
  * method {@code @Transactional} khác trong cùng class sẽ không đi qua proxy.
  */
 @Component
+@RequiredArgsConstructor
 public class MetricsRefreshJob {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsRefreshJob.class);
 
     private final BusinessMetrics metrics;
-
-    public MetricsRefreshJob(BusinessMetrics metrics) {
-        this.metrics = metrics;
-    }
 
     @Scheduled(fixedDelayString = "PT15S", initialDelayString = "PT20S")
     @Transactional(readOnly = true)

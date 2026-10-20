@@ -8,6 +8,7 @@ import dev.techmart.catalog.dto.CatalogDtos.*;
 import dev.techmart.catalog.repository.*;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import tools.jackson.core.type.TypeReference;
 import dev.techmart.common.web.PageResponse;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import java.time.Clock;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class ProductService {
 
     private static final Logger log = LoggerFactory.getLogger(ProductService.class);
@@ -33,18 +35,6 @@ public class ProductService {
     private final CatalogCache cache;
     private final AuditLogger audit;
     private final Clock clock;
-
-    public ProductService(ProductRepository products, ProductVariantRepository variants,
-                          CategoryRepository categories, BrandRepository brands,
-                          CatalogCache cache, AuditLogger audit, Clock clock) {
-        this.audit = audit;
-        this.products = products;
-        this.variants = variants;
-        this.categories = categories;
-        this.brands = brands;
-        this.cache = cache;
-        this.clock = clock;
-    }
 
     // ------------------------------------------------------------------ đọc
 

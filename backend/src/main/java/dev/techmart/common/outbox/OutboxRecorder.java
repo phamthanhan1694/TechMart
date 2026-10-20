@@ -1,5 +1,6 @@
 package dev.techmart.common.outbox;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -7,6 +8,7 @@ import java.util.Map;
 
 /** Ghi event vào outbox. Luôn được gọi TRONG transaction nghiệp vụ đang chạy. */
 @Service
+@RequiredArgsConstructor
 public class OutboxRecorder {
 
     public static final String AGGREGATE_ORDER = "ORDER";
@@ -19,10 +21,6 @@ public class OutboxRecorder {
     public static final String ORDER_DELIVERED = "ORDER_DELIVERED";
 
     private final OutboxEventRepository repository;
-
-    public OutboxRecorder(OutboxEventRepository repository) {
-        this.repository = repository;
-    }
 
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
     public void record(String aggregateType, Long aggregateId, String eventType, Map<String, Object> payload) {

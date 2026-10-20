@@ -8,6 +8,7 @@ import dev.techmart.identity.dto.AccountDtos.UpdateProfileRequest;
 import dev.techmart.identity.dto.AuthDtos.UserResponse;
 import dev.techmart.identity.repository.RefreshTokenRepository;
 import dev.techmart.identity.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ import java.time.Clock;
 
 /** Người dùng tự quản lý hồ sơ và mật khẩu của mình. */
 @Service
+@RequiredArgsConstructor
 public class AccountService {
 
     private static final Logger log = LoggerFactory.getLogger(AccountService.class);
@@ -26,14 +28,6 @@ public class AccountService {
     private final RefreshTokenRepository refreshTokens;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
-
-    public AccountService(UserRepository users, RefreshTokenRepository refreshTokens,
-                          PasswordEncoder passwordEncoder, Clock clock) {
-        this.users = users;
-        this.refreshTokens = refreshTokens;
-        this.passwordEncoder = passwordEncoder;
-        this.clock = clock;
-    }
 
     @Transactional
     public UserResponse updateProfile(Long userId, UpdateProfileRequest req) {

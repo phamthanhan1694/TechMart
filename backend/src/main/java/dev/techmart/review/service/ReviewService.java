@@ -12,6 +12,7 @@ import dev.techmart.order.repository.OrderItemRepository;
 import dev.techmart.review.domain.Review;
 import dev.techmart.review.dto.ReviewDtos.*;
 import dev.techmart.review.repository.ReviewRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ReviewService {
 
     private static final Logger log = LoggerFactory.getLogger(ReviewService.class);
@@ -30,12 +32,6 @@ public class ReviewService {
     private final ReviewRepository reviews;
     private final OrderItemRepository orderItems;
     private final UserRepository users;
-
-    public ReviewService(ReviewRepository reviews, OrderItemRepository orderItems, UserRepository users) {
-        this.reviews = reviews;
-        this.orderItems = orderItems;
-        this.users = users;
-    }
 
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> findByProduct(Long productId, Pageable pageable) {

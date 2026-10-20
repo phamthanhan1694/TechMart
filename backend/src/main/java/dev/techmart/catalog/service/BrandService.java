@@ -6,19 +6,17 @@ import dev.techmart.catalog.dto.CatalogDtos.BrandResponse;
 import dev.techmart.catalog.repository.BrandRepository;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class BrandService {
 
     private final BrandRepository brands;
-
-    public BrandService(BrandRepository brands) {
-        this.brands = brands;
-    }
 
     @Transactional(readOnly = true)
     public List<BrandResponse> findAll() {

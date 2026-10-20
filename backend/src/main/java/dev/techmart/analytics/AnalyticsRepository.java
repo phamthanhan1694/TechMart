@@ -2,6 +2,8 @@ package dev.techmart.analytics;
 
 import dev.techmart.analytics.AnalyticsDtos.*;
 import dev.techmart.order.domain.RevenueStatuses;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -31,15 +33,12 @@ import java.util.*;
  * SQL mà không qua tham số ràng buộc hoặc whitelist.
  */
 @Repository
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 class AnalyticsRepository {
 
     private static final String R = RevenueStatuses.SQL_IN;
 
     private final NamedParameterJdbcTemplate jdbc;
-
-    AnalyticsRepository(NamedParameterJdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
 
     // =================================================================== tổng quan
 

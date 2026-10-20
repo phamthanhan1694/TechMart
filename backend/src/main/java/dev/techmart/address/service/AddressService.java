@@ -6,6 +6,7 @@ import dev.techmart.address.dto.AddressDtos.AddressResponse;
 import dev.techmart.address.repository.UserAddressRepository;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,16 +20,13 @@ import java.util.List;
  * nhất lên); DB giữ phần "không quá một" bằng partial unique index.
  */
 @Service
+@RequiredArgsConstructor
 public class AddressService {
 
     /** Đủ cho nhà riêng, công ty, nhà bố mẹ... Không giới hạn thì một script ghi được triệu dòng. */
     public static final int MAX_ADDRESSES = 10;
 
     private final UserAddressRepository addresses;
-
-    public AddressService(UserAddressRepository addresses) {
-        this.addresses = addresses;
-    }
 
     @Transactional(readOnly = true)
     public List<AddressResponse> list(Long userId) {

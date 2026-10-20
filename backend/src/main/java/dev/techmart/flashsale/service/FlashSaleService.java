@@ -15,6 +15,7 @@ import dev.techmart.flashsale.dto.FlashSaleDtos.*;
 import dev.techmart.flashsale.repository.FlashSaleItemRepository;
 import dev.techmart.flashsale.repository.FlashSaleRepository;
 import dev.techmart.order.dto.OrderDtos.OrderResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ import java.util.Map;
  * <p>Nếu bước 2 thất bại thì trả lại suất cho Redis - nếu không, suất đó bị "bốc hơi".
  */
 @Service
+@RequiredArgsConstructor
 public class FlashSaleService {
 
     private static final Logger log = LoggerFactory.getLogger(FlashSaleService.class);
@@ -53,20 +55,6 @@ public class FlashSaleService {
     private final BusinessMetrics metrics;
     private final AuditLogger audit;
     private final Clock clock;
-
-    public FlashSaleService(FlashSaleRepository sales, FlashSaleItemRepository items,
-                            FlashSaleStockCounter stockCounter, FlashSaleOrderWriter orderWriter,
-                            ProductVariantRepository variants, BusinessMetrics metrics,
-                            AuditLogger audit, Clock clock) {
-        this.audit = audit;
-        this.sales = sales;
-        this.items = items;
-        this.stockCounter = stockCounter;
-        this.orderWriter = orderWriter;
-        this.variants = variants;
-        this.metrics = metrics;
-        this.clock = clock;
-    }
 
     // ------------------------------------------------------------------ đọc
 

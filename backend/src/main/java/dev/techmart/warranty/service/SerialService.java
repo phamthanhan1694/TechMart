@@ -8,6 +8,7 @@ import dev.techmart.order.domain.OrderItem;
 import dev.techmart.warranty.domain.ProductSerial;
 import dev.techmart.warranty.dto.WarrantyDtos.*;
 import dev.techmart.warranty.repository.ProductSerialRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Limit;
@@ -27,6 +28,7 @@ import java.util.Set;
  * <p>Xem {@link ProductSerial} về lý do tồn tại song song với {@code stock_quantity}.
  */
 @Service
+@RequiredArgsConstructor
 public class SerialService {
 
     private static final Logger log = LoggerFactory.getLogger(SerialService.class);
@@ -35,12 +37,6 @@ public class SerialService {
     private final ProductSerialRepository serials;
     private final ProductVariantRepository variants;
     private final Clock clock;
-
-    public SerialService(ProductSerialRepository serials, ProductVariantRepository variants, Clock clock) {
-        this.serials = serials;
-        this.variants = variants;
-        this.clock = clock;
-    }
 
     /** Tra cứu bảo hành - công khai, không cần đăng nhập, giống mọi trang bảo hành thật. */
     @Transactional(readOnly = true)

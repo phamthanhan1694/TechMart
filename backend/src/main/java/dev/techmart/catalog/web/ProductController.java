@@ -7,6 +7,7 @@ import dev.techmart.catalog.service.ProductService;
 import dev.techmart.common.web.PageResponse;
 import dev.techmart.common.web.PageableSanitizer;
 import dev.techmart.identity.security.AuthPrincipal;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -29,15 +30,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Catalog", description = "Sản phẩm, phiên bản, tìm kiếm và lọc")
+@RequiredArgsConstructor
 public class ProductController {
 
     private static final String SPEC_PREFIX = "spec.";
 
     private final ProductService productService;
-
-    public ProductController(ProductService productService) {
-        this.productService = productService;
-    }
 
     @GetMapping("/products")
     @SecurityRequirements

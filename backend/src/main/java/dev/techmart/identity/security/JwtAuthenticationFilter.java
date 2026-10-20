@@ -1,5 +1,6 @@
 package dev.techmart.identity.security;
 
+import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
 import dev.techmart.common.error.ApiError;
 import dev.techmart.common.error.BusinessException;
@@ -26,6 +27,7 @@ import java.util.UUID;
  * để client luôn nhận đúng một cấu trúc.
  */
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String HEADER = "Authorization";
@@ -33,11 +35,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
-
-    public JwtAuthenticationFilter(JwtService jwtService, ObjectMapper objectMapper) {
-        this.jwtService = jwtService;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,

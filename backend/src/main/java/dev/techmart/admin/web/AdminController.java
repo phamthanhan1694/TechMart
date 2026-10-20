@@ -9,6 +9,7 @@ import dev.techmart.order.domain.OrderStatus;
 import dev.techmart.order.dto.OrderDtos.OrderResponse;
 import dev.techmart.order.dto.OrderDtos.UpdateStatusRequest;
 import dev.techmart.order.service.OrderService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,15 +27,11 @@ import java.util.List;
 @RequestMapping("/api/v1/admin")
 @Tag(name = "Admin", description = "Quản lý đơn hàng, tồn kho và báo cáo doanh thu")
 @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+@RequiredArgsConstructor
 public class AdminController {
 
     private final AdminService adminService;
     private final OrderService orderService;
-
-    public AdminController(AdminService adminService, OrderService orderService) {
-        this.adminService = adminService;
-        this.orderService = orderService;
-    }
 
     // ------------------------------------------------------------------ đơn hàng
 

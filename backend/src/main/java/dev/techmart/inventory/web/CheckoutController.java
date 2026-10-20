@@ -3,6 +3,7 @@ package dev.techmart.inventory.web;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.inventory.dto.InventoryDtos.CheckoutSessionResponse;
 import dev.techmart.inventory.service.ReservationService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -15,13 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/checkout")
 @Tag(name = "Checkout", description = "Giữ hàng tạm thời trước khi thanh toán")
 @PreAuthorize("hasRole('CUSTOMER')")
+@RequiredArgsConstructor
 public class CheckoutController {
 
     private final ReservationService reservationService;
-
-    public CheckoutController(ReservationService reservationService) {
-        this.reservationService = reservationService;
-    }
 
     @PostMapping("/sessions")
     @Operation(summary = "Bắt đầu checkout và giữ hàng 10 phút",

@@ -4,6 +4,7 @@ import dev.techmart.common.web.PageResponse;
 import dev.techmart.common.web.PageableSanitizer;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.notification.NotificationService.NotificationResponse;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -15,13 +16,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/notifications")
 @Tag(name = "Notification", description = "Thông báo trong ứng dụng, sinh từ outbox. Client polling unread-count.")
+@RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService service;
-
-    public NotificationController(NotificationService service) {
-        this.service = service;
-    }
 
     @GetMapping
     @Operation(summary = "Thông báo của tôi", description = "Mới nhất đứng đầu.")

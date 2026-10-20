@@ -2,6 +2,7 @@ package dev.techmart.wishlist;
 
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.wishlist.WishlistDtos.WishlistItemResponse;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -15,13 +16,10 @@ import java.util.List;
 @RequestMapping("/api/v1/wishlist")
 @Tag(name = "Wishlist", description = "Sản phẩm yêu thích. PUT/DELETE đều idempotent.")
 @PreAuthorize("hasRole('CUSTOMER')")
+@RequiredArgsConstructor
 public class WishlistController {
 
     private final WishlistService service;
-
-    public WishlistController(WishlistService service) {
-        this.service = service;
-    }
 
     @GetMapping
     @Operation(summary = "Danh sách yêu thích", description = "Mới nhất đứng đầu. Sản phẩm ngừng bán vẫn hiện, kèm purchasable=false.")

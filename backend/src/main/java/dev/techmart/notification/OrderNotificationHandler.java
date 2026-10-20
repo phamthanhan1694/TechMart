@@ -3,6 +3,7 @@ package dev.techmart.notification;
 import dev.techmart.common.outbox.OutboxEvent;
 import dev.techmart.common.outbox.OutboxEventHandler;
 import dev.techmart.common.outbox.OutboxRecorder;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -19,6 +20,7 @@ import java.util.Map;
  * phục vụ một consumer là để consumer định hình producer.
  */
 @Component
+@RequiredArgsConstructor
 public class OrderNotificationHandler implements OutboxEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(OrderNotificationHandler.class);
@@ -43,11 +45,6 @@ public class OrderNotificationHandler implements OutboxEventHandler {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final NotificationService notifications;
-
-    public OrderNotificationHandler(NamedParameterJdbcTemplate jdbc, NotificationService notifications) {
-        this.jdbc = jdbc;
-        this.notifications = notifications;
-    }
 
     @Override
     public boolean supports(OutboxEvent event) {

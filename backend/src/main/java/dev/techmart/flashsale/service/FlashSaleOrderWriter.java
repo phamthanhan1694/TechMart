@@ -15,6 +15,7 @@ import dev.techmart.order.domain.OrderStatus;
 import dev.techmart.order.dto.OrderDtos.OrderResponse;
 import dev.techmart.order.repository.OrderRepository;
 import dev.techmart.order.service.OrderCodeGenerator;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,6 +41,7 @@ import java.util.Map;
  * ở giai đoạn trước.
  */
 @Component
+@RequiredArgsConstructor
 public class FlashSaleOrderWriter {
 
     private static final Logger log = LoggerFactory.getLogger(FlashSaleOrderWriter.class);
@@ -52,18 +54,6 @@ public class FlashSaleOrderWriter {
     private final UserRepository users;
     private final OutboxRecorder outbox;
     private final Clock clock;
-
-    public FlashSaleOrderWriter(FlashSaleItemRepository items, VariantLocker variantLocker,
-                                OrderRepository orders, OrderCodeGenerator codeGenerator,
-                                UserRepository users, OutboxRecorder outbox, Clock clock) {
-        this.items = items;
-        this.variantLocker = variantLocker;
-        this.orders = orders;
-        this.codeGenerator = codeGenerator;
-        this.users = users;
-        this.outbox = outbox;
-        this.clock = clock;
-    }
 
     @Transactional
     public OrderResponse write(Long userId, Long itemId, PurchaseRequest req, String idempotencyKey) {

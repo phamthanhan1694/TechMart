@@ -2,6 +2,7 @@ package dev.techmart.analytics;
 
 import dev.techmart.analytics.AnalyticsDtos.*;
 import dev.techmart.order.domain.OrderStatus;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,15 +26,11 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/analytics")
 @Tag(name = "Admin - Thống kê", description = "KPI có so sánh kỳ trước, chuỗi thời gian, cơ cấu, phễu, bản đồ nhiệt, xuất CSV")
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AnalyticsController {
 
     private final AnalyticsService service;
     private final OrderCsvExporter exporter;
-
-    public AnalyticsController(AnalyticsService service, OrderCsvExporter exporter) {
-        this.service = service;
-        this.exporter = exporter;
-    }
 
     @GetMapping("/overview")
     @Operation(summary = "KPI tổng quan kèm so sánh kỳ trước cùng độ dài",

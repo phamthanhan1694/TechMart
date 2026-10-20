@@ -3,6 +3,7 @@ package dev.techmart.catalog.web;
 import dev.techmart.catalog.dto.CatalogDtos.*;
 import dev.techmart.catalog.service.BrandService;
 import dev.techmart.catalog.service.CategoryService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,15 +18,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Catalog - Danh mục & Thương hiệu")
+@RequiredArgsConstructor
 public class TaxonomyController {
 
     private final CategoryService categoryService;
     private final BrandService brandService;
-
-    public TaxonomyController(CategoryService categoryService, BrandService brandService) {
-        this.categoryService = categoryService;
-        this.brandService = brandService;
-    }
 
     // --- Danh mục ---
 

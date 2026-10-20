@@ -7,6 +7,7 @@ import dev.techmart.common.web.PageableSanitizer;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.order.dto.OrderDtos.*;
 import dev.techmart.order.service.OrderService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,13 +25,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/orders")
 @Tag(name = "Order", description = "Đặt hàng, xem đơn, huỷ đơn")
+@RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
-
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
 
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")

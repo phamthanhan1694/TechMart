@@ -4,6 +4,7 @@ import dev.techmart.address.dto.AddressDtos.AddressRequest;
 import dev.techmart.address.dto.AddressDtos.AddressResponse;
 import dev.techmart.address.service.AddressService;
 import dev.techmart.identity.security.AuthPrincipal;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,13 +20,10 @@ import java.util.List;
 @RequestMapping("/api/v1/account/addresses")
 @Tag(name = "Account - Địa chỉ", description = "Sổ địa chỉ giao hàng, tối đa 10 địa chỉ, đúng một mặc định")
 @PreAuthorize("hasRole('CUSTOMER')")
+@RequiredArgsConstructor
 public class AddressController {
 
     private final AddressService service;
-
-    public AddressController(AddressService service) {
-        this.service = service;
-    }
 
     @GetMapping
     @Operation(summary = "Danh sách địa chỉ", description = "Địa chỉ mặc định đứng đầu.")

@@ -3,6 +3,7 @@ package dev.techmart.identity.web;
 import dev.techmart.identity.dto.AuthDtos.*;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.identity.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -16,13 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Auth", description = "Đăng ký, đăng nhập, xoay vòng token")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
-
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
 
     @PostMapping("/register")
     @SecurityRequirements

@@ -1,6 +1,7 @@
 package dev.techmart.identity.service;
 
 import dev.techmart.identity.repository.RefreshTokenRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -25,17 +26,13 @@ import java.time.Clock;
  * <p>Test bắt được: {@code refresh_reusedToken_revokesEntireChain}.
  */
 @Component
+@RequiredArgsConstructor
 public class TokenRevoker {
 
     private static final Logger log = LoggerFactory.getLogger(TokenRevoker.class);
 
     private final RefreshTokenRepository refreshTokens;
     private final Clock clock;
-
-    public TokenRevoker(RefreshTokenRepository refreshTokens, Clock clock) {
-        this.refreshTokens = refreshTokens;
-        this.clock = clock;
-    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int revokeAllForUser(Long userId, String reason) {

@@ -4,6 +4,7 @@ import dev.techmart.audit.domain.AuditAction;
 import dev.techmart.audit.domain.AuditLog;
 import dev.techmart.audit.repository.AuditLogRepository;
 import dev.techmart.identity.security.AuthPrincipal;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,15 +30,12 @@ import java.util.Map;
  * thread khác (@Async, job định kỳ) sẽ được ghi là SYSTEM.
  */
 @Service
+@RequiredArgsConstructor
 public class AuditLogger {
 
     private static final String SYSTEM = "SYSTEM";
 
     private final AuditLogRepository repository;
-
-    public AuditLogger(AuditLogRepository repository) {
-        this.repository = repository;
-    }
 
     /** MANDATORY: gọi ngoài transaction nghiệp vụ là lỗi lập trình, phải nổ ngay. */
     @Transactional(propagation = Propagation.MANDATORY)

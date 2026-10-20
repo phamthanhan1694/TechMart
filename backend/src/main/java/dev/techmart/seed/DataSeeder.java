@@ -25,6 +25,7 @@ import dev.techmart.warranty.domain.ProductSerial;
 import dev.techmart.warranty.repository.ProductSerialRepository;
 import dev.techmart.seed.SeedCatalog.LaptopSeed;
 import dev.techmart.seed.SeedCatalog.PhoneSeed;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.persistence.EntityManager;
@@ -56,6 +57,7 @@ import java.util.*;
  */
 @Component
 @Profile({"dev", "demo"})
+@RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
@@ -83,28 +85,6 @@ public class DataSeeder implements CommandLineRunner {
     private EntityManager em;
 
     private final Random random = new Random(20260901L);   // cố định seed -> dữ liệu tái lập được
-
-    public DataSeeder(BrandRepository brands, CategoryRepository categories, ProductRepository products,
-                      UserRepository users, OrderRepository orders, CouponRepository coupons,
-                      FlashSaleRepository flashSales, FlashSaleStockCounter stockCounter,
-                      ProductSerialRepository serials, ReviewRepository reviews,
-                      PasswordEncoder passwordEncoder, AppProperties props,
-                      NamedParameterJdbcTemplate jdbc, Clock clock) {
-        this.jdbc = jdbc;
-        this.brands = brands;
-        this.categories = categories;
-        this.products = products;
-        this.users = users;
-        this.orders = orders;
-        this.coupons = coupons;
-        this.flashSales = flashSales;
-        this.stockCounter = stockCounter;
-        this.serials = serials;
-        this.reviews = reviews;
-        this.passwordEncoder = passwordEncoder;
-        this.props = props;
-        this.clock = clock;
-    }
 
     @Override
     @Transactional

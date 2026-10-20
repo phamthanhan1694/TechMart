@@ -1,5 +1,6 @@
 package dev.techmart.common.ratelimit;
 
+import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
 import dev.techmart.common.error.ApiError;
 import dev.techmart.common.error.ErrorCode;
@@ -29,6 +30,7 @@ import java.util.UUID;
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
+@RequiredArgsConstructor
 public class RateLimitFilter extends OncePerRequestFilter {
 
     /** Endpoint, giới hạn theo user, giới hạn theo IP (mỗi phút). */
@@ -63,12 +65,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final RateLimiter rateLimiter;
     private final ObjectMapper objectMapper;
     private final BusinessMetrics metrics;
-
-    public RateLimitFilter(RateLimiter rateLimiter, ObjectMapper objectMapper, BusinessMetrics metrics) {
-        this.rateLimiter = rateLimiter;
-        this.objectMapper = objectMapper;
-        this.metrics = metrics;
-    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,

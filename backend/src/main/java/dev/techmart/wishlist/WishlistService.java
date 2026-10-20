@@ -3,6 +3,7 @@ package dev.techmart.wishlist;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
 import dev.techmart.wishlist.WishlistDtos.WishlistItemResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +25,12 @@ import java.util.Objects;
  * biến mất khỏi danh sách của khách là cách tệ nhất để báo tin "hết bán".
  */
 @Service
+@RequiredArgsConstructor
 public class WishlistService {
 
     public static final int MAX_ITEMS = 100;
 
     private final NamedParameterJdbcTemplate jdbc;
-
-    public WishlistService(NamedParameterJdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
 
     @Transactional(readOnly = true)
     public List<WishlistItemResponse> list(Long userId) {

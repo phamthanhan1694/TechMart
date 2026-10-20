@@ -1,5 +1,6 @@
 package dev.techmart.identity.security;
 
+import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
 import dev.techmart.common.config.AppProperties;
 import dev.techmart.common.error.ApiError;
@@ -35,17 +36,12 @@ import java.util.UUID;
  */
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final ObjectMapper objectMapper;
     private final AppProperties props;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter, ObjectMapper objectMapper, AppProperties props) {
-        this.jwtFilter = jwtFilter;
-        this.objectMapper = objectMapper;
-        this.props = props;
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

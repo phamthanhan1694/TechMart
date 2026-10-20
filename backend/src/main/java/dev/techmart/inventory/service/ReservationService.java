@@ -14,6 +14,7 @@ import dev.techmart.inventory.dto.InventoryDtos.CheckoutSessionResponse;
 import dev.techmart.inventory.dto.InventoryDtos.ReservedLine;
 import dev.techmart.inventory.dto.InventoryDtos.StockShortage;
 import dev.techmart.inventory.repository.InventoryReservationRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ import java.util.*;
  * <p>Xem ADR-0004 và docs/02-luồng-nghiep-vu.md mục 2.
  */
 @Service
+@RequiredArgsConstructor
 public class ReservationService {
 
     private static final Logger log = LoggerFactory.getLogger(ReservationService.class);
@@ -48,22 +50,6 @@ public class ReservationService {
     private final AppProperties props;
     private final BusinessMetrics metrics;
     private final Clock clock;
-
-    public ReservationService(InventoryReservationRepository reservations,
-                              VariantLocker variantLocker,
-                              CartRepository carts,
-                              UserRepository users,
-                              AppProperties props,
-                              BusinessMetrics metrics,
-                              Clock clock) {
-        this.reservations = reservations;
-        this.variantLocker = variantLocker;
-        this.carts = carts;
-        this.users = users;
-        this.props = props;
-        this.metrics = metrics;
-        this.clock = clock;
-    }
 
     /**
      * Giữ hàng cho toàn bộ giỏ hàng của user.

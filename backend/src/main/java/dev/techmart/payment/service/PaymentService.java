@@ -12,6 +12,7 @@ import dev.techmart.payment.domain.Payment;
 import dev.techmart.payment.domain.PaymentStatus;
 import dev.techmart.payment.dto.PaymentDtos.*;
 import dev.techmart.payment.repository.PaymentRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +24,7 @@ import java.time.Clock;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
@@ -32,15 +34,6 @@ public class PaymentService {
     private final OrderService orderService;
     private final MockPaymentGateway gateway;
     private final Clock clock;
-
-    public PaymentService(PaymentRepository payments, OrderRepository orders, OrderService orderService,
-                          MockPaymentGateway gateway, Clock clock) {
-        this.payments = payments;
-        this.orders = orders;
-        this.orderService = orderService;
-        this.gateway = gateway;
-        this.clock = clock;
-    }
 
     /**
      * Khởi tạo giao dịch.

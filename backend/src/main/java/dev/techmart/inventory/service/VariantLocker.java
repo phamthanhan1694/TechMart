@@ -2,6 +2,7 @@ package dev.techmart.inventory.service;
 
 import dev.techmart.catalog.domain.ProductVariant;
 import dev.techmart.catalog.repository.ProductVariantRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -27,13 +28,10 @@ import java.util.List;
  * đã ném ra từ chính câu query đó rồi. Thứ tự nạp mới là thứ phải sửa.
  */
 @Component
+@RequiredArgsConstructor
 public class VariantLocker {
 
     private final ProductVariantRepository variants;
-
-    public VariantLocker(ProductVariantRepository variants) {
-        this.variants = variants;
-    }
 
     /**
      * {@code SELECT ... ORDER BY id FOR UPDATE} trong một câu query.

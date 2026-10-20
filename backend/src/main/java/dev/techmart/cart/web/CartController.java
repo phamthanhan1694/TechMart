@@ -3,6 +3,7 @@ package dev.techmart.cart.web;
 import dev.techmart.cart.dto.CartDtos.*;
 import dev.techmart.cart.service.CartService;
 import dev.techmart.identity.security.AuthPrincipal;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -15,13 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/cart")
 @Tag(name = "Cart", description = "Giỏ hàng của người đang đăng nhập")
 @PreAuthorize("hasRole('CUSTOMER')")
+@RequiredArgsConstructor
 public class CartController {
 
     private final CartService cartService;
-
-    public CartController(CartService cartService) {
-        this.cartService = cartService;
-    }
 
     @GetMapping
     @Operation(summary = "Xem gio hang",

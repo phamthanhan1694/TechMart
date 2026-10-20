@@ -1,5 +1,6 @@
 package dev.techmart.common.outbox;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Limit;
@@ -18,6 +19,7 @@ import java.util.List;
  * cùng transaction nghiệp vụ, worker xử lý sau khi đã commit, có retry và có giới hạn retry.
  */
 @Component
+@RequiredArgsConstructor
 public class OutboxWorker {
 
     private static final Logger log = LoggerFactory.getLogger(OutboxWorker.class);
@@ -26,12 +28,6 @@ public class OutboxWorker {
     private final OutboxEventRepository repository;
     private final List<OutboxEventHandler> handlers;
     private final Clock clock;
-
-    public OutboxWorker(OutboxEventRepository repository, List<OutboxEventHandler> handlers, Clock clock) {
-        this.repository = repository;
-        this.handlers = handlers;
-        this.clock = clock;
-    }
 
     /** {@code @Transactional} phải ở đây - gọi nội bộ sang drainOnce() không đi qua proxy. */
     @Scheduled(fixedDelayString = "PT5S", initialDelayString = "PT15S")

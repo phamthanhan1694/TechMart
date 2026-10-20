@@ -6,6 +6,7 @@ import dev.techmart.flashsale.dto.FlashSaleDtos.*;
 import dev.techmart.flashsale.service.FlashSaleService;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.order.dto.OrderDtos.OrderResponse;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -23,13 +24,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/flash-sales")
 @Tag(name = "Flash Sale", description = "Mở bán giới hạn - trừ tồn bằng Redis Lua nguyên tử")
+@RequiredArgsConstructor
 public class FlashSaleController {
 
     private final FlashSaleService flashSaleService;
-
-    public FlashSaleController(FlashSaleService flashSaleService) {
-        this.flashSaleService = flashSaleService;
-    }
 
     @GetMapping("/active")
     @SecurityRequirements

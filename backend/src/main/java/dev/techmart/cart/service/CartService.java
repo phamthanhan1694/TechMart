@@ -9,6 +9,7 @@ import dev.techmart.catalog.repository.ProductVariantRepository;
 import dev.techmart.common.error.BusinessException;
 import dev.techmart.common.error.ErrorCode;
 import dev.techmart.identity.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,17 +26,12 @@ import static dev.techmart.cart.dto.CartDtos.MAX_QUANTITY_PER_ITEM;
  * xác nhận id đó tồn tại).
  */
 @Service
+@RequiredArgsConstructor
 public class CartService {
 
     private final CartRepository carts;
     private final ProductVariantRepository variants;
     private final UserRepository users;
-
-    public CartService(CartRepository carts, ProductVariantRepository variants, UserRepository users) {
-        this.carts = carts;
-        this.variants = variants;
-        this.users = users;
-    }
 
     @Transactional
     public CartResponse getCart(Long userId) {

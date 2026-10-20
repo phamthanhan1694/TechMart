@@ -7,6 +7,7 @@ import dev.techmart.identity.domain.UserStatus;
 import dev.techmart.identity.dto.AccountDtos.*;
 import dev.techmart.identity.security.AuthPrincipal;
 import dev.techmart.identity.service.AdminUserService;
+import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,13 +23,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/users")
 @Tag(name = "Admin - Người dùng", description = "Tra cứu khách hàng, khoá/mở, đổi vai trò, tạo tài khoản nhân viên")
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AdminUserController {
 
     private final AdminUserService service;
-
-    public AdminUserController(AdminUserService service) {
-        this.service = service;
-    }
 
     @GetMapping
     @Operation(summary = "Danh sách người dùng",

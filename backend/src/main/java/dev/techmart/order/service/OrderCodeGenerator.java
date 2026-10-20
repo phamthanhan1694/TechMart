@@ -1,5 +1,6 @@
 package dev.techmart.order.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -18,6 +19,7 @@ import java.time.format.DateTimeFormatter;
  * cùng lúc. Ràng buộc UNIQUE(code) ở DB bắt trường hợp trùng hiếm hoi.
  */
 @Component
+@RequiredArgsConstructor
 public class OrderCodeGenerator {
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
@@ -26,10 +28,6 @@ public class OrderCodeGenerator {
 
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
-
-    public OrderCodeGenerator(Clock clock) {
-        this.clock = clock;
-    }
 
     public String generate() {
         StringBuilder suffix = new StringBuilder(SUFFIX_LENGTH);

@@ -15,6 +15,7 @@ import dev.techmart.warranty.domain.WarrantyStatus;
 import dev.techmart.warranty.dto.WarrantyDtos.*;
 import dev.techmart.warranty.repository.ProductSerialRepository;
 import dev.techmart.warranty.repository.WarrantyRequestRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import java.time.Clock;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class WarrantyService {
 
     private static final Logger log = LoggerFactory.getLogger(WarrantyService.class);
@@ -36,15 +38,6 @@ public class WarrantyService {
     private final UserRepository users;
     private final AuditLogger audit;
     private final Clock clock;
-
-    public WarrantyService(WarrantyRequestRepository requests, ProductSerialRepository serials,
-                           UserRepository users, AuditLogger audit, Clock clock) {
-        this.audit = audit;
-        this.requests = requests;
-        this.serials = serials;
-        this.users = users;
-        this.clock = clock;
-    }
 
     /**
      * Tạo yêu cầu bảo hành theo serial.
