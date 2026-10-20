@@ -5,8 +5,8 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 /**
- * Nhat ky đổi trạng thái: ai đổi, từ dau sang dau, lúc nao, vì sao.
- * Kho hàng và đơn hàng là nhưng thu phải truy vết được - mọi hệ thống thật deu có bằng nay.
+ * Nhật ký đổi trạng thái: ai đổi, từ đầu sang dau, lúc nào, vì sao.
+ * Kho hàng và đơn hàng là những thứ phải truy vết được - mọi hệ thống thật đều có bảng này.
  */
 @Entity
 @Table(name = "order_status_history")
@@ -28,7 +28,7 @@ public class OrderStatusHistory {
     @Column(name = "to_status", nullable = false, length = 30)
     private OrderStatus toStatus;
 
-    /** null khi hành động đó hệ thống thực hien (webhook thanh toán, job tự động). */
+    /** null khi hành động do hệ thống thực hiện (webhook thanh toán, job tự động). */
     @Column(name = "changed_by")
     private Long changedBy;
 

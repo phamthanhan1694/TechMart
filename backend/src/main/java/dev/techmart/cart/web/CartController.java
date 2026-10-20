@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/cart")
-@Tag(name = "Cart", description = "Gio hang cua nguoi dang dang nhap")
+@Tag(name = "Cart", description = "Giỏ hàng của người đang đăng nhập")
 @PreAuthorize("hasRole('CUSTOMER')")
 public class CartController {
 
@@ -25,22 +25,22 @@ public class CartController {
 
     @GetMapping
     @Operation(summary = "Xem gio hang",
-            description = "Tra kem availableQuantity tung dong va co hasStockIssue "
-                    + "de client bao truoc khi khach vao checkout.")
+            description = "Trả kèm availableQuantity từng dòng và cờ hasStockIssue "
+                    + "để client báo trước khi khách vào checkout.")
     public CartResponse get(@AuthenticationPrincipal AuthPrincipal principal) {
         return cartService.getCart(principal.id());
     }
 
     @PostMapping("/items")
-    @Operation(summary = "Them san pham vao gio",
-            description = "Variant da co trong gio thi cong don so luong. Them vao gio KHONG giu hang.")
+    @Operation(summary = "Thêm sản phẩm vào giỏ",
+            description = "Variant đã có trong giỏ thì cộng dồn số lượng. Thêm vào giỏ KHÔNG giữ hàng.")
     public CartResponse addItem(@AuthenticationPrincipal AuthPrincipal principal,
                                 @Valid @RequestBody AddItemRequest req) {
         return cartService.addItem(principal.id(), req);
     }
 
     @PutMapping("/items/{itemId}")
-    @Operation(summary = "Doi so luong mot dong")
+    @Operation(summary = "Đổi số lượng một dòng")
     public CartResponse updateItem(@AuthenticationPrincipal AuthPrincipal principal,
                                    @PathVariable Long itemId,
                                    @Valid @RequestBody UpdateItemRequest req) {
@@ -48,14 +48,14 @@ public class CartController {
     }
 
     @DeleteMapping("/items/{itemId}")
-    @Operation(summary = "Xoa mot dong khoi gio")
+    @Operation(summary = "Xoá một dòng khỏi giỏ")
     public CartResponse removeItem(@AuthenticationPrincipal AuthPrincipal principal,
                                    @PathVariable Long itemId) {
         return cartService.removeItem(principal.id(), itemId);
     }
 
     @DeleteMapping
-    @Operation(summary = "Xoa sach gio hang")
+    @Operation(summary = "Xoá sạch giỏ hàng")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void clear(@AuthenticationPrincipal AuthPrincipal principal) {
         cartService.clear(principal.id());

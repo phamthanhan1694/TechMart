@@ -37,7 +37,7 @@ public class CategoryService {
     @Transactional
     public CategoryResponse create(CategoryRequest req) {
         if (categories.existsBySlug(req.slug())) {
-            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug da ton tai: " + req.slug());
+            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug đã tồn tại: " + req.slug());
         }
         return CategoryResponse.from(categories.save(
                 new Category(req.name(), req.slug(), resolveParent(req.parentId(), null))));
@@ -48,7 +48,7 @@ public class CategoryService {
         Category category = categories.findById(id)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.CATEGORY_NOT_FOUND, id));
         if (!category.getSlug().equals(req.slug()) && categories.existsBySlug(req.slug())) {
-            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug da ton tai: " + req.slug());
+            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug đã tồn tại: " + req.slug());
         }
         category.update(req.name(), req.slug(), resolveParent(req.parentId(), id));
         return CategoryResponse.from(category);
@@ -60,10 +60,10 @@ public class CategoryService {
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.CATEGORY_NOT_FOUND, id));
         if (products.countByCategoryId(id) > 0) {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_EMPTY,
-                    "Danh muc van con san pham, khong the xoa");
+                    "Danh mục vẫn còn sản phẩm, không thể xoá");
         }
         if (!categories.findAllByParentId(id).isEmpty()) {
-            throw new BusinessException(ErrorCode.CATEGORY_NOT_EMPTY, "Danh muc van con danh muc con");
+            throw new BusinessException(ErrorCode.CATEGORY_NOT_EMPTY, "Danh mục vẫn còn danh mục con");
         }
         categories.delete(category);
     }
@@ -73,7 +73,7 @@ public class CategoryService {
             return null;
         }
         if (parentId.equals(selfId)) {
-            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh muc khong the la cha cua chinh no");
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục không thể là cha của chính nó");
         }
         return categories.findById(parentId)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.CATEGORY_NOT_FOUND, parentId));

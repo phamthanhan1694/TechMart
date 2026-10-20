@@ -10,7 +10,7 @@ import java.time.Instant;
  * Yêu cầu bảo hành cho một đơn vị hàng cụ thể (theo serial).
  *
  * <p>Gắn với {@link ProductSerial} chứ không phải với sản phẩm hay đơn hàng: bảo hành
- * là chuyen của <i>cai may nay</i>, không phải của <i>dòng máy nay</i>.
+ * là chuyện của <i>cái máy này</i>, không phải của <i>dòng máy này</i>.
  */
 @Entity
 @Table(name = "warranty_requests")
@@ -69,8 +69,8 @@ public class WarrantyRequest {
     }
 
     /**
-     * Bằng chuyen trạng thái, cũng tinh than với OrderStateMachine nhưng đơn gian hơn
-     * nên để thang trong entity: REQUESTED -> APPROVED/REJECTED, APPROVED -> COMPLETED.
+     * Bảng chuyển trạng thái, cùng tinh thần với OrderStateMachine nhưng đơn giản hơn
+     * nên để thẳng trong entity: REQUESTED -> APPROVED/REJECTED, APPROVED -> COMPLETED.
      */
     public void transitionTo(WarrantyStatus next, String resolution, Instant now) {
         boolean allowed = switch (status) {
@@ -79,7 +79,7 @@ public class WarrantyRequest {
             case REJECTED, COMPLETED -> false;
         };
         if (!allowed) {
-            throw new IllegalStateException("Khong the chuyen tu " + status + " sang " + next);
+            throw new IllegalStateException("Không thể chuyển từ " + status + " sang " + next);
         }
         this.status = next;
         this.resolution = resolution;

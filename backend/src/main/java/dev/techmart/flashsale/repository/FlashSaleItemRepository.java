@@ -13,11 +13,11 @@ import java.util.Optional;
 public interface FlashSaleItemRepository extends JpaRepository<FlashSaleItem, Long> {
 
     /**
-     * Khoá dòng suất bán trước khi ghi so đã bán.
+     * Khoá dòng suất bán trước khi ghi số đã bán.
      *
-     * <p>Chi nhưng người <b>đã thắng</b> o cửa Redis mọi den được đây, nên so transaction
-     * cham vào dòng này bị chặn trên boi {@code sale_quantity} - vai chuc, không phải vài nghìn.
-     * Redis là <i>cua</i>, DB vẫn là <i>so cai</i>.
+     * <p>Chỉ những người <b>đã thắng</b> ở cửa Redis mới đến được đây, nên số transaction
+     * chạm vào dòng này bị chặn trên bởi {@code sale_quantity} - vài chục, không phải vài nghìn.
+     * Redis là <i>cửa</i>, DB vẫn là <i>sổ cái</i>.
      *
      * <p>Không fetch variant ở đây: để nó ở dạng proxy cho VariantLocker nạp - xem
      * {@link dev.techmart.inventory.service.VariantLocker}.

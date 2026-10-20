@@ -19,19 +19,19 @@ public final class AccountDtos {
     // ------------------------------------------------------------------ tài khoản cá nhân
 
     public record UpdateProfileRequest(
-            @NotBlank @Size(max = 150) @Schema(example = "Nguyen Van A") String fullName,
-            @Pattern(regexp = "^$|^0\\d{9}$", message = "So dien thoai phai co 10 chu so va bat dau bang 0")
+            @NotBlank @Size(max = 150) @Schema(example = "Nguyễn Văn A") String fullName,
+            @Pattern(regexp = "^$|^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt dau bằng 0")
             @Schema(example = "0901234567") String phone
     ) {}
 
     public record ChangePasswordRequest(
             @NotBlank String currentPassword,
-            @NotBlank @Size(min = 8, max = 72) @Schema(description = "Toi thieu 8 ky tu") String newPassword
+            @NotBlank @Size(min = 8, max = 72) @Schema(description = "Tối thiểu 8 ký tự") String newPassword
     ) {}
 
     // ------------------------------------------------------------------ quản lý người dùng
 
-    @Schema(description = "Mot dong trong danh sach nguoi dung, kem so lieu mua hang")
+    @Schema(description = "Một dòng trong danh sách người dùng, kèm số liệu mua hàng")
     public record AdminUserRow(
             Long id,
             String email,
@@ -40,14 +40,14 @@ public final class AccountDtos {
             Role role,
             UserStatus status,
             Instant createdAt,
-            @Schema(description = "So don da thu tien") long paidOrders,
+            @Schema(description = "Số đơn đã thu tiền") long paidOrders,
             BigDecimal totalSpent,
             Instant lastOrderAt
     ) {}
 
     public record AdminUserDetail(
             AdminUserRow user,
-            @Schema(description = "So giay con bi khoa dang nhap tam thoi; 0 = khong bi khoa")
+            @Schema(description = "Số giây còn bị khoá đăng nhập tạm thời; 0 = không bị khoá")
             long loginLockedSeconds,
             List<OrderSummaryResponse> recentOrders
     ) {}
@@ -56,7 +56,7 @@ public final class AccountDtos {
             @NotBlank @Email @Size(max = 255) String email,
             @NotBlank @Size(min = 8, max = 72) String password,
             @NotBlank @Size(max = 150) String fullName,
-            @Pattern(regexp = "^$|^0\\d{9}$", message = "So dien thoai phai co 10 chu so va bat dau bang 0")
+            @Pattern(regexp = "^$|^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt dau bằng 0")
             String phone,
             @NotNull Role role
     ) {}

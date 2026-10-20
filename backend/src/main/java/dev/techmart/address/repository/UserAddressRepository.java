@@ -20,7 +20,7 @@ public interface UserAddressRepository extends JpaRepository<UserAddress, Long> 
      *
      * <p>Phải là câu UPDATE hàng loạt chạy trước khi bật cờ cho địa chỉ mới. Nếu chỉ sửa hai
      * entity trong bộ nhớ, Hibernate có thể phát UPDATE bật cờ mới trước UPDATE tắt cờ cũ -
-     * và partial unique index (không thể DEFERRABLE) sẽ báo vì phạm ngay ở câu đầu tiên.
+     * và partial unique index (không thể DEFERRABLE) sẽ báo vi phạm ngay ở câu đầu tiên.
      */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE UserAddress a SET a.isDefault = false WHERE a.userId = :userId AND a.isDefault = true")

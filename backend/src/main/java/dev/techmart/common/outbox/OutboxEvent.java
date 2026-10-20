@@ -9,17 +9,17 @@ import java.time.Instant;
 import java.util.Map;
 
 /**
- * Su kien cần xu ly bat dòng bo, ghi trong CUNG transaction với thay đổi nghiệp vụ.
+ * Sự kiện cần xử lý bất đồng bộ, ghi trong CÙNG transaction với thay đổi nghiệp vụ.
  *
  * <p>Vì sao không gọi thẳng {@code mailService.send()} trong transaction đặt hàng:
  * <ul>
- *   <li>gửi mail cham và có thể lỗi -> keo dai transaction, giữ khoá dòng lau hơn cần thiet;</li>
- *   <li>nếu transaction rollback SAU khi mail da gửi thì khách nhận mail ve đơn không tồn tại.</li>
+ *   <li>gửi mail chậm và có thể lỗi -> kéo dài transaction, giữ khoá dòng lâu hơn cần thiết;</li>
+ *   <li>nếu transaction rollback SAU khi mail đã gửi thì khách nhận mail về đơn không tồn tại.</li>
  * </ul>
- * Outbox giai ca hai: event chỉ tồn tại nếu đơn hàng da commit, và viec gửi xay ra sau đó.
+ * Outbox giải cả hai: event chỉ tồn tại nếu đơn hàng đã commit, và việc gửi xảy ra sau đó.
  *
- * <p>Đánh đổi thua nhận: giao hàng <i>at-least-once</i> - worker chet sau khi gửi nhưng trước
- * khi commit thì mail gửi trung. Chap nhận được với email; nếu là trừ tiền thì phia nhận
+ * <p>Đánh đổi thừa nhận: giao hàng <i>at-least-once</i> - worker chết sau khi gửi nhưng trước
+ * khi commit thì mail gửi trùng. Chấp nhận được với email; nếu là trừ tiền thì phía nhận
  * phải có khoá idempotent riêng. Xem ADR-0005.
  */
 @Entity
@@ -93,7 +93,7 @@ public class OutboxEvent {
         this.retryCount++;
         this.lastError = error != null && error.length() > 1000 ? error.substring(0, 1000) : error;
         if (this.retryCount >= MAX_RETRY) {
-            this.status = Status.FAILED;   // dùng retry, chờ người xu ly
+            this.status = Status.FAILED;   // dùng retry, chờ người xử lý
         }
     }
 }

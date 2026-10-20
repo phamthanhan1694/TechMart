@@ -24,7 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin")
-@Tag(name = "Admin", description = "Quan ly don hang, ton kho va bao cao doanh thu")
+@Tag(name = "Admin", description = "Quản lý đơn hàng, tồn kho và báo cáo doanh thu")
 @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
 public class AdminController {
 
@@ -39,7 +39,7 @@ public class AdminController {
     // ------------------------------------------------------------------ đơn hàng
 
     @GetMapping("/orders")
-    @Operation(summary = "Danh sach don hang", description = "Loc theo trang thai va khoang ngay.")
+    @Operation(summary = "Danh sách đơn hàng", description = "Lọc theo trạng thái và khoảng ngày.")
     public PageResponse<AdminOrderRow> orders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -49,13 +49,13 @@ public class AdminController {
     }
 
     @PatchMapping("/orders/{code}/status")
-    @Operation(summary = "Doi trang thai don hang",
+    @Operation(summary = "Đổi trạng thái đơn hàng",
             description = """
-                    Di qua bang chuyen trang thai o `OrderStateMachine`. Chuyen doi khong hop le
-                    tra `409 INVALID_STATE_TRANSITION`; khong du quyen tra `403`.
+                    Đi qua bảng chuyển trạng thái ở `OrderStateMachine`. Chuyển đổi không hợp lệ
+                    trả `409 INVALID_STATE_TRANSITION`; không đủ quyền trả `403`.
 
-                    Cac chuyen doi lam hang quay ve kho (huy, hoan tra) se tu dong hoan ton kho
-                    va hoan luot ma giam gia.
+                    Các chuyển đổi làm hàng quay về kho (huỷ, hoàn trả) sẽ tự động hoàn tồn kho
+                    và hoàn lượt mã giảm giá.
                     """)
     public OrderResponse updateStatus(@AuthenticationPrincipal AuthPrincipal principal,
                                       @PathVariable String code,
@@ -66,7 +66,7 @@ public class AdminController {
     // ------------------------------------------------------------------ tồn kho
 
     @GetMapping("/inventory/low-stock")
-    @Operation(summary = "Variant sap het hang")
+    @Operation(summary = "Variant sắp hết hàng")
     public List<LowStockItem> lowStock(@RequestParam(defaultValue = "10") int threshold) {
         return adminService.lowStock(threshold);
     }
@@ -75,21 +75,21 @@ public class AdminController {
 
     @GetMapping("/dashboard/summary")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "So lieu tong quan",
-            description = "Doanh thu hom nay/thang nay, so don theo trang thai, "
-                    + "so variant sap het hang, so event outbox chua xu ly, so phien dang giu hang.")
+    @Operation(summary = "Số liệu tổng quan",
+            description = "Doanh thu hôm nay/tháng này, số đơn theo trạng thái, "
+                    + "số variant sắp hết hàng, số event outbox chưa xử lý, số phiên đang giữ hàng.")
     public DashboardSummary summary() {
         return adminService.summary();
     }
 
     @GetMapping("/dashboard/revenue")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Doanh thu theo ngay hoac thang",
+    @Operation(summary = "Doanh thu theo ngày hoặc tháng",
             description = """
-                    Tinh bang query aggregate o DB (`date_trunc` + `GROUP BY`), khong nap don hang
-                    ve ung dung roi cong bang Java - cach do chay duoc voi 400 don va chet voi 400.000.
+                    Tính bằng query aggregate ở DB (`date_trunc` + `GROUP BY`), không nạp đơn hàng
+                    về ứng dụng rồi cộng bằng Java - cách đó chạy được với 400 đơn và chết với 400.000.
 
-                    Chi tinh cac trang thai da thu duoc tien: PAID, PACKED, SHIPPED, DELIVERED.
+                    Chỉ tính các trạng thái đã thu được tiền: PAID, PACKED, SHIPPED, DELIVERED.
                     """)
     public RevenueReport revenue(
             @RequestParam(defaultValue = "day") String groupBy,
@@ -100,7 +100,7 @@ public class AdminController {
 
     @GetMapping("/dashboard/top-products")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "San pham ban chay nhat")
+    @Operation(summary = "Sản phẩm bán chạy nhất")
     public List<TopProduct> topProducts(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,

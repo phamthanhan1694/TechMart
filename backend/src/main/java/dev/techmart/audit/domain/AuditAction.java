@@ -1,7 +1,7 @@
 package dev.techmart.audit.domain;
 
 /**
- * Hành động được ghi nhật ký. Dùng enum thay vì chuỗi tự đó: lọc theo hành động ở màn hình
+ * Hành động được ghi nhật ký. Dùng enum thay vì chuỗi tự do: lọc theo hành động ở màn hình
  * admin chỉ có nghĩa khi tập giá trị đóng và không có hai cách viết cho cùng một việc.
  */
 public enum AuditAction {

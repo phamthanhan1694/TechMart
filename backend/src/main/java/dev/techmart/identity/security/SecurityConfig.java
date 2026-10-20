@@ -24,13 +24,13 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Cấu hinh báo mat.
+ * Cấu hình bảo mật.
  *
- * <p>Nguyên tắc: <b>mac dinh là từ choi</b> - {@code anyRequest().authenticated()},
- * chỉ mo ra tung endpoint public một cach tuong minh. Cach nguoc lai (mac dinh mo,
- * chặn tung cai) chac chặn sẽ bo sot khi thêm endpoint mọi.
+ * <p>Nguyên tắc: <b>mặc định là từ chối</b> - {@code anyRequest().authenticated()},
+ * chỉ mở ra từng endpoint public một cách tường minh. Cách ngược lại (mặc định mở,
+ * chặn từng cái) chắc chắn sẽ bỏ sót khi thêm endpoint mới.
  *
- * <p>Phan quyen theo quyền sở hữu (đơn hàng này có phải của user này không) nằm ở
+ * <p>Phân quyền theo quyền sở hữu (đơn hàng này có phải của user này không) nằm ở
  * tầng service, không ở đây - @PreAuthorize chỉ kiểm được role.
  */
 @Configuration
@@ -57,7 +57,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh")
                             .permitAll()
-                        // Webhook không có token nhưng phải xac thực chu ky HMAC o tầng service
+                        // Webhook không có token nhưng phải xác thực chữ ký HMAC ở tầng service
                         .requestMatchers("/api/v1/payments/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/products/**",
@@ -79,7 +79,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Strength 12: cham hơn mac dinh 10 một chut, đổi lại chỉ phi tan cong brute force cao hơn. */
+    /** Strength 12: chậm hơn mặc định 10 một chút, đổi lại chi phí tấn công brute force cao hơn. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
@@ -88,7 +88,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Whitelist cụ thể, không dùng "*" - và không the dùng "*" khi allowCredentials(true)
+        // Whitelist cụ thể, không dùng "*" - và không thể dùng "*" khi allowCredentials(true)
         config.setAllowedOrigins(props.cors().allowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));

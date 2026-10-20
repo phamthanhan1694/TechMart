@@ -7,8 +7,8 @@ import java.time.ZoneId;
 import java.util.List;
 
 /**
- * Cấu hinh riêng của ứng dụng, anh xa từ khoi {@code app:} trong application.yml.
- * Dùng record để bắt buộc bất biến và có validate kieu ngay lúc khoi dòng.
+ * Cấu hình riêng của ứng dụng, ánh xạ từ khối {@code app:} trong application.yml.
+ * Dùng record để bắt buộc bất biến và có validate kiểu ngay lúc khởi động.
  */
 @ConfigurationProperties(prefix = "app")
 public record AppProperties(
@@ -32,8 +32,8 @@ public record AppProperties(
     public record Cors(List<String> allowedOrigins) {}
 
     /**
-     * Bat/tắt cache sản phẩm. Cần tắt được để đó hiệu năng trước/sau -
-     * một có cong tac chỉ để đó là thu dạng có.
+     * Bật/tắt cache sản phẩm. Cần tắt được để đo hiệu năng trước/sau -
+     * một công tắc chỉ để đo là thứ đáng có.
      */
     public record Cache(boolean productsEnabled, Duration listTtl, Duration detailTtl) {}
 

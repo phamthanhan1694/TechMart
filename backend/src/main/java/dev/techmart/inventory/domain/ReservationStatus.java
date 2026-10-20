@@ -1,9 +1,9 @@
 package dev.techmart.inventory.domain;
 
 public enum ReservationStatus {
-    /** Dạng giữ hàng, chưa hết hạn. */
+    /** Đang giữ hàng, chưa hết hạn. */
     HELD,
-    /** Da chuyen thanh đơn hàng. */
+    /** Đã chuyển thành đơn hàng. */
     COMMITTED,
     /** Khách chủ động huỷ phiên checkout. */
     RELEASED,

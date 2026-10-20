@@ -20,12 +20,12 @@ public final class PaymentDtos {
             @NotNull PaymentMethod method
     ) {}
 
-    @Schema(description = "Callback tu cong thanh toan. Bat buoc co chu ky HMAC hop le.")
+    @Schema(description = "Callback từ cổng thanh toán. Bắt buộc có chữ ký HMAC hợp lệ.")
     public record WebhookRequest(
             @NotBlank String transactionRef,
             @NotNull PaymentStatus status,
             @NotNull BigDecimal amount,
-            @NotBlank @Schema(description = "HMAC-SHA256 cua 'transactionRef|status|amount'") String signature
+            @NotBlank @Schema(description = "HMAC-SHA256 của 'transactionRef|status|amount'") String signature
     ) {}
 
     public record PaymentResponse(
@@ -44,12 +44,12 @@ public final class PaymentDtos {
         }
     }
 
-    @Schema(description = "Tien ich demo: sinh san callback da ky de khoi phai tu tinh HMAC")
+    @Schema(description = "Tiện ích demo: sinh sẵn callback đã ký để khỏi phải tự tính HMAC")
     public record SimulatedCallback(
             String transactionRef,
             PaymentStatus status,
             BigDecimal amount,
             String signature,
-            @Schema(description = "Dan nguyen body nay vao POST /api/v1/payments/webhook") String hint
+            @Schema(description = "Dán nguyên body này vào POST /api/v1/payments/webhook") String hint
     ) {}
 }

@@ -16,13 +16,13 @@ import java.util.Objects;
 
 /**
  * Sản phẩm (dòng máy). Tồn kho KHÔNG nằm ở đây mà nằm ở {@link ProductVariant} -
- * iPhone 15 ban 128GB và 256GB có giá và tồn kho khác nhau.
+ * iPhone 15 bản 128GB và 256GB có giá và tồn kho khác nhau.
  *
- * <p>{@code spec} là thông số chung của ca dòng máy, lưu JSONB có GIN index để lọc
- * ({@code spec @> '{"ram":"16GB"}'}). Xem docs/01-domain-v2.md mục 5.2 ve JSONB vs EAV.
+ * <p>{@code spec} là thông số chung của cả dòng máy, lưu JSONB có GIN index để lọc
+ * ({@code spec @> '{"ram":"16GB"}'}). Xem docs/01-domain-v2.md mục 5.2 về JSONB vs EAV.
  *
  * <p>{@code @SQLRestriction} tự động thêm {@code deleted_at IS NULL} vào mọi truy vấn JPA -
- * để không bao giờ quen lọc sản phẩm da xoá mềm. Truy van native phải từ thêm điều kiện nay.
+ * để không bao giờ quên lọc sản phẩm đã xoá mềm. Truy vấn native phải tự thêm điều kiện này.
  */
 @Entity
 @Table(name = "products")
@@ -125,8 +125,8 @@ public class Product {
     }
 
     /**
-     * Xoá mềm. Xoá cũng sẽ vì phạm khoá ngoại với order_items của đơn hàng cũ,
-     * hoac pha lich su đơn hàng - xem docs/01-domain-v2.md mục 1.
+     * Xoá mềm. Xoá cứng sẽ vi phạm khoá ngoại với order_items của đơn hàng cũ,
+     * hoặc phá lịch sử đơn hàng - xem docs/01-domain-v2.md mục 1.
      */
     public void softDelete(Instant now) {
         this.deletedAt = now;

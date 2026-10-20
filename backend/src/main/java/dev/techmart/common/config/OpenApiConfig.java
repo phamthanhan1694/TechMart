@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Project này không làm frontend, nên Swagger UI chính là giao dien sản phẩm.
- * Dau từ vào mo ta ở đây dạng giả hơn nhiều thu khác (docs/03-api-contract.md mục 13).
+ * Project này không làm frontend, nên Swagger UI chính là giao diện sản phẩm.
+ * Đầu tư vào mô tả ở đây đáng giá hơn nhiều thứ khác (docs/03-api-contract.md mục 13).
  */
 @Configuration
 public class OpenApiConfig {
@@ -24,25 +24,25 @@ public class OpenApiConfig {
                         .title("TechMart API")
                         .version("v1")
                         .description("""
-                                Backend thuong mai dien tu thiet bi dien tu, tap trung vao tinh dung dan
-                                cua ton kho duoi tai dong thoi: giu hang co han dung khi checkout,
-                                chong ban qua ton, mo ban gioi han co rate limiting, thanh toan idempotent.
+                                Backend thương mại điện tử thiết bị điện tử, tập trung vào tính đúng đắn
+                                của tồn kho dưới tải đồng thời: giữ hàng có hạn dùng khi checkout,
+                                chống bán quá tồn, mở bán giới hạn có rate limiting, thanh toán idempotent.
 
-                                **Tai khoan demo**
+                                **Tài khoản demo**
                                 - ADMIN: `admin@techmart.dev` / `Admin@123`
                                 - STAFF: `staff@techmart.dev` / `Staff@123`
-                                - CUSTOMER (co san don hang): `customer@techmart.dev` / `Customer@123`
-                                - CUSTOMER (moi tinh): `new@techmart.dev` / `Customer@123`
+                                - CUSTOMER (có sẵn đơn hàng): `customer@techmart.dev` / `Customer@123`
+                                - CUSTOMER (mới tinh): `new@techmart.dev` / `Customer@123`
 
-                                **Cach dung:** goi `POST /api/v1/auth/login`, copy `accessToken`,
-                                bam Authorize o goc tren ben phai va dan vao.
+                                **Cách dùng:** gọi `POST /api/v1/auth/login`, copy `accessToken`,
+                                bấm Authorize ở góc trên bên phải và dán vào.
                                 """))
                 .components(new Components().addSecuritySchemes(BEARER,
                         new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("Dan accessToken lay tu /api/v1/auth/login")))
+                                .description("Dán accessToken lấy từ /api/v1/auth/login")))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER));
     }
 }

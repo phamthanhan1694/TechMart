@@ -25,7 +25,7 @@ import java.util.Map;
  * mới phải nhớ gọi hàm này, và quên gọi thì không có gì báo lỗi.
  *
  * <p>Người thực hiện lấy từ SecurityContext thay vì truyền qua tham số, để không phải đổi
- * chữ ký của mọi service. Giới hạn thừa nhận: SecurityContext là thread-lọcal, nên gọi từ
+ * chữ ký của mọi service. Giới hạn thừa nhận: SecurityContext là thread-local, nên gọi từ
  * thread khác (@Async, job định kỳ) sẽ được ghi là SYSTEM.
  */
 @Service

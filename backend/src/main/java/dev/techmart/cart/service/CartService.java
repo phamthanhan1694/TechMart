@@ -52,7 +52,7 @@ public class CartService {
 
         if (item.getQuantity() > MAX_QUANTITY_PER_ITEM) {
             throw new BusinessException(ErrorCode.QUANTITY_EXCEEDS_LIMIT,
-                    "Toi da " + MAX_QUANTITY_PER_ITEM + " san pham moi dong");
+                    "Tối đa " + MAX_QUANTITY_PER_ITEM + " sản phẩm mỗi dòng");
         }
         // Kiểm tra ở đây chỉ để báo sớm cho khách. Ràng buộc thật sự được áp ở lúc giữ hàng
         // và lúc đặt hàng - giữa hai thời điểm đó tồn kho có thể đổi.

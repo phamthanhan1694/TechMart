@@ -17,14 +17,14 @@ public final class AnalyticsDtos {
     private AnalyticsDtos() {
     }
 
-    @Schema(description = "Khoang ngay, tinh ca hai dau, theo mui gio bao cao")
+    @Schema(description = "Khoảng ngày, tính cả hai đầu, theo múi giờ báo cáo")
     public record Range(LocalDate from, LocalDate to, int days) {}
 
-    @Schema(description = "Mot chi so kem ky truoc cung do dai de so sanh")
+    @Schema(description = "Một chỉ số kèm kỳ trước cùng độ dài để so sánh")
     public record Kpi(
             BigDecimal current,
             BigDecimal previous,
-            @Schema(description = "% thay doi so voi ky truoc; null khi ky truoc bang 0 (khong chia duoc)")
+            @Schema(description = "% thay đổi so với kỳ trước; null khi kỳ trước bằng 0 (không chia được)")
             BigDecimal changePercent
     ) {}
 
@@ -36,11 +36,11 @@ public final class AnalyticsDtos {
             Kpi averageOrderValue,
             Kpi unitsSold,
             Kpi placedOrders,
-            @Schema(description = "Ti le huy tren tong don dat, don vi %") Kpi cancelRate,
+            @Schema(description = "Tỉ lệ huỷ trên tổng đơn đặt, đơn vị %") Kpi cancelRate,
             Kpi discountTotal,
             Kpi newCustomers,
             Kpi buyers,
-            @Schema(description = "% nguoi mua trong ky da tung mua truoc ky, don vi %") Kpi returningBuyerRate
+            @Schema(description = "% người mua trong kỳ đã từng mua trước kỳ, đơn vị %") Kpi returningBuyerRate
     ) {}
 
     public record SeriesPoint(
@@ -56,7 +56,7 @@ public final class AnalyticsDtos {
             String groupBy,
             Range range,
             List<SeriesPoint> points,
-            @Schema(description = "Ky truoc cung do dai, can theo chi so - de ve duong so sanh")
+            @Schema(description = "Kỳ trước cùng độ dài, căn theo chỉ số - để vẽ đường so sánh")
             List<SeriesPoint> previous
     ) {}
 
@@ -66,12 +66,12 @@ public final class AnalyticsDtos {
             BigDecimal revenue,
             long orders,
             long units,
-            @Schema(description = "Ti trong doanh so, don vi %") BigDecimal share
+            @Schema(description = "Tỉ trọng doanh số, đơn vị %") BigDecimal share
     ) {}
 
     public record Breakdown(
             String dimension,
-            @Schema(description = "category/brand: doanh so hang hoa (tong line_total, truoc giam gia va phi ship). "
+            @Schema(description = "category/brand: doanh số hàng hoá (tổng line_total, trước giảm giá và phí ship). "
                     + "province: doanh thu don (total_amount).")
             String measure,
             BigDecimal total,
@@ -86,12 +86,12 @@ public final class AnalyticsDtos {
             long cancelled,
             long refunded,
             long pendingPayment,
-            @Schema(description = "Trung vi so gio tu dat den thanh toan") BigDecimal medianHoursToPay,
-            @Schema(description = "Trung vi so gio tu dat den giao thanh cong") BigDecimal medianHoursToDeliver
+            @Schema(description = "Trung vị số giờ từ đặt đến thanh toán") BigDecimal medianHoursToPay,
+            @Schema(description = "Trung vị số giờ từ đặt đến giao thành công") BigDecimal medianHoursToDeliver
     ) {}
 
     public record HeatCell(
-            @Schema(description = "1 = Thu Hai ... 7 = Chu Nhat (ISO)") int dayOfWeek,
+            @Schema(description = "1 = Thứ Hai ... 7 = Chủ Nhật (ISO)") int dayOfWeek,
             int hour,
             long orders,
             BigDecimal revenue
@@ -148,7 +148,7 @@ public final class AnalyticsDtos {
             long healthy,
             long totalUnits,
             long reservedUnits,
-            @Schema(description = "Ton kho x gia ban hien tai - khong co gia von nen day KHONG phai gia tri so sach")
+            @Schema(description = "Tồn kho x giá bán hiện tại - không có giá vốn nên đây KHÔNG phải giá trị sổ sách")
             BigDecimal stockValue,
             int lowThreshold,
             int slowDays,
@@ -162,7 +162,7 @@ public final class AnalyticsDtos {
             Range range,
             long total,
             BigDecimal average,
-            @Schema(description = "So luot theo so sao 1..5, du ca muc bang 0") Map<Integer, Long> distribution,
+            @Schema(description = "Số lượt theo số sao 1..5, đủ cả mức bằng 0") Map<Integer, Long> distribution,
             List<LowRatedProduct> lowestRated
     ) {}
 }

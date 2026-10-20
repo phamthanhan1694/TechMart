@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Quan ly tồn kho theo serial/IMEI.
+ * Quản lý tồn kho theo serial/IMEI.
  *
  * <p>Xem {@link ProductSerial} về lý do tồn tại song song với {@code stock_quantity}.
  */
@@ -57,7 +57,7 @@ public class SerialService {
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.VARIANT_NOT_FOUND, req.variantId()));
         int months = req.warrantyMonths() != null ? req.warrantyMonths() : DEFAULT_WARRANTY_MONTHS;
 
-        // Chuẩn hoá và bỏ trùng ngay trong lo gửi lên
+        // Chuẩn hoá và bỏ trùng ngay trong lô gửi lên
         Set<String> unique = new LinkedHashSet<>();
         req.serialNumbers().forEach(s -> unique.add(s.trim().toUpperCase()));
 
@@ -72,21 +72,21 @@ public class SerialService {
         }
         serials.saveAll(toSave);
 
-        log.info("Da nhap {} serial cho variant {} ({} bi bo qua vi trung)",
+        log.info("Đã nhập {} serial cho variant {} ({} bị bỏ qua vì trùng)",
                 toSave.size(), req.variantId(), duplicates.size());
         return new BulkSerialResponse(toSave.size(), duplicates.size(), duplicates);
     }
 
     /**
-     * Gan serial cho từng dòng đơn hàng khi <b>đóng gói</b> (PAID -> PACKED).
+     * Gán serial cho từng dòng đơn hàng khi <b>đóng gói</b> (PAID -> PACKED).
      *
-     * <p>Gan ở bước đóng gói chứ không phải lúc đặt hàng: gắn lúc đặt hàng thì mỗi lần mua
+     * <p>Gán ở bước đóng gói chứ không phải lúc đặt hàng: gắn lúc đặt hàng thì mỗi lần mua
      * phải khoá và cập nhật N dòng serial thay vì một dòng đếm, đúng chỗ đang tranh chấp
      * nặng nhất. Đến bước đóng gói thì đơn đã chốt, không còn ai tranh nữa.
      *
-     * <p><b>Không chặn viec đóng gói khi thieu serial.</b> Phan lon variant không được theo đổi
-     * theo serial (không có dòng nào trong bảng) - đó là bình thường. Thieu một phần thì ghi
-     * cảnh báo để kho xử lý, chứ không giữ đơn hàng lai: hàng vẫn phải đi.
+     * <p><b>Không chặn việc đóng gói khi thiếu serial.</b> Phần lớn variant không được theo dõi
+     * theo serial (không có dòng nào trong bảng) - đó là bình thường. Thiếu một phần thì ghi
+     * cảnh báo để kho xử lý, chứ không giữ đơn hàng lại: hàng vẫn phải đi.
      */
     @Transactional
     public int assignForOrder(Order order) {
@@ -96,13 +96,13 @@ public class SerialService {
         for (OrderItem item : order.getItems()) {
             Long variantId = item.getVariant().getId();
             if (serials.countByVariantIdAndStatus(variantId, dev.techmart.warranty.domain.SerialStatus.IN_STOCK) == 0) {
-                continue;   // variant này không theo đổi theo serial
+                continue;   // variant này không theo dõi theo serial
             }
             List<ProductSerial> available =
                     serials.lockAvailableForVariant(variantId, Limit.of(item.getQuantity()));
 
             if (available.size() < item.getQuantity()) {
-                log.warn("Don {} dong {}: can {} serial nhung chi con {} - kho can bo sung",
+                log.warn("Đơn {} dòng {}: cần {} serial nhưng chỉ còn {} - kho cần bổ sung",
                         order.getCode(), item.getSku(), item.getQuantity(), available.size());
             }
             for (ProductSerial serial : available) {
@@ -111,12 +111,12 @@ public class SerialService {
             }
         }
         if (assigned > 0) {
-            log.info("Da gan {} serial cho don {}", assigned, order.getCode());
+            log.info("Đã gán {} serial cho đơn {}", assigned, order.getCode());
         }
         return assigned;
     }
 
-    /** Hoàn trả: serial về trạng thái RETURNED, chờ kho kiểm tra rồi mọi quyết định. */
+    /** Hoàn trả: serial về trạng thái RETURNED, chờ kho kiểm tra rồi mới quyết định. */
     @Transactional
     public void releaseForOrder(Order order) {
         for (OrderItem item : order.getItems()) {

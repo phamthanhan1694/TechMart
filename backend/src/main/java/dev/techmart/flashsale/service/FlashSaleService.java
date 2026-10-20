@@ -27,17 +27,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Mo ban giới hạn.
+ * Mở bán giới hạn.
  *
- * <p>Kien truc hai tầng:
+ * <p>Kiến trúc hai tầng:
  * <ol>
- *   <li><b>Cua Redis</b> - Lua script nguyên tử quyết định ai được mua. Chiu được vài nghìn
- *       request/giây trên cùng một suất ban.</li>
- *   <li><b>So cai DB</b> - chỉ nhưng người đã thắng o của mọi mo transaction ghi đơn hàng
- *       và trừ tồn kho thật. So transaction bị chặn trên boi {@code sale_quantity}.</li>
+ *   <li><b>Cửa Redis</b> - Lua script nguyên tử quyết định ai được mua. Chịu được vài nghìn
+ *       request/giây trên cùng một suất bán.</li>
+ *   <li><b>Sổ cái DB</b> - chỉ những người đã thắng ở cửa mới mở transaction ghi đơn hàng
+ *       và trừ tồn kho thật. Số transaction bị chặn trên bởi {@code sale_quantity}.</li>
  * </ol>
  *
- * <p>Nếu bước 2 thất bại thì trả lại suat cho Redis - nếu không, suất đó bị "bốc hơi".
+ * <p>Nếu bước 2 thất bại thì trả lại suất cho Redis - nếu không, suất đó bị "bốc hơi".
  */
 @Service
 public class FlashSaleService {
@@ -68,7 +68,7 @@ public class FlashSaleService {
         this.clock = clock;
     }
 
-    // ------------------------------------------------------------------ doc
+    // ------------------------------------------------------------------ đọc
 
     @Transactional(readOnly = true)
     public List<FlashSaleResponse> findActive() {
@@ -85,11 +85,11 @@ public class FlashSaleService {
     // ------------------------------------------------------------------ mua
 
     /**
-     * Mua một suat flash sale.
+     * Mua một suất flash sale.
      *
-     * <p>Buoc qua cửa Redis nằm NGOAI transaction - có y. Nếu gọi Lua trong transaction thì
-     * hàng nghìn request sẽ giữ connection DB trong lúc cho Redis trả lỗi, và connection pool
-     * cần trước khi kip từ choi ai.
+     * <p>Bước qua cửa Redis nằm NGOÀI transaction - cố ý. Nếu gọi Lua trong transaction thì
+     * hàng nghìn request sẽ giữ connection DB trong lúc chờ Redis trả lời, và connection pool
+     * cạn trước khi kịp từ chối ai.
      */
     public OrderResponse purchase(Long userId, Long itemId, PurchaseRequest req, String idempotencyKey) {
         FlashSaleItem item = items.findDetailById(itemId)
@@ -111,21 +111,21 @@ public class FlashSaleService {
         }
         if (result == FlashSaleStockCounter.USER_LIMIT_EXCEEDED) {
             throw new BusinessException(ErrorCode.FLASH_SALE_LIMIT_EXCEEDED,
-                    "Moi nguoi chi duoc mua toi da " + item.getPerUserLimit() + " suat");
+                    "Mỗi người chỉ được mua tối đa " + item.getPerUserLimit() + " suất");
         }
         if (result == FlashSaleStockCounter.NOT_WARMED_UP) {
-            // Fail-closed: không dam báo được thì từ chối bán, con hơn bán quá so suat
-            log.error("Bo dem Redis cho flash sale item {} khong ton tai - tu choi ban", itemId);
+            // Fail-closed: không đảm bảo được thì từ chối bán, còn hơn bán quá số suất
+            log.error("Bộ đếm Redis cho flash sale item {} không tồn tại - từ chối bán", itemId);
             throw new BusinessException(ErrorCode.SERVICE_UNAVAILABLE,
-                    "Phien ban tam thoi khong kha dung");
+                    "Phiên bán tạm thời không khả dụng");
         }
 
         try {
             return orderWriter.write(userId, itemId, req, idempotencyKey);
         } catch (RuntimeException e) {
-            // Da thang o cửa Redis nhưng ghi so cai thất bại -> trả lại suat
+            // Đã thắng ở cửa Redis nhưng ghi sổ cái thất bại -> trả lại suất
             stockCounter.refund(itemId, userId, req.quantity());
-            log.error("Tao don flash sale that bai, da tra lai {} suat cho item {}",
+            log.error("Tạo đơn flash sale thất bại, đã trả lại {} suất cho item {}",
                     req.quantity(), itemId, e);
             throw e;
         }
@@ -136,7 +136,7 @@ public class FlashSaleService {
     @Transactional
     public FlashSaleResponse create(CreateFlashSaleRequest req) {
         if (!req.endsAt().isAfter(req.startsAt())) {
-            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "endsAt phai sau startsAt");
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "endsAt phải sau startsAt");
         }
         FlashSale sale = new FlashSale(req.name(), req.startsAt(), req.endsAt());
         for (CreateItemRequest itemReq : req.items()) {
@@ -157,8 +157,8 @@ public class FlashSaleService {
     }
 
     /**
-     * Nạp san tồn kho vào Redis trước giỏ mo ban.
-     * Không nạp trước thì dùng giây mo ban sẽ có hàng nghìn request cũng nạp - cache stampede.
+     * Nạp sẵn tồn kho vào Redis trước giờ mở bán.
+     * Không nạp trước thì đúng giây mở bán sẽ có hàng nghìn request cùng nạp - cache stampede.
      */
     @Transactional
     public int warmUp(Long saleId) {
@@ -170,7 +170,7 @@ public class FlashSaleService {
     }
 
     /**
-     * Đổi soat cuoi phiên: so đã bán o DB phải bằng so suat tru ton còn lại trên Redis.
+     * Đối soát cuối phiên: số đã bán ở DB phải bằng số suất trừ tồn còn lại trên Redis.
      * Lệch thì log cảnh báo - đây là cái giá phải trả cho nhất quán cuối.
      */
     @Transactional(readOnly = true)
@@ -180,7 +180,7 @@ public class FlashSaleService {
                     .map(remaining -> item.getSaleQuantity() - remaining)
                     .orElse(item.getSoldQuantity());
             if (redisSold != item.getSoldQuantity()) {
-                log.warn("Doi soat lech o flash sale item {}: Redis={} DB={}",
+                log.warn("Đối soát lệch ở flash sale item {}: Redis={} DB={}",
                         item.getId(), redisSold, item.getSoldQuantity());
             }
         }
@@ -189,7 +189,7 @@ public class FlashSaleService {
     private FlashSaleResponse toResponse(FlashSale sale, Instant now) {
         List<FlashSaleItemResponse> itemResponses = sale.getItems().stream()
                 .map(item -> FlashSaleDtos.toItemResponse(item,
-                        // Phiên dạng chay: doc ton từ Redis. Da ket thuc: doc từ DB.
+                        // Phiên đang chạy: đọc tồn từ Redis. Đã kết thúc: đọc từ DB.
                         stockCounter.remaining(item.getId()).orElseGet(item::remaining)))
                 .toList();
         return FlashSaleDtos.toResponse(sale, itemResponses, now);

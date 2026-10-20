@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Một phiên mo ban giới hạn.
+ * Một phiên mở bán giới hạn.
  *
- * <p>Đây là noi mo hinh tai khác han phần còn lại của hệ thống: vài nghìn request/giây
- * đó vào <b>cùng một dòng</b> dữ liệu trong vai giây dau. Khoá bi quan o DB không chiu noi -
+ * <p>Đây là nơi mô hình tải khác hẳn phần còn lại của hệ thống: vài nghìn request/giây
+ * đổ vào <b>cùng một dòng</b> dữ liệu trong vài giây đầu. Khoá bi quan ở DB không chịu nổi -
  * mọi request xếp hàng chờ cùng một row lock, connection pool căng, và các API khác chết theo.
- * Vì vậy phiên này tru ton bằng Redis Lua script (xem {@code FlashSaleStockScript}).
+ * Vì vậy phiên này trừ tồn bằng Redis Lua script (xem {@code FlashSaleStockScript}).
  */
 @Entity
 @Table(name = "flash_sales")

@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/account/addresses")
-@Tag(name = "Account - Dia chi", description = "So dia chi giao hang, toi da 10 dia chi, dung mot mac dinh")
+@Tag(name = "Account - Địa chỉ", description = "Sổ địa chỉ giao hàng, tối đa 10 địa chỉ, đúng một mặc định")
 @PreAuthorize("hasRole('CUSTOMER')")
 public class AddressController {
 
@@ -28,34 +28,34 @@ public class AddressController {
     }
 
     @GetMapping
-    @Operation(summary = "Danh sach dia chi", description = "Dia chi mac dinh dung dau.")
+    @Operation(summary = "Danh sách địa chỉ", description = "Địa chỉ mặc định đứng đầu.")
     public List<AddressResponse> list(@AuthenticationPrincipal AuthPrincipal principal) {
         return service.list(principal.id());
     }
 
     @PostMapping
-    @Operation(summary = "Them dia chi", description = "Dia chi dau tien tu thanh mac dinh. Qua 10 dia chi tra 422 ADDRESS_LIMIT_EXCEEDED.")
+    @Operation(summary = "Thêm địa chỉ", description = "Địa chỉ đầu tiên tự thành mặc định. Qua 10 địa chỉ trả 422 ADDRESS_LIMIT_EXCEEDED.")
     public ResponseEntity<AddressResponse> create(@AuthenticationPrincipal AuthPrincipal principal,
                                                   @Valid @RequestBody AddressRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(principal.id(), req));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Sua dia chi")
+    @Operation(summary = "Sửa địa chỉ")
     public AddressResponse update(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long id,
                                   @Valid @RequestBody AddressRequest req) {
         return service.update(principal.id(), id, req);
     }
 
     @PostMapping("/{id}/default")
-    @Operation(summary = "Dat lam mac dinh")
+    @Operation(summary = "Đặt làm mặc định")
     public AddressResponse setDefault(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long id) {
         return service.setDefault(principal.id(), id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Xoa dia chi", description = "Xoa dia chi mac dinh thi dia chi moi nhat con lai len lam mac dinh.")
+    @Operation(summary = "Xoá địa chỉ", description = "Xoá địa chỉ mặc định thì địa chỉ mới nhất còn lại lên làm mặc định.")
     public void delete(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long id) {
         service.delete(principal.id(), id);
     }

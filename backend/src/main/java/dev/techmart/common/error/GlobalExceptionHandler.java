@@ -33,13 +33,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiError> handleBusiness(BusinessException ex, HttpServletRequest req) {
         String traceId = traceId();
-        // Lỗi nghiệp vụ là chuyen binh thuong -> WARN, không kem stack trace
-        log.warn("[{}] {} tai {}: {}", traceId, ex.code(), req.getRequestURI(), ex.getMessage());
+        // Lỗi nghiệp vụ là chuyện bình thường -> WARN, không kèm stack trace
+        log.warn("[{}] {} tại {}: {}", traceId, ex.code(), req.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(ex.code().status())
                 .body(ApiError.of(ex.code(), ex.getMessage(), req.getRequestURI(), traceId, ex.details()));
     }
 
-    /** Bean Validation thất bại -> liet ke tung field sai trong details. */
+    /** Bean Validation thất bại -> liệt kê từng field sai trong details. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
         List<FieldViolation> violations = ex.getBindingResult().getFieldErrors().stream()
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Hai transaction cùng sửa một bản ghi. Trả 409 để client thử lại - đây là hành vi đúng
-     * ve nghiệp vụ, không phải lỗi hệ thống (docs/02-luồng-nghiep-vu.md mục 1).
+     * về nghiệp vụ, không phải lỗi hệ thống (docs/02-luồng-nghiep-vu.md mục 1).
      */
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ApiError> handleOptimisticLock(OptimisticLockingFailureException ex, HttpServletRequest req) {
@@ -74,21 +74,21 @@ public class GlobalExceptionHandler {
 
     /**
      * Vi phạm ràng buộc DB. Đây thường là chốt chặn cuối cùng đã làm việc của nó
-     * (vd CHECK stock_quantity >= 0) - log ERROR vì no báo hieu logic khoá o trên đã hở.
+     * (vd CHECK stock_quantity >= 0) - log ERROR vì nó báo hiệu logic khoá ở trên đã hở.
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest req) {
         String traceId = traceId();
-        log.error("[{}] Vi pham rang buoc DB tai {}", traceId, req.getRequestURI(), ex);
+        log.error("[{}] Vi phạm ràng buộc DB tại {}", traceId, req.getRequestURI(), ex);
         ErrorCode code = ErrorCode.CONCURRENT_MODIFICATION;
         return ResponseEntity.status(code.status())
-                .body(ApiError.of(code, "Du lieu xung dot, vui long thu lai", req.getRequestURI(), traceId, null));
+                .body(ApiError.of(code, "Dữ liệu xung đột, vui lòng thử lại", req.getRequestURI(), traceId, null));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest req) {
         String traceId = traceId();
-        log.error("[{}] Loi khong luong truoc tai {}", traceId, req.getRequestURI(), ex);
+        log.error("[{}] Lỗi không lường trước tại {}", traceId, req.getRequestURI(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiError.of(ErrorCode.INTERNAL_ERROR, ErrorCode.INTERNAL_ERROR.defaultMessage(),
                         req.getRequestURI(), traceId, null));
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ApiError> build(ErrorCode code, String msg, HttpServletRequest req, Object details) {
         String traceId = traceId();
-        log.warn("[{}] {} tai {}", traceId, code, req.getRequestURI());
+        log.warn("[{}] {} tại {}", traceId, code, req.getRequestURI());
         return ResponseEntity.status(code.status())
                 .body(ApiError.of(code, msg, req.getRequestURI(), traceId, details));
     }

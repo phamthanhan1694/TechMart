@@ -17,13 +17,13 @@ import java.util.UUID;
 /**
  * Cổng thanh toán giả.
  *
- * <p>Có y <b>không</b> tich hop VNPay/Momo thật: viec đó ton thoi gian vào thu tuc dạng ky
- * và doc tai lieu của ben thu ba, không thêm chieu sau kỹ thuật nao. Cai dạng the hien la
- * <i>hinh dạng</i> của luồng thanh toán thật - và cổng giả này làm dùng nhu thật:
- * sinh transaction ref, trả kết quả qua webhook bat dòng bo, và <b>ky HMAC</b> len callback.
+ * <p>Cố ý <b>không</b> tích hợp VNPay/Momo thật: việc đó tốn thời gian vào thủ tục đăng ký
+ * và đọc tài liệu của bên thứ ba, không thêm chiều sâu kỹ thuật nào. Cái đáng thể hiện là
+ * <i>hình dạng</i> của luồng thanh toán thật - và cổng giả này làm đúng như thật:
+ * sinh transaction ref, trả kết quả qua webhook bất đồng bộ, và <b>ký HMAC</b> lên callback.
  *
  * <p>Ký cả ở cổng giả vì hai lý do: (1) để phía nhận viết đúng code xác thực chữ ký ngay
- * từ dau, (2) để không tạo thoi quen tin webhook không xac thuc.
+ * từ đầu, (2) để không tạo thói quen tin webhook không xác thực.
  */
 @Component
 public class MockPaymentGateway {
@@ -42,22 +42,22 @@ public class MockPaymentGateway {
     }
 
     /**
-     * Chuoi được ky. Thứ tự các truong là một phần của giao uoc - đổi thứ tự là đổi chu ky.
+     * Chuỗi được ký. Thứ tự các trường là một phần của giao ước - đổi thứ tự là đổi chữ ký.
      *
-     * <p><b>Số tiền được chuan hoa về 2 chữ số thap phần trước khi ky.</b> Nếu ky thang
-     * {@code âmount.toPlainString()} thì chu ky phụ thuộc vào <i>cach bieu dien</i> chứ không
-     * phải <i>giá trị</i>: cùng một số tiền, ben ky ghi {@code 45010000.00} con ben gọi lai
-     * gửi {@code 45010000.0} (rat để xay ra khi callback đi qua một lớp trung gian parse
-     * JSON number thanh float) thì chu ky truot du tien không hề sai.
+     * <p><b>Số tiền được chuẩn hoá về 2 chữ số thập phân trước khi ký.</b> Nếu ký thẳng
+     * {@code amount.toPlainString()} thì chữ ký phụ thuộc vào <i>cách biểu diễn</i> chứ không
+     * phải <i>giá trị</i>: cùng một số tiền, bên ký ghi {@code 45010000.00} còn bên gọi lại
+     * gửi {@code 45010000.0} (rất dễ xảy ra khi callback đi qua một lớp trung gian parse
+     * JSON number thành float) thì chữ ký trượt dù tiền không hề sai.
      *
-     * <p>Lỗi này lo ra khi viet script demo: body callback di qua Python json rồi quay lai,
-     * mat một chu so 0 o cuoi, và webhook bị từ chối với INVALID_WEBHOOK_SIGNATURE.
+     * <p>Lỗi này lộ ra khi viết script demo: body callback đi qua Python json rồi quay lại,
+     * mất một chữ số 0 ở cuối, và webhook bị từ chối với INVALID_WEBHOOK_SIGNATURE.
      */
     public String payloadToSign(String transactionRef, String status, BigDecimal amount) {
         return transactionRef + "|" + status + "|" + normalize(amount);
     }
 
-    /** Mọi số tiền trong hệ thống deu là NUMERIC(15,2), nên 2 chu so là dạng chính tac. */
+    /** Mọi số tiền trong hệ thống đều là NUMERIC(15,2), nên 2 chữ số là dạng chính tắc. */
     private static String normalize(BigDecimal amount) {
         return amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
@@ -71,14 +71,14 @@ public class MockPaymentGateway {
                     payloadToSign(transactionRef, status, amount).getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(raw);
         } catch (Exception e) {
-            throw new IllegalStateException("Khong ky duoc webhook", e);
+            throw new IllegalStateException("Không ký được webhook", e);
         }
     }
 
     /**
-     * So sanh chu ky bằng {@link MessageDigest#isEqual} chứ không phải {@code equals}:
-     * so sanh chuỗi thong thuong thoat som o byte dau tien khác nhau, để lo thong tin
-     * qua thoi gian thực thì (timing attack).
+     * So sánh chữ ký bằng {@link MessageDigest#isEqual} chứ không phải {@code equals}:
+     * so sánh chuỗi thông thường thoát sớm ở byte đầu tiên khác nhau, để lộ thông tin
+     * qua thời gian thực thi (timing attack).
      */
     public boolean verify(String transactionRef, String status, BigDecimal amount, String signature) {
         if (signature == null) {
@@ -89,9 +89,9 @@ public class MockPaymentGateway {
                 expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8));
     }
 
-    /** Mô phỏng kết quả từ cổng thanh toán. Mac dinh thành công; gọi được để test ca nhanh thất bại. */
+    /** Mô phỏng kết quả từ cổng thanh toán. Mặc định thành công; gọi được để test cả nhánh thất bại. */
     public boolean authorize(String transactionRef, BigDecimal amount) {
-        log.info("[MOCK GATEWAY] Uy quyen {} cho giao dich {}", amount, transactionRef);
+        log.info("[MOCK GATEWAY] Uỷ quyền {} cho giao dịch {}", amount, transactionRef);
         return true;
     }
 }

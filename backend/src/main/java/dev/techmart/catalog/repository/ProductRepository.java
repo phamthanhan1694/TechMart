@@ -15,11 +15,11 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     /**
      * Nạp kèm variant + brand + category cho trang chi tiết.
      *
-     * <p><b>Có chu y không nạp kèm {@code images}:</b> Hibernate không JOIN FETCH được hai
-     * collection kieu List (bag) trong cùng một query - no ném MultipleBagFetchException,
-     * vì tích Descartes của hai bag không thể tách ngược ra được. Anh được nạp lazy bằng
+     * <p><b>Cố ý không nạp kèm {@code images}:</b> Hibernate không JOIN FETCH được hai
+     * collection kiểu List (bag) trong cùng một query - nó ném MultipleBagFetchException,
+     * vì tích Descartes của hai bag không thể tách ngược ra được. Ảnh được nạp lazy bằng
      * một query riêng: trang chi tiết tốn 2 query thay vì 1, đổi lại không phải đổi
-     * mo hinh entity sang Set. Nếu cần gop thật thì đổi ca hai sang Set hoac dùng
+     * mô hình entity sang Set. Nếu cần gộp thật thì đổi cả hai sang Set hoặc dùng
      * @Fetch(SUBSELECT).
      */
     @EntityGraph(attributePaths = {"variants", "brand", "category"})
@@ -29,7 +29,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findDetailById(@Param("id") Long id);
 
-    /** So sanh 2-3 sản phẩm: một query, không lap N lan. */
+    /** So sánh 2-3 sản phẩm: một query, không lặp N lần. */
     @EntityGraph(attributePaths = {"brand", "category"})
     @Query("SELECT p FROM Product p WHERE p.id IN :ids")
     List<Product> findAllForCompare(@Param("ids") Collection<Long> ids);

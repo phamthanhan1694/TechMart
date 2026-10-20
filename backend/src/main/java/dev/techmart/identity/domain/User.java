@@ -18,7 +18,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    /** Luon là hash BCrypt. Không bao giờ lo ra DTO nao. */
+    /** Luôn là hash BCrypt. Không bao giờ lộ ra DTO nào. */
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -85,8 +85,8 @@ public class User {
 
     @Override
     public int hashCode() {
-        // Hàng so: id được sinh sau khi persist, dùng id trong hashCode sẽ làm
-        // object "biến mat" khoi HashSet sau khi flush.
+        // Hằng số: id được sinh sau khi persist, dùng id trong hashCode sẽ làm
+        // object "biến mất" khỏi HashSet sau khi flush.
         return Objects.hash(getClass());
     }
 }

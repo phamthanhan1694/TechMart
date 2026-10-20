@@ -38,7 +38,7 @@ public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
-    /** Phí vận chuyển phẳng. Một bảng phí theo khu vực không thêm chieu sau kỹ thuật nao. */
+    /** Phí vận chuyển phẳng. Một bảng phí theo khu vực không thêm chiều sâu kỹ thuật nào. */
     private static final BigDecimal FLAT_SHIPPING_FEE = new BigDecimal("30000.00");
 
     private final OrderRepository orders;
@@ -74,17 +74,17 @@ public class OrderService {
     // =================================================================== đặt hàng
 
     /**
-     * Đặt hàng từ một phiên checkout dạng giữ hàng.
+     * Đặt hàng từ một phiên checkout đang giữ hàng.
      *
      * <p>Toàn bộ nằm trong MỘT transaction: chốt hàng đã giữ -> trừ tồn kho -> tạo đơn
-     * kèm snapshot -> đánh dấu reservation da dùng -> đơn giá -> ghi outbox.
-     * Bat ky buoc nao thất bại thì rollback tắt ca.
+     * kèm snapshot -> đánh dấu reservation đã dùng -> áp mã giảm giá -> ghi outbox.
+     * Bất kỳ bước nào thất bại thì rollback tất cả.
      *
      * <p><b>Idempotency:</b> đường nhanh là tra cứu theo {@code idempotencyKey}; chốt chặn
-     * thật su là ràng buộc {@code UNIQUE(orders.idempotency_key)} o DB - hai request song song
-     * cũng key thì một cai sẽ vì phạm ràng buộc và đọc lại kết quả của cai kia.
+     * thật sự là ràng buộc {@code UNIQUE(orders.idempotency_key)} ở DB - hai request song song
+     * cùng key thì một cái sẽ vi phạm ràng buộc và đọc lại kết quả của cái kia.
      *
-     * <p><b>Chống oversell:</b> variant được khoá bi quan theo thứ tự id trước khi tru
+     * <p><b>Chống oversell:</b> variant được khoá bi quan theo thứ tự id trước khi trừ
      * (xem {@link VariantLocker#lockAndRefresh}).
      */
     @Transactional
@@ -95,7 +95,7 @@ public class OrderService {
             if (!existing.isOwnedBy(userId)) {
                 throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_CONFLICT);
             }
-            log.info("Idempotency: tra lai don {} da tao truoc do cho key {}",
+            log.info("Idempotency: trả lại đơn {} đã tạo trước đó cho key {}",
                     existing.getCode(), idempotencyKey);
             return OrderResponse.from(existing);
         }
@@ -122,7 +122,7 @@ public class OrderService {
                 throw BusinessException.notFound(ErrorCode.VARIANT_NOT_FOUND, entry.getKey());
             }
             try {
-                // Hàng đã được giữ ở bước checkout: chuyển từ "dạng giữ" sang "đã bán"
+                // Hàng đã được giữ ở bước checkout: chuyển từ "đang giữ" sang "đã bán"
                 variant.commitHold(entry.getValue());
             } catch (IllegalStateException e) {
                 throw new BusinessException(ErrorCode.INSUFFICIENT_STOCK, e.getMessage());
@@ -132,22 +132,22 @@ public class OrderService {
 
         // Tính tiền ở server từ order_items - không bao giờ tin số tiền client gửi lên
         order.recalculateTotals(FLAT_SHIPPING_FEE, BigDecimal.ZERO, null);
-        order.logTransition(null, OrderStatus.PENDING_PAYMENT, userId, "Dat hang", now);
+        order.logTransition(null, OrderStatus.PENDING_PAYMENT, userId, "Đặt hàng", now);
 
         Order saved;
         try {
             saved = orders.saveAndFlush(order);
         } catch (DataIntegrityViolationException e) {
-            // Hai request song song cũng Idempotency-Key: cai thua đọc lại kết quả của cai thang
-            log.info("Idempotency: race tren key {}, doc lai don da tao", idempotencyKey);
+            // Hai request song song cùng Idempotency-Key: cái thua đọc lại kết quả của cái thắng
+            log.info("Idempotency: race trên key {}, đọc lại đơn đã tạo", idempotencyKey);
             return orders.findByIdempotencyKey(idempotencyKey)
                     .map(OrderResponse::from)
                     .orElseThrow(() -> new BusinessException(ErrorCode.IDEMPOTENCY_KEY_CONFLICT));
         }
 
-        // Áp mã giảm giá SAU khi đơn có id (coupon_redemptions tham chieu order_id).
+        // Áp mã giảm giá SAU khi đơn có id (coupon_redemptions tham chiếu order_id).
         // Trừ lượt ở đây, trong cùng transaction, có khoá dòng coupon - không phải ở
-        // buoc /coupons/validate (buoc đó chỉ để hiển thị trước).
+        // bước /coupons/validate (bước đó chỉ để hiển thị trước).
         if (req.couponCode() != null && !req.couponCode().isBlank()) {
             BigDecimal discount = couponService.redeem(
                     req.couponCode(), saved.getSubtotal(), userId, saved);
@@ -162,12 +162,12 @@ public class OrderService {
                 "userId", userId,
                 "totalAmount", saved.getTotalAmount().toPlainString()));
 
-        log.info("Da tao don {} cho user {}: {} dong, tong {}",
+        log.info("Đã tạo đơn {} cho user {}: {} dòng, tổng {}",
                 saved.getCode(), userId, saved.getItems().size(), saved.getTotalAmount());
         return OrderResponse.from(saved);
     }
 
-    // =================================================================== doc
+    // =================================================================== đọc
 
     @Transactional(readOnly = true)
     public PageResponse<OrderSummaryResponse> listMyOrders(Long userId, Pageable pageable) {
@@ -191,7 +191,7 @@ public class OrderService {
     // =================================================================== đổi trạng thái
 
     /**
-     * Huy đơn.
+     * Huỷ đơn.
      *
      * <p><b>Idempotent:</b> huỷ một đơn đã huỷ trả 200 và không làm gì. Thiếu nhánh này thì
      * khách bấm huỷ hai lần sẽ được hoàn kho hai lần và tồn kho bị thổi phồng - đây là lỗi
@@ -202,13 +202,13 @@ public class OrderService {
         Order order = requireVisibleOrder(code, principal);
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
-            return OrderResponse.from(order);   // không phải lỗi, và không hoàn kho lan hai
+            return OrderResponse.from(order);   // không phải lỗi, và không hoàn kho lần hai
         }
         return doTransition(order, OrderStatus.CANCELLED, principal,
                 req != null ? req.reason() : null);
     }
 
-    /** Đổi trạng thái boi STAFF/ADMIN. */
+    /** Đổi trạng thái bởi STAFF/ADMIN. */
     @Transactional
     public OrderResponse updateStatus(String code, AuthPrincipal principal, UpdateStatusRequest req) {
         Order order = orders.findByCode(code)
@@ -243,14 +243,14 @@ public class OrderService {
 
         if (!OrderStateMachine.transitionExists(from, toStatus)) {
             throw new BusinessException(ErrorCode.INVALID_STATE_TRANSITION,
-                    "Khong the chuyen tu " + from + " sang " + toStatus);
+                    "Không thể chuyển từ " + from + " sang " + toStatus);
         }
         if (!OrderStateMachine.isAllowed(from, toStatus, actor)) {
-            // Khách có thể huỷ đơn chưa thanh toán, nhưng không được huỷ đơn da giao
+            // Khách có thể huỷ đơn chưa thanh toán, nhưng không được huỷ đơn đã giao
             ErrorCode code = toStatus == OrderStatus.CANCELLED
                     ? ErrorCode.ORDER_NOT_CANCELLABLE : ErrorCode.ACCESS_DENIED;
             throw new BusinessException(code,
-                    actor + " khong duoc phep chuyen " + from + " sang " + toStatus);
+                    actor + " không được phép chuyển " + from + " sang " + toStatus);
         }
 
         Instant now = clock.instant();
@@ -264,7 +264,7 @@ public class OrderService {
             serialService.releaseForOrder(order);
         }
         // Đóng gói là lúc gắn serial cho từng đơn vị hàng - không phải lúc đặt hàng.
-        // Lúc đặt hàng đang tranh chấp nặng nhất, gan serial o đó sẽ phải khoá N dòng
+        // Lúc đặt hàng đang tranh chấp nặng nhất, gán serial ở đó sẽ phải khoá N dòng
         // thay vì một dòng đếm. Xem SerialService.assignForOrder.
         if (from == OrderStatus.PAID && toStatus == OrderStatus.PACKED) {
             serialService.assignForOrder(order);
@@ -277,7 +277,7 @@ public class OrderService {
                 "fromStatus", from.name(),
                 "toStatus", toStatus.name()));
 
-        log.info("Don {}: {} -> {} boi {} ({})", order.getCode(), from, toStatus, actor, actorId);
+        log.info("Đơn {}: {} -> {} bởi {} ({})", order.getCode(), from, toStatus, actor, actorId);
     }
 
     /** Hoàn hàng về kho. Khoá theo thứ tự id, giống lúc trừ. */
@@ -289,7 +289,7 @@ public class OrderService {
         for (ProductVariant variant : variantLocker.lockAndRefresh(byVariant.keySet())) {
             variant.restock(byVariant.get(variant.getId()));
         }
-        log.info("Da hoan kho cho don {}: {} variant", order.getCode(), byVariant.size());
+        log.info("Đã hoàn kho cho đơn {}: {} variant", order.getCode(), byVariant.size());
     }
 
     private static String eventTypeFor(OrderStatus status) {

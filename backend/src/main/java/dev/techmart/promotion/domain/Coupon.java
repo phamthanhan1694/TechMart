@@ -11,7 +11,7 @@ import java.time.Instant;
  * Mã giảm giá.
  *
  * <p>{@code usedCount} + {@code @Version} tạo ra <b>bài toán đồng thời thứ hai</b> của hệ thống:
- * 50 người cũng dùng một mã còn 1 lượt thì đúng một người được. Dùng lại chính cơ chế khoá
+ * 50 người cùng dùng một mã còn 1 lượt thì đúng một người được. Dùng lại chính cơ chế khoá
  * đã viết cho tồn kho, nên gần như miễn phí về công sức mà vẫn là một câu chuyện kỹ thuật riêng.
  *
  * <p>Mọi phép tính tiền đều bằng {@code BigDecimal} và làm tròn {@code HALF_UP} về 2 chữ số.
@@ -133,7 +133,7 @@ public class Coupon {
     /** Gọi trong transaction đặt hàng, sau khi đã khoá dòng này. */
     public void consume() {
         if (!hasQuotaLeft()) {
-            throw new IllegalStateException("Ma giam gia da het luot");
+            throw new IllegalStateException("Mã giảm giá đã hết lượt");
         }
         this.usedCount++;
     }

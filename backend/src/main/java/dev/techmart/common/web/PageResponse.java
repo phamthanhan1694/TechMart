@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * Cấu trúc phần trang riêng, không trả thang {@code Page} của Spring.
+ * Cấu trúc phân trang riêng, không trả thẳng {@code Page} của Spring.
  *
- * <p>Lý do: Page lo nhiều field thua (pageable, sort, first/last, numberOfElements) va
- * cấu trúc đó không on dinh giữa các ban Spring - trả thang ra API là buoc client
+ * <p>Lý do: Page lộ nhiều field thừa (pageable, sort, first/last, numberOfElements) và
+ * cấu trúc đó không ổn định giữa các bản Spring - trả thẳng ra API là buộc client
  * phụ thuộc vào chi tiết nội bộ của framework.
  */
 public record PageResponse<T>(

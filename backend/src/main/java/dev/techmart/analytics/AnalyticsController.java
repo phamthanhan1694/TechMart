@@ -23,7 +23,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/admin/analytics")
-@Tag(name = "Admin - Thong ke", description = "KPI co so sanh ky truoc, chuoi thoi gian, co cau, pheu, ban do nhiet, xuat CSV")
+@Tag(name = "Admin - Thống kê", description = "KPI có so sánh kỳ trước, chuỗi thời gian, cơ cấu, phễu, bản đồ nhiệt, xuất CSV")
 @PreAuthorize("hasRole('ADMIN')")
 public class AnalyticsController {
 
@@ -36,16 +36,16 @@ public class AnalyticsController {
     }
 
     @GetMapping("/overview")
-    @Operation(summary = "KPI tong quan kem so sanh ky truoc cung do dai",
-            description = "changePercent = null khi ky truoc bang 0 - khong tu bia ra '+100%'.")
+    @Operation(summary = "KPI tổng quan kèm so sánh kỳ trước cùng độ dài",
+            description = "changePercent = null khi kỳ trước bằng 0 - không tự bịa ra '+100%'.")
     public Overview overview(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return service.overview(from, to);
     }
 
     @GetMapping("/timeseries")
-    @Operation(summary = "Chuoi thoi gian day du moc, ke ca moc bang 0",
-            description = "groupBy: day | week (bat dau Thu Hai) | month. Kem chuoi ky truoc de ve duong so sanh.")
+    @Operation(summary = "Chuỗi thời gian đầy đủ mốc, kể cả mốc bằng 0",
+            description = "groupBy: day | week (bắt đầu Thứ Hai) | month. Kèm chuỗi kỳ trước để vẽ đường so sánh.")
     public TimeSeries timeseries(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                  @RequestParam(defaultValue = "day") String groupBy) {
@@ -53,8 +53,8 @@ public class AnalyticsController {
     }
 
     @GetMapping("/breakdown")
-    @Operation(summary = "Co cau doanh so",
-            description = "dimension: category | brand | province. Qua `limit` dong thi phan duoi gop thanh 'Khac'.")
+    @Operation(summary = "Cơ cấu doanh số",
+            description = "dimension: category | brand | province. Qua `limit` dòng thì phần đuôi gộp thành 'Khác'.")
     public Breakdown breakdown(@RequestParam(defaultValue = "category") String dimension,
                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -63,21 +63,21 @@ public class AnalyticsController {
     }
 
     @GetMapping("/funnel")
-    @Operation(summary = "Pheu don hang tu lich su trang thai", description = "Kem trung vi thoi gian thanh toan va giao hang.")
+    @Operation(summary = "Phễu đơn hàng từ lịch sử trạng thái", description = "Kèm trung vị thời gian thanh toán và giao hàng.")
     public Funnel funnel(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return service.funnel(from, to);
     }
 
     @GetMapping("/heatmap")
-    @Operation(summary = "Don theo thu x gio (gio Viet Nam)", description = "Chi tra o co du lieu; client tu dien o trong.")
+    @Operation(summary = "Đơn theo thứ x giờ (giờ Việt Nam)", description = "Chỉ trả ô có dữ liệu; client tự điền ô trống.")
     public Heatmap heatmap(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return service.heatmap(from, to);
     }
 
     @GetMapping("/customers")
-    @Operation(summary = "Khach moi, khach quay lai, khach chi tieu nhieu nhat")
+    @Operation(summary = "Khách mới, khách quay lại, khách chi tiêu nhiều nhất")
     public CustomerStats customers(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                    @RequestParam(defaultValue = "10") int limit) {
@@ -85,37 +85,37 @@ public class AnalyticsController {
     }
 
     @GetMapping("/payments")
-    @Operation(summary = "Thanh toan theo phuong thuc", description = "Ti le thanh cong tinh tren giao dich da co ket qua.")
+    @Operation(summary = "Thanh toán theo phương thức", description = "Tỉ lệ thành công tính trên giao dịch đã có kết quả.")
     public List<PaymentMethodStats> payments(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return service.payments(from, to);
     }
 
     @GetMapping("/coupons")
-    @Operation(summary = "Hieu qua ma giam gia")
+    @Operation(summary = "Hiệu quả mã giảm giá")
     public CouponStats coupons(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return service.coupons(from, to);
     }
 
     @GetMapping("/inventory")
-    @Operation(summary = "Suc khoe ton kho (anh chup hien tai)",
-            description = "Het hang / sap het / on dinh, gia tri ton theo gia ban, hang cham ban trong slowDays ngay.")
+    @Operation(summary = "Sức khoẻ tồn kho (ảnh chụp hiện tại)",
+            description = "Hết hàng / sắp hết / ổn định, giá trị tồn theo giá bán, hàng chậm bán trong slowDays ngày.")
     public InventoryStats inventory(@RequestParam(defaultValue = "10") int lowThreshold,
                                     @RequestParam(defaultValue = "30") int slowDays) {
         return service.inventory(lowThreshold, slowDays);
     }
 
     @GetMapping("/reviews")
-    @Operation(summary = "Phan bo danh gia va san pham bi cham thap nhat (toi thieu 3 luot)")
+    @Operation(summary = "Phân bố đánh giá và sản phẩm bị chấm thấp nhất (tối thiểu 3 lượt)")
     public ReviewStats reviews(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return service.reviews(from, to);
     }
 
     @GetMapping("/export/orders.csv")
-    @Operation(summary = "Xuat don hang ra CSV",
-            description = "Stream tung dong, UTF-8 co BOM cho Excel. Qua 100.000 dong tra 422 EXPORT_TOO_LARGE. Moi lan xuat duoc ghi audit log.")
+    @Operation(summary = "Xuất đơn hàng ra CSV",
+            description = "Stream từng dòng, UTF-8 có BOM cho Excel. Qua 100.000 dòng trả 422 EXPORT_TOO_LARGE. Mỗi lần xuất được ghi audit log.")
     public void exportOrders(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                              @RequestParam(required = false) OrderStatus status,

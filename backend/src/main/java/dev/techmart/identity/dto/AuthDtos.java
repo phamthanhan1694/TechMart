@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 
-/** DTO của module identity. Gom vào một file vì deu nho và luon doc cũng nhau. */
+/** DTO của module identity. Gom vào một file vì đều nhỏ và luôn đọc cùng nhau. */
 public final class AuthDtos {
 
     private AuthDtos() {
@@ -21,12 +21,12 @@ public final class AuthDtos {
             @Schema(example = "nguyenvana@example.com") String email,
 
             @NotBlank @Size(min = 8, max = 72)
-            @Schema(example = "MatKhau@123", description = "Toi thieu 8 ky tu") String password,
+            @Schema(example = "MatKhau@123", description = "Tối thiểu 8 ký tự") String password,
 
             @NotBlank @Size(max = 150)
-            @Schema(example = "Nguyen Van A") String fullName,
+            @Schema(example = "Nguyễn Văn A") String fullName,
 
-            @Pattern(regexp = "^$|^0\\d{9}$", message = "So dien thoai phai co 10 chu so va bat dau bang 0")
+            @Pattern(regexp = "^$|^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt dau bằng 0")
             @Schema(example = "0901234567") String phone
     ) {}
 
@@ -37,12 +37,12 @@ public final class AuthDtos {
 
     public record RefreshRequest(@NotBlank String refreshToken) {}
 
-    @Schema(description = "Cap token. refreshToken chi hien thi mot lan duy nhat.")
+    @Schema(description = "Cặp token. refreshToken chỉ hiển thị một lần duy nhất.")
     public record TokenResponse(
             String accessToken,
             String refreshToken,
             @Schema(example = "Bearer") String tokenType,
-            @Schema(example = "900", description = "So giay con lai cua accessToken") long expiresIn
+            @Schema(example = "900", description = "Số giây còn lại của accessToken") long expiresIn
     ) {
         public static TokenResponse of(String access, String refresh, long ttlSeconds) {
             return new TokenResponse(access, refresh, "Bearer", ttlSeconds);

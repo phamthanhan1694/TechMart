@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/orders")
-@Tag(name = "Order", description = "Dat hang, xem don, huy don")
+@Tag(name = "Order", description = "Đặt hàng, xem đơn, huỷ đơn")
 public class OrderController {
 
     private final OrderService orderService;
@@ -34,17 +34,17 @@ public class OrderController {
 
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Dat hang tu phien checkout",
+    @Operation(summary = "Đặt hàng từ phiên checkout",
             description = """
-                    **Bat buoc** header `Idempotency-Key` (UUID do client sinh).
-                    Goi lai cung key se tra ve dung don da tao, khong tao don thu hai.
+                    **Bắt buộc** header `Idempotency-Key` (UUID do client sinh).
+                    Gọi lại cùng key sẽ trả về đúng đơn đã tạo, không tạo đơn thứ hai.
 
-                    Toan bo chay trong mot transaction: chot hang da giu -> tru ton kho ->
-                    tao don kem snapshot ten/SKU/gia -> don gio hang -> ghi outbox.
+                    Toàn bộ chạy trong một transaction: chốt hàng đã giữ -> trừ tồn kho ->
+                    tạo đơn kèm snapshot tên/SKU/giá -> dọn giỏ hàng -> ghi outbox.
                     """)
     public ResponseEntity<OrderResponse> place(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Parameter(description = "UUID do client sinh, bat buoc", required = true)
+            @Parameter(description = "UUID do client sinh, bắt buộc", required = true)
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody PlaceOrderRequest req) {
 
@@ -55,7 +55,7 @@ public class OrderController {
 
     @GetMapping
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Danh sach don cua chinh minh")
+    @Operation(summary = "Danh sách đơn của chính mình")
     public PageResponse<OrderSummaryResponse> myOrders(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -63,22 +63,22 @@ public class OrderController {
     }
 
     @GetMapping("/{code}")
-    @Operation(summary = "Chi tiet don theo ma",
-            description = "Khach chi xem duoc don cua minh; don cua nguoi khac tra 404 (khong phai 403).")
+    @Operation(summary = "Chi tiết đơn theo mã",
+            description = "Khách chỉ xem được đơn của mình; đơn của người khác trả 404 (không phải 403).")
     public OrderResponse get(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable String code) {
         return orderService.getByCode(code, principal);
     }
 
     @GetMapping("/{code}/history")
-    @Operation(summary = "Lich su doi trang thai cua don")
+    @Operation(summary = "Lịch sử đổi trạng thái của đơn")
     public List<StatusHistoryResponse> history(@AuthenticationPrincipal AuthPrincipal principal,
                                                @PathVariable String code) {
         return orderService.getHistory(code, principal);
     }
 
     @PostMapping("/{code}/cancel")
-    @Operation(summary = "Huy don",
-            description = "Idempotent: huy mot don da huy tra 200 va KHONG hoan kho lan hai.")
+    @Operation(summary = "Huỷ đơn",
+            description = "Idempotent: huỷ một đơn đã huỷ trả 200 và KHÔNG hoàn kho lần hai.")
     public OrderResponse cancel(@AuthenticationPrincipal AuthPrincipal principal,
                                 @PathVariable String code,
                                 @RequestBody(required = false) @Valid CancelOrderRequest req) {
@@ -88,7 +88,7 @@ public class OrderController {
     private void requireIdempotencyKey(String key) {
         if (key == null || key.isBlank()) {
             throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_REQUIRED,
-                    "Thieu header Idempotency-Key. Client phai sinh mot UUID cho moi lan dat hang.");
+                    "Thiếu header Idempotency-Key. Client phải sinh một UUID cho mỗi lần đặt hàng.");
         }
     }
 }

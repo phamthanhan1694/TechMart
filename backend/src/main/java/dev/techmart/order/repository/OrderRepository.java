@@ -16,9 +16,9 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
-     * Danh sach đơn của user.
+     * Danh sách đơn của user.
      *
-     * <p>{@code @EntityGraph} nạp kèm items trong cùng một query. Không có no thì
+     * <p>{@code @EntityGraph} nạp kèm items trong cùng một query. Không có nó thì
      * 20 đơn = 21 query - đây là chỗ N+1 kinh điển nhất của mọi hệ thống e-commerce.
      */
     @EntityGraph(attributePaths = {"items"})
@@ -27,7 +27,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = {"items"})
     Optional<Order> findByCode(String code);
 
-    /** Duong nhanh của idempotency; chốt chặn thật su là UNIQUE(idempotency_key) o DB. */
+    /** Đường nhanh của idempotency; chốt chặn thật sự là UNIQUE(idempotency_key) ở DB. */
     @EntityGraph(attributePaths = {"items"})
     Optional<Order> findByIdempotencyKey(String idempotencyKey);
 

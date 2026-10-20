@@ -24,7 +24,7 @@ public final class OrderDtos {
 
     public record ShippingAddress(
             @NotBlank @Size(max = 150) String receiverName,
-            @NotBlank @Pattern(regexp = "^0\\d{9}$", message = "So dien thoai phai co 10 chu so") String phone,
+            @NotBlank @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số") String phone,
             @NotBlank @Size(max = 255) String street,
             @NotBlank @Size(max = 100) String ward,
             @NotBlank @Size(max = 100) String district,
@@ -43,11 +43,11 @@ public final class OrderDtos {
     }
 
     public record PlaceOrderRequest(
-            @NotBlank @Schema(description = "sessionId lay tu POST /api/v1/checkout/sessions")
+            @NotBlank @Schema(description = "sessionId lấy từ POST /api/v1/checkout/sessions")
             String sessionId,
             @NotNull @Valid ShippingAddress shippingAddress,
             @Size(max = 500) String note,
-            @Schema(description = "Ma giam gia, khong bat buoc") String couponCode
+            @Schema(description = "Mã giảm giá, không bắt buộc") String couponCode
     ) {}
 
     public record CancelOrderRequest(@Size(max = 500) String reason) {}

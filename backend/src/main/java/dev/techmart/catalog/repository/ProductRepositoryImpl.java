@@ -23,7 +23,7 @@ import java.util.Set;
  *
  * <p><b>Vì sao native chứ không Criteria API:</b> bộ lọc chạy trên cột JSONB
  * ({@code spec @> '{"ram":"16GB"}'}) để dùng được GIN index. Criteria API không diễn đạt
- * được toán tử {@code @>} mà không dạng ký hàm tuỳ biến, và làm vòng qua sẽ mất index.
+ * được toán tử {@code @>} mà không đăng ký hàm tuỳ biến, và làm vòng qua sẽ mất index.
  *
  * <p><b>Chống SQL injection:</b> mọi giá trị đều đi qua tham số ràng buộc; riêng tên cột
  * sắp xếp không thể tham số hoá nên phải whitelist - xem {@link #SORT_COLUMNS}.
@@ -129,7 +129,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         try {
             return objectMapper.writeValueAsString(spec);
         } catch (JacksonException e) {   // Jackson 3: ngoại lệ không còn là checked exception
-            throw new IllegalArgumentException("Khong the chuyen bo loc spec sang JSON", e);
+            throw new IllegalArgumentException("Không thể chuyển bộ lọc spec sang JSON", e);
         }
     }
 

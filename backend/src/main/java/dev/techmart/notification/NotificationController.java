@@ -14,7 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
-@Tag(name = "Notification", description = "Thong bao trong ung dung, sinh tu outbox. Client polling unread-count.")
+@Tag(name = "Notification", description = "Thông báo trong ứng dụng, sinh từ outbox. Client polling unread-count.")
 public class NotificationController {
 
     private final NotificationService service;
@@ -24,7 +24,7 @@ public class NotificationController {
     }
 
     @GetMapping
-    @Operation(summary = "Thong bao cua toi", description = "Moi nhat dung dau.")
+    @Operation(summary = "Thông báo của tôi", description = "Mới nhất đứng đầu.")
     public PageResponse<NotificationResponse> list(@AuthenticationPrincipal AuthPrincipal principal,
                                                    @RequestParam(defaultValue = "0") int page,
                                                    @RequestParam(defaultValue = "10") int size) {
@@ -33,21 +33,21 @@ public class NotificationController {
     }
 
     @GetMapping("/unread-count")
-    @Operation(summary = "So thong bao chua doc",
-            description = "Endpoint duoc polling dinh ky - chay tren partial index WHERE read_at IS NULL.")
+    @Operation(summary = "Số thông báo chưa đọc",
+            description = "Endpoint được polling định kỳ - chạy trên partial index WHERE read_at IS NULL.")
     public Map<String, Long> unreadCount(@AuthenticationPrincipal AuthPrincipal principal) {
         return Map.of("count", service.unreadCount(principal.id()));
     }
 
     @PostMapping("/{id}/read")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Danh dau da doc")
+    @Operation(summary = "Đánh dấu đã đọc")
     public void markRead(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long id) {
         service.markRead(principal.id(), id);
     }
 
     @PostMapping("/read-all")
-    @Operation(summary = "Danh dau tat ca da doc")
+    @Operation(summary = "Đánh dấu tất cả đã đọc")
     public Map<String, Integer> markAllRead(@AuthenticationPrincipal AuthPrincipal principal) {
         return Map.of("updated", service.markAllRead(principal.id()));
     }

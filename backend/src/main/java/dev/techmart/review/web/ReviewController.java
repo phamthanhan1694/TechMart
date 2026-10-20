@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Review", description = "Danh gia san pham - chi nguoi da mua va da nhan hang")
+@Tag(name = "Review", description = "Đánh giá sản phẩm - chỉ người đã mua và đã nhận hàng")
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -30,7 +30,7 @@ public class ReviewController {
 
     @GetMapping("/products/{productId}/reviews")
     @SecurityRequirements
-    @Operation(summary = "Danh gia cua mot san pham")
+    @Operation(summary = "Đánh giá của một sản phẩm")
     public PageResponse<ReviewResponse> byProduct(@PathVariable Long productId,
                                                   @PageableDefault(size = 20) Pageable pageable) {
         return reviewService.findByProduct(productId, PageableSanitizer.sanitize(pageable));
@@ -38,21 +38,21 @@ public class ReviewController {
 
     @GetMapping("/products/{productId}/reviews/summary")
     @SecurityRequirements
-    @Operation(summary = "Diem trung binh va phan bo so sao",
-            description = "Tinh bang query GROUP BY o DB, khong nap het danh gia ve ung dung.")
+    @Operation(summary = "Điểm trung bình và phân bố số sao",
+            description = "Tính bằng query GROUP BY ở DB, không nạp hết đánh giá về ứng dụng.")
     public RatingSummary summary(@PathVariable Long productId) {
         return reviewService.summaryFor(productId);
     }
 
     @PostMapping("/reviews")
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Viet danh gia",
+    @Operation(summary = "Viết đánh giá",
             description = """
-                    Chi danh gia duoc dong don hang **thuoc ve minh** va don da **DELIVERED**.
-                    Moi dong don chi danh gia mot lan - dam bao boi UNIQUE(order_item_id) o DB,
-                    khong chi bang cau kiem trong code.
+                    Chỉ đánh giá được dòng đơn hàng **thuộc về mình** và đơn đã **DELIVERED**.
+                    Mỗi dòng đơn chỉ đánh giá một lần - đảm bảo bởi UNIQUE(order_item_id) ở DB,
+                    không chỉ bằng câu kiểm trong code.
 
-                    Mua lai lan sau thi danh gia lai duoc, vi do la mot lan mua khac.
+                    Mua lại lần sau thì đánh giá lại được, vì đó là một lần mua khác.
                     """)
     public ResponseEntity<ReviewResponse> create(@AuthenticationPrincipal AuthPrincipal principal,
                                                  @Valid @RequestBody CreateReviewRequest req) {
@@ -61,7 +61,7 @@ public class ReviewController {
 
     @PutMapping("/reviews/{id}")
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
-    @Operation(summary = "Sua danh gia cua minh")
+    @Operation(summary = "Sửa đánh giá của mình")
     public ReviewResponse update(@AuthenticationPrincipal AuthPrincipal principal,
                                  @PathVariable Long id,
                                  @Valid @RequestBody UpdateReviewRequest req) {
@@ -70,7 +70,7 @@ public class ReviewController {
 
     @DeleteMapping("/reviews/{id}")
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
-    @Operation(summary = "Xoa danh gia", description = "Chu danh gia hoac ADMIN. Cua nguoi khac tra 404.")
+    @Operation(summary = "Xoá đánh giá", description = "Chủ đánh giá hoặc ADMIN. Của người khác trả 404.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long id) {
         reviewService.delete(principal, id);

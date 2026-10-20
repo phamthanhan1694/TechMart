@@ -27,7 +27,7 @@ public final class FlashSaleDtos {
             BigDecimal salePrice,
             int discountPercent,
             int saleQuantity,
-            @Schema(description = "Doc tu Redis khi phien dang chay, tu DB khi da ket thuc")
+            @Schema(description = "Đọc từ Redis khi phiên đang chạy, từ DB khi đã kết thúc")
             int remaining,
             int perUserLimit
     ) {}

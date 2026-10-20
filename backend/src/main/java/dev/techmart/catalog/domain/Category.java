@@ -16,7 +16,7 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String slug;
 
-    /** Phan cấp một cap: Dien thoai -> Flagship / Tam trung / Pho thong. */
+    /** Phân cấp một cấp: Điện thoại -> Flagship / Tầm trung / Phổ thông. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Category parent;

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/checkout")
-@Tag(name = "Checkout", description = "Giu hang tam thoi truoc khi thanh toan")
+@Tag(name = "Checkout", description = "Giữ hàng tạm thời trước khi thanh toán")
 @PreAuthorize("hasRole('CUSTOMER')")
 public class CheckoutController {
 
@@ -24,29 +24,29 @@ public class CheckoutController {
     }
 
     @PostMapping("/sessions")
-    @Operation(summary = "Bat dau checkout va giu hang 10 phut",
+    @Operation(summary = "Bắt đầu checkout và giữ hàng 10 phút",
             description = """
-                    Giu toan bo gio hang. Sau khi goi, `availableQuantity` ma nguoi khac thay
-                    se giam ngay, nhung `stockQuantity` chua doi - hang moi bi giu, chua bi tru.
+                    Giữ toàn bộ giỏ hàng. Sau khi gọi, `availableQuantity` mà người khác thấy
+                    sẽ giảm ngay, nhưng `stockQuantity` chưa đổi - hàng mới bị giữ, chưa bị trừ.
 
-                    Thieu hang tra 409 INSUFFICIENT_STOCK kem `details` liet ke TUNG variant
-                    thieu bao nhieu, de client hien thi chinh xac.
+                    Thiếu hàng trả 409 INSUFFICIENT_STOCK kèm `details` liệt kê TỪNG variant
+                    thiếu bao nhiêu, để client hiển thị chính xác.
 
-                    Het 10 phut ma chua goi POST /orders thi hang tu dong duoc nha.
+                    Hết 10 phút mà chưa gọi POST /orders thì hàng tự động được nhả.
                     """)
     public ResponseEntity<CheckoutSessionResponse> create(@AuthenticationPrincipal AuthPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED).body(reservationService.hold(principal.id()));
     }
 
     @GetMapping("/sessions/{sessionId}")
-    @Operation(summary = "Xem phien checkout", description = "Kem so giay con lai truoc khi het han.")
+    @Operation(summary = "Xem phiên checkout", description = "Kèm số giây còn lại trước khi hết hạn.")
     public CheckoutSessionResponse get(@AuthenticationPrincipal AuthPrincipal principal,
                                        @PathVariable String sessionId) {
         return reservationService.getSession(principal.id(), sessionId);
     }
 
     @DeleteMapping("/sessions/{sessionId}")
-    @Operation(summary = "Huy phien checkout", description = "Nha hang ngay lap tuc, khong cho het han.")
+    @Operation(summary = "Huỷ phiên checkout", description = "Nhả hàng ngay lập tức, không chờ hết hạn.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancel(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable String sessionId) {
         reservationService.cancel(principal.id(), sessionId);

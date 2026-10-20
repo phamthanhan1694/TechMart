@@ -17,15 +17,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Nha hàng của các phiên giữ hàng da quá hạn.
+ * Nhả hàng của các phiên giữ hàng đã quá hạn.
  *
- * <p>Đây là có che <b>báo dam</b> của toàn bộ tinh nang giữ hàng: Redis có thể chet,
+ * <p>Đây là cơ chế <b>bảo đảm</b> của toàn bộ tính năng giữ hàng: Redis có thể chết,
  * app có thể restart giữa chừng, nhưng chừng nào DB còn thì hàng vẫn được nhả đúng.
- * Đổi lai là đó tre tối đa 30 giây - chap nhận được, vì hàng nha muon 30 giây không hai ai
- * con hàng ket vinh vien thì có (ADR-0004).
+ * Đổi lại là độ trễ tối đa 30 giây - chấp nhận được, vì hàng nhả muộn 30 giây không hại ai
+ * còn hàng kẹt vĩnh viễn thì có (ADR-0004).
  *
- * <p>Quet theo lo có giới hạn. Thao tac nhả hàng phải idempotent: điều kiện
- * {@code status = HELD} được kiểm lai ngay trước khi đổi, nên job chay chống vẫn đúng.
+ * <p>Quét theo lô có giới hạn. Thao tác nhả hàng phải idempotent: điều kiện
+ * {@code status = HELD} được kiểm lại ngay trước khi đổi, nên job chạy chồng vẫn đúng.
  */
 @Component
 public class ReservationExpiryJob {
@@ -47,25 +47,25 @@ public class ReservationExpiryJob {
     }
 
     /**
-     * <b>Chú ý {@code @Transactional} ở đây.</b> Trước đó method này không có annotation va
-     * gọi sang {@code releaseExpiredBatch()} trong CUNG một class - Spring AOP hoạt động qua
-     * proxy, nên gọi nội bộ không di qua proxy và {@code @Transactional} của method được gọi
-     * bi bỏ qua hoan toan. Kết quả: job ném TransactionRequiredException mỗi 30 giây.
+     * <b>Chú ý {@code @Transactional} ở đây.</b> Trước đó method này không có annotation và
+     * gọi sang {@code releaseExpiredBatch()} trong CÙNG một class - Spring AOP hoạt động qua
+     * proxy, nên gọi nội bộ không đi qua proxy và {@code @Transactional} của method được gọi
+     * bị bỏ qua hoàn toàn. Kết quả: job ném TransactionRequiredException mỗi 30 giây.
      *
-     * <p>Đây là bay kinh điển của Spring, và là thu chỉ lo ra khi chay thật chứ không phải
-     * khi doc code. Đặt annotation ở đây thì transaction mo từ vong ngoai, lỗi gọi ben trong
-     * chỉ đơn gián tham gia vào nó.
+     * <p>Đây là bẫy kinh điển của Spring, và là thứ chỉ lộ ra khi chạy thật chứ không phải
+     * khi đọc code. Đặt annotation ở đây thì transaction mở từ vòng ngoài, lời gọi bên trong
+     * chỉ đơn giản tham gia vào nó.
      */
     @Scheduled(fixedDelayString = "PT30S", initialDelayString = "PT10S")
     @Transactional
     public void releaseExpired() {
         int released = releaseExpiredBatch();
         if (released > 0) {
-            log.info("Da nha {} ban ghi giu hang qua han", released);
+            log.info("Đã nhả {} bản ghi giữ hàng quá hạn", released);
         }
     }
 
-    /** Public để test gọi truc tiep (gọi từ ngoai vào thì proxy hoạt động binh thuong). */
+    /** Public để test gọi trực tiếp (gọi từ ngoài vào thì proxy hoạt động bình thường). */
     @Transactional
     public int releaseExpiredBatch() {
         List<InventoryReservation> expired = reservations.findExpiredBatch(
@@ -74,11 +74,11 @@ public class ReservationExpiryJob {
             return 0;
         }
 
-        // Gom theo variant trước, rồi khoá một lan theo thứ tự id - giống hệt luồng giữ hàng.
-        // Không được cham vào r.getVariant() trước khi khoá (xem VariantLocker).
+        // Gom theo variant trước, rồi khoá một lần theo thứ tự id - giống hệt luồng giữ hàng.
+        // Không được chạm vào r.getVariant() trước khi khoá (xem VariantLocker).
         Map<Long, Integer> byVariant = new LinkedHashMap<>();
         for (InventoryReservation r : expired) {
-            // Kiểm lai trạng thái: một transaction khác có thể vua commit no thanh đơn hàng
+            // Kiểm lại trạng thái: một transaction khác có thể vừa commit nó thành đơn hàng
             if (r.isHeld()) {
                 byVariant.merge(r.getVariant().getId(), r.getQuantity(), Integer::sum);
             }

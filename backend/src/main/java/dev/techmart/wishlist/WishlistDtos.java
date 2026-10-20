@@ -18,7 +18,7 @@ public final class WishlistDtos {
             String brandName,
             BigDecimal minPrice,
             int availableQuantity,
-            @Schema(description = "false khi san pham da ngung ban (xoa mem hoac khong con ACTIVE)")
+            @Schema(description = "false khi sản phẩm đã ngừng bán (xoá mềm hoặc không còn ACTIVE)")
             boolean purchasable,
             Instant addedAt
     ) {}

@@ -26,16 +26,16 @@ public final class WarrantyDtos {
     public record BulkSerialResponse(
             int imported,
             int skippedDuplicates,
-            @Schema(description = "Serial bi bo qua vi da ton tai") List<String> duplicates
+            @Schema(description = "Serial bị bỏ qua vì đã tồn tại") List<String> duplicates
     ) {}
 
-    @Schema(description = "Ket qua tra cuu bao hanh - endpoint cong khai, khong can dang nhap")
+    @Schema(description = "Kết quả tra cứu bảo hành - endpoint công khai, không cần đăng nhập")
     public record WarrantyLookupResponse(
             String serialNo,
             String productName,
             String variantName,
             SerialStatus status,
-            @Schema(description = "null neu hang chua xuat kho") Instant activatedAt,
+            @Schema(description = "null nếu hàng chưa xuất kho") Instant activatedAt,
             Instant expiresAt,
             boolean underWarranty,
             int warrantyMonths,
@@ -45,11 +45,11 @@ public final class WarrantyDtos {
             boolean active = s.isUnderWarranty(now);
             String message;
             if (s.getActivatedAt() == null) {
-                message = "Serial hop le nhung hang chua duoc ban ra";
+                message = "Serial hợp lệ nhưng hàng chưa được bán ra";
             } else if (active) {
-                message = "Con bao hanh";
+                message = "Còn bảo hành";
             } else {
-                message = "Da het han bao hanh";
+                message = "Đã hết hạn bảo hành";
             }
             return new WarrantyLookupResponse(
                     s.getSerialNo(), s.getVariant().getProduct().getName(), s.getVariant().getName(),

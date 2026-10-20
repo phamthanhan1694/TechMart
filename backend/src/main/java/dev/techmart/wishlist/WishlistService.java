@@ -82,7 +82,7 @@ public class WishlistService {
                     SELECT EXISTS (SELECT 1 FROM wishlist_items WHERE user_id = :userId AND product_id = :productId)
                     """, Map.of("userId", userId, "productId", productId), Boolean.class));
             if (!alreadyThere) {
-                throw new BusinessException(ErrorCode.WISHLIST_LIMIT_EXCEEDED, "Toi da " + MAX_ITEMS + " san pham");
+                throw new BusinessException(ErrorCode.WISHLIST_LIMIT_EXCEEDED, "Tối đa " + MAX_ITEMS + " sản phẩm");
             }
             return;
         }

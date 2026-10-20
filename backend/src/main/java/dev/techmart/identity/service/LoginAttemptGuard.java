@@ -29,7 +29,7 @@ import java.util.Map;
  * <p><b>Đánh đổi lớn nhất:</b> kẻ xấu biết email của nạn nhân có thể cố tình gõ sai để khoá
  * họ (từ chối dịch vụ nhắm vào một người). Giảm nhẹ bằng cách chỉ khoá <i>tạm thời</i>
  * (15 phút) chứ không khoá vĩnh viễn, và admin gỡ khoá được ngay. Giải pháp triệt để hơn là
- * CAPTCHA sau vài lần sai - cần dịch vụ bên ngoài, nằm ngoài phạm vì.
+ * CAPTCHA sau vài lần sai - cần dịch vụ bên ngoài, nằm ngoài phạm vi.
  *
  * <p><b>Email không tồn tại cũng bị đếm và bị khoá y hệt.</b> Nếu chỉ khoá email có thật thì
  * thông báo "tài khoản bị khoá" trở thành cách dò xem email nào đã đăng ký.
@@ -72,11 +72,11 @@ public class LoginAttemptGuard {
                     String.valueOf(config.maxAttempts()),
                     String.valueOf(config.lockDuration().toMillis()));
             if (result != null && result == -1L) {
-                log.warn("Khoa dang nhap tam thoi {} sau {} lan sai", maskEmail(email), config.maxAttempts());
+                log.warn("Khoá đăng nhập tạm thời {} sau {} lần sai", maskEmail(email), config.maxAttempts());
                 throw locked(config.lockDuration());
             }
         } catch (DataAccessException e) {
-            log.warn("Redis khong kha dung, bo qua dem lan dang nhap sai (fail-open): {}", e.getMessage());
+            log.warn("Redis không khả dụng, bỏ qua đếm lần đăng nhập sai (fail-open): {}", e.getMessage());
         }
     }
 
@@ -85,7 +85,7 @@ public class LoginAttemptGuard {
         try {
             redis.delete(failKey(email));
         } catch (DataAccessException e) {
-            log.warn("Redis khong kha dung, khong xoa duoc bo dem dang nhap: {}", e.getMessage());
+            log.warn("Redis không khả dụng, không xoá được bộ đếm đăng nhập: {}", e.getMessage());
         }
     }
 
@@ -104,7 +104,7 @@ public class LoginAttemptGuard {
             Long ttl = redis.getExpire(lockKey(email), java.util.concurrent.TimeUnit.MILLISECONDS);
             return ttl != null && ttl > 0 ? Duration.ofMillis(ttl) : Duration.ZERO;
         } catch (DataAccessException e) {
-            log.warn("Redis khong kha dung, bo qua kiem tra khoa dang nhap (fail-open): {}", e.getMessage());
+            log.warn("Redis không khả dụng, bỏ qua kiểm tra khoá đăng nhập (fail-open): {}", e.getMessage());
             return Duration.ZERO;
         }
     }
@@ -112,7 +112,7 @@ public class LoginAttemptGuard {
     private static BusinessException locked(Duration remaining) {
         long seconds = Math.max(1, (remaining.toMillis() + 999) / 1000);
         return new BusinessException(ErrorCode.LOGIN_TEMPORARILY_LOCKED,
-                "Dang nhap sai qua nhieu lan, thu lai sau " + Math.max(1, (seconds + 59) / 60) + " phut",
+                "Đăng nhập sai quá nhiều lần, thử lại sau " + Math.max(1, (seconds + 59) / 60) + " phut",
                 Map.of("retryAfterSeconds", seconds));
     }
 
@@ -130,7 +130,7 @@ public class LoginAttemptGuard {
                     .digest(email.trim().toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash, 0, 16);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("JVM thieu SHA-256", e);
+            throw new IllegalStateException("JVM thiếu SHA-256", e);
         }
     }
 

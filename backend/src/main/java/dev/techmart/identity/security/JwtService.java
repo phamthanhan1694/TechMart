@@ -24,14 +24,14 @@ import java.util.Date;
 import java.util.HexFormat;
 
 /**
- * Sinh và xac thực token.
+ * Sinh và xác thực token.
  *
- * <p><b>Access token</b> là JWT ky HS256, song 15 phút. Ngan vì JWT không thu hồi được -
- * ai cam được là dùng được cho tới khi hết hạn, nên rút ngắn tuổi thọ là cach duy nhất
- * giới hạn thiet hai.
+ * <p><b>Access token</b> là JWT ký HS256, sống 15 phút. Ngắn vì JWT không thu hồi được -
+ * ai cầm được là dùng được cho tới khi hết hạn, nên rút ngắn tuổi thọ là cách duy nhất
+ * giới hạn thiệt hại.
  *
- * <p><b>Refresh token</b> KHÔNG phải JWT mà là chuỗi ngau nhien 256 bit, luu hash SHA-256
- * trong DB. Lý do: refresh token phải thu hồi được, mà muốn thu hồi thì phải trả DB -
+ * <p><b>Refresh token</b> KHÔNG phải JWT mà là chuỗi ngẫu nhiên 256 bit, lưu hash SHA-256
+ * trong DB. Lý do: refresh token phải thu hồi được, mà muốn thu hồi thì phải tra DB -
  * lúc đó dùng JWT không còn lợi ích gì mà còn thêm bề mặt tấn công.
  */
 @Service
@@ -51,7 +51,7 @@ public class JwtService {
         byte[] secret = props.jwt().secret().getBytes(StandardCharsets.UTF_8);
         if (secret.length < 32) {
             throw new IllegalStateException(
-                    "app.jwt.secret phai dai toi thieu 32 byte cho HS256. Sinh moi: openssl rand -base64 48");
+                    "app.jwt.secret phải dài tối thiểu 32 byte cho HS256. Sinh mới: openssl rand -base64 48");
         }
         this.key = Keys.hmacShaKeyFor(secret);
     }
@@ -70,8 +70,8 @@ public class JwtService {
     }
 
     /**
-     * Doc token và dùng danh tinh người gọi.
-     * Chi chap nhận HS256 và dùng issuer - từ choi token từ khai thuat toan khac.
+     * Đọc token và dựng danh tính người gọi.
+     * Chỉ chấp nhận HS256 và đúng issuer - từ chối token tự khai thuật toán khác.
      */
     public AuthPrincipal parseAccessToken(String token) {
         try {
@@ -95,20 +95,20 @@ public class JwtService {
         }
     }
 
-    /** Chuỗi ngẫu nhiên 256 bit, chỉ trả về cho client một lan duy nhất. */
+    /** Chuỗi ngẫu nhiên 256 bit, chỉ trả về cho client một lần duy nhất. */
     public String generateRefreshTokenValue() {
         byte[] bytes = new byte[REFRESH_TOKEN_BYTES];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    /** SHA-256 (không phải BCrypt): token da là ngau nhien 256 bit nên không cần làm cham. */
+    /** SHA-256 (không phải BCrypt): token đã là ngẫu nhiên 256 bit nên không cần làm chậm. */
     public String hashRefreshToken(String raw) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(raw.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 phai co san tren moi JVM", e);
+            throw new IllegalStateException("SHA-256 phải có sẵn trên mọi JVM", e);
         }
     }
 

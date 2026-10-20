@@ -8,12 +8,12 @@ import java.math.BigDecimal;
 /**
  * Một dòng trong đơn hàng.
  *
- * <p><b>Snapshot đây du</b>: ten sản phẩm, ten phiên ban, SKU và đơn giá deu được chep lai
- * tai thời điểm đặt hàng. Không tham chieu sang {@code products} để lấy ten hay giá:
- * sản phẩm có thể đổi ten, đổi giá, hoac bi xoá mềm sau nay, nhưng hoá đơn cũ phải in được
- * y nguyen. Đây là nguyen tac "đơn hàng là bản ghi lich su bất biến".
+ * <p><b>Snapshot đầy đủ</b>: tên sản phẩm, tên phiên bản, SKU và đơn giá đều được chép lại
+ * tại thời điểm đặt hàng. Không tham chiếu sang {@code products} để lấy tên hay giá:
+ * sản phẩm có thể đổi tên, đổi giá, hoặc bị xoá mềm sau này, nhưng hoá đơn cũ phải in được
+ * y nguyen. Đây là nguyen tac "đơn hàng là bản ghi lịch sử bất biến".
  *
- * <p>{@code variant} van được giữ để hoàn kho khi huỷ đơn và để thong ke ban hàng.
+ * <p>{@code variant} vẫn được giữ để hoàn kho khi huỷ đơn và để thống kê bán hàng.
  */
 @Entity
 @Table(name = "order_items")
@@ -58,12 +58,12 @@ public class OrderItem {
 
     /**
      * Dùng khi giá bán khác giả niem yet của variant - vd giá flash sale.
-     * Vẫn là snapshot: đơn cũ giữ nguyen giả đã bán, không doc nguoc từ variant.
+     * Vẫn là snapshot: đơn cũ giữ nguyen giả đã bán, không đọc ngược từ variant.
      */
     public OrderItem(ProductVariant variant, int quantity, BigDecimal unitPrice) {
         this.variant = variant;
         this.quantity = quantity;
-        // Chep lai tại đây - không bao giờ doc nguoc từ variant khi hiển thị đơn cũ
+        // Chép lại tại đây - không bao giờ đọc ngược từ variant khi hiển thị đơn cũ
         this.productName = variant.getProduct().getName();
         this.variantName = variant.getName();
         this.sku = variant.getSku();

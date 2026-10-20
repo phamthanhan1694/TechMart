@@ -14,15 +14,15 @@ import java.util.List;
  * Token bucket dùng chung trên Redis.
  *
  * <p><b>Vì sao không đếm trong bộ nhớ JVM:</b> biến đếm đó chỉ sống trong một instance.
- * Deploy hai instance là giới hạn bi nhân đôi ngay. Trạng thái rate limit phải nằm ở tầng
- * dùng chung - cùng một lý do khien {@code synchronized} vo dùng khi chống oversell.
+ * Deploy hai instance là giới hạn bị nhân đôi ngay. Trạng thái rate limit phải nằm ở tầng
+ * dùng chung - cùng một lý do khiến {@code synchronized} vô dụng khi chống oversell.
  *
  * <p><b>Fail-open khi Redis chết.</b> Chặn nhầm toàn bộ người dùng thật tệ hơn nhiều so với
- * tam thoi mat kha nang chống bot. Nguoc với flash sale (fail-closed) - xem
+ * tạm thời mất khả năng chống bot. Ngược với flash sale (fail-closed) - xem
  * {@code docs/04-error-catalog.md} mục 9.
  *
- * <p>Viet bằng Lua thay vì dùng thư viện (Bucket4j) vì flash sale da cần dùng có che
- * Redis + Lua này rồi: một khai niem cho cả hai tinh nang, và không thêm phụ thuộc.
+ * <p>Viết bằng Lua thay vì dùng thư viện (Bucket4j) vì flash sale đã cần dùng cơ chế
+ * Redis + Lua này rồi: một khái niệm cho cả hai tính năng, và không thêm phụ thuộc.
  */
 @Component
 public class RateLimiter {
@@ -42,9 +42,9 @@ public class RateLimiter {
     }
 
     /**
-     * @param key      dinh danh gầu, vd {@code rl:login:203.0.113.7}
-     * @param capacity so request tối đa trong một dot dồn
-     * @param perMinute số token nạp lại mọi phút
+     * @param key      định danh gầu, vd {@code rl:login:203.0.113.7}
+     * @param capacity số request tối đa trong một đợt dồn
+     * @param perMinute số token nạp lại mỗi phút
      */
     public Decision check(String key, int capacity, int perMinute) {
         double refillPerSecond = perMinute / 60.0;
@@ -65,8 +65,8 @@ public class RateLimiter {
             return new Decision(allowed, capacity, remaining, retryAfterMillis);
 
         } catch (DataAccessException e) {
-            // Fail-open có chu dich: mat chống bot con hơn chặn nhầm người dùng thật
-            log.warn("Redis khong kha dung, rate limit tam thoi bi bo qua (fail-open): {}", e.getMessage());
+            // Fail-open có chủ đích: mất chống bot còn hơn chặn nhầm người dùng thật
+            log.warn("Redis không khả dụng, rate limit tạm thời bị bỏ qua (fail-open): {}", e.getMessage());
             return Decision.allowed(capacity, capacity);
         }
     }

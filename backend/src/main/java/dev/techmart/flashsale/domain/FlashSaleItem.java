@@ -8,11 +8,11 @@ import java.math.BigDecimal;
 /**
  * Một suất bán trong phiên flash sale.
  *
- * <p>{@code soldQuantity} o DB là bản ghi <b>cuối cùng</b>, được dòng bo từ Redis qua outbox.
- * Trong lúc phiên dạng chay, nguon su thật là bộ đếm trên Redis - đây la
- * <i>nhat quan cuoi (eventual consistency) có chu dich</i>, đổi lấy throughput.
- * Ket thực phiên có job đối soát: {@code soldQuantity} phải bằng
- * {@code saleQuantity - ton còn lại trên Redis}.
+ * <p>{@code soldQuantity} ở DB là bản ghi <b>cuối cùng</b>, được đồng bộ từ Redis qua outbox.
+ * Trong lúc phiên đang chạy, nguồn sự thật là bộ đếm trên Redis - đây là
+ * <i>nhất quán cuối (eventual consistency) có chủ đích</i>, đổi lấy throughput.
+ * Kết thúc phiên có job đối soát: {@code soldQuantity} phải bằng
+ * {@code saleQuantity - tồn còn lại trên Redis}.
  */
 @Entity
 @Table(name = "flash_sale_items")
@@ -73,7 +73,7 @@ public class FlashSaleItem {
         this.flashSale = flashSale;
     }
 
-    /** Dòng bo từ Redis ve DB. CHECK constraint o DB chặn viec vượt qua saleQuantity. */
+    /** Đồng bộ từ Redis về DB. CHECK constraint ở DB chặn việc vượt qua saleQuantity. */
     public void recordSold(int quantity) {
         this.soldQuantity += quantity;
     }

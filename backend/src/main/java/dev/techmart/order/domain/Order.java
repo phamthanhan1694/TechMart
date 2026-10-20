@@ -16,13 +16,13 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Đơn hàng - bản ghi lich su bất biến.
+ * Đơn hàng - bản ghi lịch sử bất biến.
  *
- * <p>{@code code} là dinh danh đổi ngoai (TM-20260901-0001), không phoi {@code id} tuan từ:
- * id tuan từ tiet lo so đơn mọi ngay của cửa hàng và tạo có hoi đó tuan từ.
+ * <p>{@code code} là định danh đối ngoại (TM-20260901-0001), không phơi {@code id} tuần tự:
+ * id tuần tự tiết lộ số đơn mỗi ngày của cửa hàng và tạo cơ hội dò tuần tự.
  *
- * <p>{@code @Version} chặn tinh huong khách bấm huỷ dùng lúc admin bam chuyen sang PACKED:
- * hai transaction cũng doc PAID, ca hai cũng thay hop le. Người thua nhận 409.
+ * <p>{@code @Version} chặn tình huống khách bấm huỷ đúng lúc admin bấm chuyển sang PACKED:
+ * hai transaction cùng đọc PAID, cả hai cùng thấy hợp lệ. Người thua nhận 409.
  */
 @Entity
 @Table(name = "orders")
@@ -135,7 +135,7 @@ public class Order {
     }
 
     /**
-     * Chot tien. Tinh lai từ order_items o server, không bao giờ tin số tiền client gửi lên.
+     * Chốt tiền. Tính lại từ order_items ở server, không bao giờ tin số tiền client gửi lên.
      */
     public void recalculateTotals(BigDecimal shippingFee, BigDecimal discountAmount, String couponCode) {
         this.subtotal = items.stream()
@@ -149,7 +149,7 @@ public class Order {
         this.totalAmount = total.max(BigDecimal.ZERO);   // giảm giá không bao giờ làm tong âm
     }
 
-    /** Chi OrderService được gọi, và chỉ sau khi da kiểm qua OrderStateMachine. */
+    /** Chỉ OrderService được gọi, và chỉ sau khi đã kiểm qua OrderStateMachine. */
     public void applyStatus(OrderStatus next, Instant now) {
         this.status = next;
         if (next == OrderStatus.DELIVERED) {

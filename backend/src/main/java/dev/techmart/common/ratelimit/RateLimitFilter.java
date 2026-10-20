@@ -23,15 +23,15 @@ import java.util.UUID;
 /**
  * Áp rate limit cho các endpoint nhạy cảm.
  *
- * <p>Hai tầng giới hạn o endpoint flash sale: theo <b>user</b> và theo <b>IP</b>.
- * Cần ca hai vì một user có thể đổi IP, con một IP (mạng công ty, NAT) có thể có nhieu
+ * <p>Hai tầng giới hạn ở endpoint flash sale: theo <b>user</b> và theo <b>IP</b>.
+ * Cần cả hai vì một user có thể đổi IP, còn một IP (mạng công ty, NAT) có thể có nhiều
  * user thật phía sau.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    /** Endpoint, giới hạn theo user, giới hạn theo IP (mọi phút). */
+    /** Endpoint, giới hạn theo user, giới hạn theo IP (mỗi phút). */
     private record Rule(String pathPrefix, String method, int perUser, int perIp) {
 
         boolean matches(HttpServletRequest request) {
@@ -41,11 +41,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private static final List<Rule> RULES = List.of(
-            // Chống đó mật khẩu.
+            // Chống dò mật khẩu.
             //
-            // 60/phút/IP nghe có vẻ lỏng, nhưng giới hạn theo IP là công cụ cùi: một IP
-            // sau NAT (văn phòng, phòng lab, mạng di động) có hàng trăm người dùng THAT
-            // phia sau. Đặt 5/phút/IP sẽ khoá nhầm cả nhóm họ chỉ vì một người go sai.
+            // 60/phút/IP nghe có vẻ lỏng, nhưng giới hạn theo IP là công cụ cùn: một IP
+            // sau NAT (văn phòng, phòng lab, mạng di động) có hàng trăm người dùng THẬT
+            // phía sau. Đặt 5/phút/IP sẽ khoá nhầm cả nhóm họ chỉ vì một người gõ sai.
             //
             // Công cụ đúng cho brute force là giới hạn THEO TÀI KHOẢN (khoá sau N lần sai) -
             // đã có ở LoginAttemptGuard (ADR-0012). Giới hạn IP ở đây chỉ để chặn kiểu quét
@@ -95,7 +95,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private RateLimiter.Decision evaluate(Rule rule, HttpServletRequest request) {
-        // Kiểm theo IP trước: no áp dùng ca cho request chưa đăng nhập
+        // Kiểm theo IP trước: nó áp dụng cả cho request chưa đăng nhập
         RateLimiter.Decision byIp = rateLimiter.check(
                 "rl:ip:" + rule.pathPrefix() + ":" + clientIp(request), rule.perIp(), rule.perIp());
         if (!byIp.allowed()) {
@@ -119,7 +119,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     /**
      * Lấy IP thật khi đứng sau reverse proxy.
-     * Chỉ tin X-Forwarded-For khi ứng dụng thật su chay sau proxy minh kiểm soát -
+     * Chỉ tin X-Forwarded-For khi ứng dụng thật sự chạy sau proxy mình kiểm soát -
      * nếu không, client có thể tự đặt header này để vượt rate limit.
      */
     private static String clientIp(HttpServletRequest request) {
@@ -137,7 +137,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setContentType("application/json;charset=UTF-8");
         objectMapper.writeValue(response.getOutputStream(), ApiError.of(
                 ErrorCode.RATE_LIMIT_EXCEEDED,
-                "Qua nhieu yeu cau. Thu lai sau " + decision.retryAfterSeconds() + " giay.",
+                "Quá nhiều yeu cau. Thử lại sau " + decision.retryAfterSeconds() + " giay.",
                 request.getRequestURI(), traceId, null));
     }
 }

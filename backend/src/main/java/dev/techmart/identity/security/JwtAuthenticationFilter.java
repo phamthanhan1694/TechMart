@@ -19,10 +19,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Doc Bearer token mọi request và đặt AuthPrincipal vào SecurityContext.
+ * Đọc Bearer token mỗi request và đặt AuthPrincipal vào SecurityContext.
  *
- * <p>Lưu ý: ngoại lệ ném trong filter <b>không</b> di qua @RestControllerAdvice
- * (filter chay trước DispatcherServlet), nên phải từ ghi envelope lỗi ở đây
+ * <p>Lưu ý: ngoại lệ ném trong filter <b>không</b> đi qua @RestControllerAdvice
+ * (filter chạy trước DispatcherServlet), nên phải tự ghi envelope lỗi ở đây
  * để client luôn nhận đúng một cấu trúc.
  */
 @Component
@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader(HEADER);
         if (header == null || !header.startsWith(PREFIX)) {
-            chain.doFilter(request, response);   // endpoint public van di tiep
+            chain.doFilter(request, response);   // endpoint public vẫn di tiep
             return;
         }
 

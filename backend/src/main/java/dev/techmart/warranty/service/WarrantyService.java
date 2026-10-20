@@ -50,7 +50,7 @@ public class WarrantyService {
      * Tạo yêu cầu bảo hành theo serial.
      *
      * <p>Kiểm quyền sở hữu qua chuỗi {@code serial -> order_item -> order -> user}: chỉ người
-     * đã mua chính đơn vị hàng đó mọi yêu cầu bảo hành được. Serial của người khác trả 404.
+     * đã mua chính đơn vị hàng đó mới yêu cầu bảo hành được. Serial của người khác trả 404.
      */
     @Transactional
     public WarrantyRequestResponse create(AuthPrincipal principal, CreateWarrantyRequest req) {
@@ -59,7 +59,7 @@ public class WarrantyService {
 
         if (serial.getOrderItem() == null) {
             throw new BusinessException(ErrorCode.REVIEW_NOT_ALLOWED,
-                    "San pham nay chua duoc ban ra, khong co bao hanh");
+                    "Sản phẩm này chưa được bán ra, không có bảo hành");
         }
         // Serial của người khác -> 404, không phải 403
         if (!serial.getOrderItem().getOrder().isOwnedBy(principal.id())) {
@@ -67,23 +67,23 @@ public class WarrantyService {
         }
         if (!serial.isUnderWarranty(clock.instant())) {
             throw new BusinessException(ErrorCode.REFUND_WINDOW_EXPIRED,
-                    "San pham da het han bao hanh");
+                    "Sản phẩm đã hết hạn bảo hành");
         }
         if (requests.existsBySerialIdAndStatusIn(serial.getId(), OPEN_STATUSES)) {
             throw new BusinessException(ErrorCode.REVIEW_ALREADY_EXISTS,
-                    "Serial nay dang co mot yeu cau bao hanh chua xu ly xong");
+                    "Serial này đang có một yêu cầu bảo hành chưa xử lý xong");
         }
 
         WarrantyRequest request = requests.save(new WarrantyRequest(
                 serial, users.getReferenceById(principal.id()), req.reason()));
-        log.info("User {} tao yeu cau bao hanh cho serial {}", principal.id(), serial.getSerialNo());
+        log.info("User {} tạo yêu cầu bảo hành cho serial {}", principal.id(), serial.getSerialNo());
         return WarrantyRequestResponse.from(request);
     }
 
     @Transactional(readOnly = true)
     public PageResponse<WarrantyRequestResponse> search(AuthPrincipal principal,
                                                         WarrantyStatus status, Pageable pageable) {
-        // Khách chỉ thay yêu cầu của minh; STAFF/ADMIN thay tắt ca
+        // Khách chỉ thấy yêu cầu của mình; STAFF/ADMIN thấy tất cả
         Long userFilter = principal.isStaffOrAdmin() ? null : principal.id();
         return PageResponse.from(requests.search(userFilter, status, pageable),
                 WarrantyRequestResponse::from);
@@ -94,7 +94,7 @@ public class WarrantyService {
         return WarrantyRequestResponse.from(requireVisible(principal, id));
     }
 
-    /** STAFF/ADMIN duyet hoac từ choi. Bằng chuyen trạng thái nằm trong entity. */
+    /** STAFF/ADMIN duyệt hoặc từ chối. Bảng chuyển trạng thái nằm trong entity. */
     @Transactional
     public WarrantyRequestResponse resolve(AuthPrincipal principal, Long id, ResolveWarrantyRequest req) {
         WarrantyRequest request = requests.findDetailById(id)
@@ -110,7 +110,7 @@ public class WarrantyService {
         }
         audit.record(AuditAction.WARRANTY_RESOLVED, "WARRANTY_REQUEST", id, java.util.Map.of(
                 "serialNo", request.getSerial().getSerialNo(), "toStatus", req.toStatus().name()));
-        log.info("User {} chuyen yeu cau bao hanh {} sang {}", principal.id(), id, req.toStatus());
+        log.info("User {} chuyển yêu cầu bảo hành {} sang {}", principal.id(), id, req.toStatus());
         return WarrantyRequestResponse.from(request);
     }
 

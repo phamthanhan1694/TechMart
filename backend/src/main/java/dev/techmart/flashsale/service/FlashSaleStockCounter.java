@@ -12,16 +12,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Bo đếm tồn kho flash sale trên Redis.
+ * Bộ đếm tồn kho flash sale trên Redis.
  *
- * <p>Trong lúc phiên dạng chay, <b>Redis là nguon su thật</b> - nguoc với reservation
- * (noi DB là nguon su thật). Lý do khác nhau: reservation cần ben vung và không bao giờ
- * được mat; flash sale cần chịu được vài nghìn request/giây trên cùng một dòng, và chap nhận
- * nhat quan cuoi với DB (dòng bỏ qua outbox, đối soát cuoi phiên).
+ * <p>Trong lúc phiên đang chạy, <b>Redis là nguồn sự thật</b> - ngược với reservation
+ * (nơi DB là nguồn sự thật). Lý do khác nhau: reservation cần bền vững và không bao giờ
+ * được mất; flash sale cần chịu được vài nghìn request/giây trên cùng một dòng, và chấp nhận
+ * nhất quán cuối với DB (đồng bộ qua outbox, đối soát cuối phiên).
  *
- * <p>Khi Redis chết, flash sale <b>fail-closed</b>: trả 503, từ chối bán. Nguoc với rate limit
- * fail-open. Cũng một hạ tầng chet, hai ung xu nguoc nhau - vì hau qua của viec sai khác nhau:
- * chặn nhầm người dùng thật thì phiên toai, con bán quá so suat thì phải den bu thật.
+ * <p>Khi Redis chết, flash sale <b>fail-closed</b>: trả 503, từ chối bán. Ngược với rate limit
+ * fail-open. Cũng một hạ tầng chết, hai ứng xử ngược nhau - vì hậu quả của việc sai khác nhau:
+ * chặn nhầm người dùng thật thì phiền toái, còn bán quá số suất thì phải đền bù thật.
  */
 @Component
 public class FlashSaleStockCounter {
@@ -43,14 +43,14 @@ public class FlashSaleStockCounter {
     }
 
     /**
-     * Nạp san tồn kho vào Redis TRUOC giỏ mo ban.
+     * Nạp sẵn tồn kho vào Redis TRƯỚC giờ mở bán.
      *
-     * <p>Nếu để lan request dau tien từ nạp thì dùng giây mo ban sẽ có hàng nghìn request
-     * cũng nạp một lúc - <b>cache stampede</b>. Nạp trước là cach chặn re nhat.
+     * <p>Nếu để lần request đầu tiên tự nạp thì đúng giây mở bán sẽ có hàng nghìn request
+     * cùng nạp một lúc - <b>cache stampede</b>. Nạp trước là cách chặn rẻ nhất.
      */
     public void warmUp(FlashSaleItem item) {
         redis.opsForValue().set(stockKey(item.getId()), String.valueOf(item.remaining()));
-        log.info("Da nap san ton kho flash sale item {}: {} suat", item.getId(), item.remaining());
+        log.info("Đã nạp sẵn tồn kho flash sale item {}: {} suất", item.getId(), item.remaining());
     }
 
     /** Trừ tồn nguyên tử. Trả về số âm là mã lỗi - xem các hằng số ở trên. */
@@ -63,7 +63,7 @@ public class FlashSaleStockCounter {
         return result != null ? result : NOT_WARMED_UP;
     }
 
-    /** Trả lai sửat khi buoc tạo đơn phia sau thất bại. */
+    /** Trả lại suất khi bước tạo đơn phía sau thất bại. */
     public void refund(Long itemId, Long userId, int quantity) {
         redis.opsForValue().increment(stockKey(itemId), quantity);
         redis.opsForValue().decrement(userKey(itemId, userId), quantity);

@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    /** Nạp kèm user để hiển thị ten người đánh giá - không thì 20 review = 21 query. */
+    /** Nạp kèm user để hiển thị tên người đánh giá - không thì 20 review = 21 query. */
     @EntityGraph(attributePaths = {"user"})
     Page<Review> findByProductIdOrderByCreatedAtDesc(Long productId, Pageable pageable);
 
@@ -22,8 +22,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Optional<Review> findByOrderItemId(Long orderItemId);
 
     /**
-     * Phan bo so sao, tinh bằng một query GROUP BY.
-     * Không nạp het review ve app rồi đếm - man hinh sản phẩm hot có thể có hàng nghìn review.
+     * Phân bố số sao, tính bằng một query GROUP BY.
+     * Không nạp hết review về app rồi đếm - màn hình sản phẩm hot có thể có hàng nghìn review.
      */
     @Query("""
             SELECT r.rating, COUNT(r) FROM Review r

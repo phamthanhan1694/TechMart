@@ -11,11 +11,11 @@ import java.time.Clock;
 import java.util.List;
 
 /**
- * Doc outbox và "gửi" thong báo.
+ * Đọc outbox và "gửi" thông báo.
  *
- * <p>Trong pham vì project nay, viec gửi được mo phong bằng ghi log - tich hop nhà cung cấp
- * email thật không thêm chieu sau kỹ thuật nao. Cai dạng ke là <i>có che</i>: event được ghi
- * cũng transaction nghiệp vụ, worker xu ly sau khi da commit, có retry và có giới hạn retry.
+ * <p>Trong phạm vi project này, việc gửi được mô phỏng bằng ghi log - tích hợp nhà cung cấp
+ * email thật không thêm chiều sâu kỹ thuật nào. Cái đáng kể là <i>cơ chế</i>: event được ghi
+ * cùng transaction nghiệp vụ, worker xử lý sau khi đã commit, có retry và có giới hạn retry.
  */
 @Component
 public class OutboxWorker {
@@ -33,13 +33,13 @@ public class OutboxWorker {
         this.clock = clock;
     }
 
-    /** {@code @Transactional} phải ở đây - gọi nội bộ sang drainOnce() không di qua proxy. */
+    /** {@code @Transactional} phải ở đây - gọi nội bộ sang drainOnce() không đi qua proxy. */
     @Scheduled(fixedDelayString = "PT5S", initialDelayString = "PT15S")
     @Transactional
     public void drain() {
         int processed = drainOnce();
         if (processed > 0) {
-            log.debug("Outbox: da xu ly {} event", processed);
+            log.debug("Outbox: đã xử lý {} event", processed);
         }
     }
 
@@ -52,7 +52,7 @@ public class OutboxWorker {
                 event.markProcessed(clock.instant());
             } catch (RuntimeException e) {
                 event.markFailed(e.getMessage());
-                log.warn("Outbox event {} that bai lan {}: {}",
+                log.warn("Outbox event {} thất bại lần {}: {}",
                         event.getId(), event.getRetryCount(), e.getMessage());
             }
         }

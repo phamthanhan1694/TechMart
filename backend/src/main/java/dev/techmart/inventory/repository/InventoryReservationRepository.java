@@ -29,10 +29,10 @@ public interface InventoryReservationRepository extends JpaRepository<InventoryR
     List<InventoryReservation> findBySessionIdWithVariant(@Param("sessionId") String sessionId);
 
     /**
-     * Lấy một LO reservation quá hạn để nha.
+     * Lấy một LÔ reservation quá hạn để nhả.
      *
-     * <p>Quet theo lo có LIMIT chứ không {@code UPDATE ... WHERE expires_at < now()} một phat
-     * trên toan bằng: lo lon khoá lau và có thể timeout. Dùng partial index
+     * <p>Quét theo lô có LIMIT chứ không {@code UPDATE ... WHERE expires_at < now()} một phát
+     * trên toàn bảng: lô lớn khoá lâu và có thể timeout. Dùng partial index
      * {@code idx_reservations_expiry} đã tạo ở V1__init.sql.
      */
     @Query("""

@@ -27,9 +27,9 @@ public interface ProductSerialRepository extends JpaRepository<ProductSerial, Lo
     /**
      * Lấy và KHOÁ các serial còn trong kho để gắn cho đơn hàng.
      *
-     * <p>{@code SKIP LOCKED} thay vì chờ: hai nhân viên cũng đóng gói hai đơn khác nhau
-     * của cùng một sản phẩm thì người thứ hai lấy serial KHAC chứ không xếp hàng chờ.
-     * Serial nào cũng được, miễn là không ai lấy trùng - dùng kiểu bài toán ma
+     * <p>{@code SKIP LOCKED} thay vì chờ: hai nhân viên cùng đóng gói hai đơn khác nhau
+     * của cùng một sản phẩm thì người thứ hai lấy serial KHÁC chứ không xếp hàng chờ.
+     * Serial nào cũng được, miễn là không ai lấy trùng - đúng kiểu bài toán mà
      * SKIP LOCKED sinh ra để giải.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

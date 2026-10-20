@@ -8,14 +8,14 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Giao dich thanh toán.
+ * Giao dịch thanh toán.
  *
- * <p>Hai ràng buộc UNIQUE là phần quan trọng nhất của bằng nay:
+ * <p>Hai ràng buộc UNIQUE là phần quan trọng nhất của bảng này:
  * <ul>
  *   <li>{@code idempotency_key} - chặn tạo hai giao dịch cho một lần bấm</li>
- *   <li>{@code transaction_ref} - chặn webhook gửi trung làm đổi trạng thái hai lần</li>
+ *   <li>{@code transaction_ref} - chặn webhook gửi trùng làm đổi trạng thái hai lần</li>
  * </ul>
- * Cong thanh toán thật <b>sẽ</b> gửi lai callback khi không nhận được 200, nên webhook
+ * Cổng thanh toán thật <b>sẽ</b> gửi lại callback khi không nhận được 200, nên webhook
  * bắt buộc phải idempotent.
  */
 @Entity

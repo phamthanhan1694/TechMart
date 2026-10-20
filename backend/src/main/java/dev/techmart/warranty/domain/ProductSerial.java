@@ -86,7 +86,7 @@ public class ProductSerial {
     public void assignTo(OrderItem orderItem, Instant now) {
         if (status != SerialStatus.IN_STOCK) {
             throw new IllegalStateException(
-                    "Serial " + serialNo + " dang o trang thai " + status + ", khong the xuat kho");
+                    "Serial " + serialNo + " đang ở trạng thái " + status + ", không thể xuất kho");
         }
         this.orderItem = orderItem;
         this.status = SerialStatus.SOLD;

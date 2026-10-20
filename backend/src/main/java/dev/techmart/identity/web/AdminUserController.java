@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin/users")
-@Tag(name = "Admin - Nguoi dung", description = "Tra cuu khach hang, khoa/mo, doi vai tro, tao tai khoan nhan vien")
+@Tag(name = "Admin - Người dùng", description = "Tra cứu khách hàng, khoá/mở, đổi vai trò, tạo tài khoản nhân viên")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
@@ -31,8 +31,8 @@ public class AdminUserController {
     }
 
     @GetMapping
-    @Operation(summary = "Danh sach nguoi dung",
-            description = "Tim theo email/ten/so dien thoai. sort nhan: createdAt, totalSpent, paidOrders, lastOrderAt, email.")
+    @Operation(summary = "Danh sách người dùng",
+            description = "Tìm theo email/tên/số điện thoại. sort nhận: createdAt, totalSpent, paidOrders, lastOrderAt, email.")
     public PageResponse<AdminUserRow> search(@RequestParam(required = false) String keyword,
                                              @RequestParam(required = false) Role role,
                                              @RequestParam(required = false) UserStatus status,
@@ -41,27 +41,27 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Chi tiet nguoi dung", description = "Kem 10 don gan nhat va trang thai khoa dang nhap tam thoi.")
+    @Operation(summary = "Chi tiết người dùng", description = "Kèm 10 đơn gần nhất và trạng thái khoá đăng nhập tạm thời.")
     public AdminUserDetail detail(@PathVariable Long id) {
         return service.detail(id);
     }
 
     @PostMapping
-    @Operation(summary = "Tao tai khoan (thuong la STAFF)")
+    @Operation(summary = "Tạo tài khoản (thường là STAFF)")
     public ResponseEntity<AdminUserRow> create(@Valid @RequestBody CreateUserRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
     }
 
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Khoa / mo khoa tai khoan",
-            description = "Khoa thi thu hoi moi refresh token. Khong tu khoa minh; khong khoa ADMIN cuoi cung.")
+    @Operation(summary = "Khoá / mở khoá tài khoản",
+            description = "Khoá thì thu hồi mọi refresh token. Không tự khoá mình; không khoá ADMIN cuối cùng.")
     public AdminUserRow changeStatus(@AuthenticationPrincipal AuthPrincipal principal,
                                      @PathVariable Long id, @Valid @RequestBody ChangeStatusRequest req) {
         return service.changeStatus(principal, id, req);
     }
 
     @PatchMapping("/{id}/role")
-    @Operation(summary = "Doi vai tro", description = "Khong tu doi vai tro cua minh; khong ha ADMIN cuoi cung.")
+    @Operation(summary = "Đổi vai trò", description = "Không tự đổi vai trò của mình; không hạ ADMIN cuối cùng.")
     public AdminUserRow changeRole(@AuthenticationPrincipal AuthPrincipal principal,
                                    @PathVariable Long id, @Valid @RequestBody ChangeRoleRequest req) {
         return service.changeRole(principal, id, req);
@@ -69,7 +69,7 @@ public class AdminUserController {
 
     @DeleteMapping("/{id}/login-lockout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Go khoa dang nhap tam thoi", description = "Cho khach goi len tong dai sau khi go sai mat khau nhieu lan.")
+    @Operation(summary = "Gỡ khoá đăng nhập tạm thời", description = "Cho khách gọi lên tổng đài sau khi gõ sai mật khẩu nhiều lần.")
     public void clearLoginLockout(@PathVariable Long id) {
         service.clearLoginLockout(id);
     }

@@ -23,12 +23,12 @@ public record ReportRange(LocalDate from, LocalDate to, ZoneId zone) {
         LocalDate end = to != null ? to : today;
         LocalDate start = from != null ? from : end.minusDays(29);
         if (start.isAfter(end)) {
-            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE, "from phai truoc hoac bang to");
+            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE, "from phải trước hoặc bằng to");
         }
         // Chặn một request quét cả chục năm dữ liệu: báo cáo là thứ admin bấm liên tục (ADR-0011)
         if (ChronoUnit.DAYS.between(start, end) + 1 > maxDays) {
             throw new BusinessException(ErrorCode.INVALID_DATE_RANGE,
-                    "Khoang ngay toi da " + maxDays + " ngay");
+                    "Khoảng ngày tối đa " + maxDays + " ngày");
         }
         return new ReportRange(start, end, zone);
     }

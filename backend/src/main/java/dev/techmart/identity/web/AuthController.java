@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Auth", description = "Dang ky, dang nhap, xoay vong token")
+@Tag(name = "Auth", description = "Đăng ký, đăng nhập, xoay vòng token")
 public class AuthController {
 
     private final AuthService authService;
@@ -26,32 +26,32 @@ public class AuthController {
 
     @PostMapping("/register")
     @SecurityRequirements
-    @Operation(summary = "Dang ky tai khoan khach hang",
-            description = "Luon tao voi role CUSTOMER. Khong nhan role tu client.")
+    @Operation(summary = "Đăng ký tài khoản khách hàng",
+            description = "Luôn tạo với role CUSTOMER. Không nhận role từ client.")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(req));
     }
 
     @PostMapping("/login")
     @SecurityRequirements
-    @Operation(summary = "Dang nhap",
-            description = "Sai email va sai mat khau tra cung ma INVALID_CREDENTIALS "
-                    + "de khong tiet lo email nao ton tai.")
+    @Operation(summary = "Đăng nhập",
+            description = "Sai email và sai mật khẩu trả cùng mã INVALID_CREDENTIALS "
+                    + "để không tiết lộ email nào tồn tại.")
     public TokenResponse login(@Valid @RequestBody LoginRequest req) {
         return authService.login(req);
     }
 
     @PostMapping("/refresh")
     @SecurityRequirements
-    @Operation(summary = "Doi cap token moi",
-            description = "Refresh token duoc xoay vong: token cu bi thu hoi ngay. "
-                    + "Dung lai token da thu hoi se thu hoi toan bo chuoi token cua user.")
+    @Operation(summary = "Đổi cặp token mới",
+            description = "Refresh token được xoay vòng: token cũ bị thu hồi ngay. "
+                    + "Dùng lại token đã thu hồi sẽ thu hồi toàn bộ chuỗi token của user.")
     public TokenResponse refresh(@Valid @RequestBody RefreshRequest req) {
         return authService.refresh(req);
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Dang xuat", description = "Thu hoi refresh token o phia server.")
+    @Operation(summary = "Đăng xuất", description = "Thu hồi refresh token ở phía server.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody RefreshRequest req) {
         authService.logout(req);
@@ -59,7 +59,7 @@ public class AuthController {
 
     @PostMapping("/logout-all")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Dang xuat khoi moi thiet bi")
+    @Operation(summary = "Đăng xuất khỏi mọi thiết bị")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logoutAll(@AuthenticationPrincipal AuthPrincipal principal) {
         authService.logoutAllDevices(principal.id());
@@ -67,7 +67,7 @@ public class AuthController {
 
     @GetMapping("/me")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Thong tin nguoi dang dang nhap")
+    @Operation(summary = "Thông tin người đang đăng nhập")
     public UserResponse me(@AuthenticationPrincipal AuthPrincipal principal) {
         return authService.me(principal.id());
     }

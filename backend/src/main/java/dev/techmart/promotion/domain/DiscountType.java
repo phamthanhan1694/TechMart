@@ -1,8 +1,8 @@
 package dev.techmart.promotion.domain;
 
 public enum DiscountType {
-    /** Giam theo phần tram, có thể có trần maxDiscount. */
+    /** Giảm theo phần trăm, có thể có trần maxDiscount. */
     PERCENT,
-    /** Giam số tiền có dinh. */
+    /** Giảm số tiền cố định. */
     FIXED
 }

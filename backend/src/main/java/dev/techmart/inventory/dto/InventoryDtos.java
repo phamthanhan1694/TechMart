@@ -11,7 +11,7 @@ public final class InventoryDtos {
     private InventoryDtos() {
     }
 
-    @Schema(description = "Chi tiet mot variant khong du hang - tra trong truong details cua loi")
+    @Schema(description = "Chi tiết một variant không đủ hàng - trả trong trường details của lỗi")
     public record StockShortage(
             Long variantId,
             String sku,
@@ -30,10 +30,10 @@ public final class InventoryDtos {
             BigDecimal lineTotal
     ) {}
 
-    @Schema(description = "Phien checkout dang giu hang")
+    @Schema(description = "Phiên checkout đang giữ hàng")
     public record CheckoutSessionResponse(
             String sessionId,
-            @Schema(description = "Het thoi diem nay ma chua dat hang thi hang tu dong duoc nha")
+            @Schema(description = "Hết thời điểm này mà chưa đặt hàng thì hàng tự động được nhả")
             Instant expiresAt,
             long secondsRemaining,
             List<ReservedLine> items,

@@ -63,12 +63,12 @@ public class ReviewService {
     /**
      * Tạo đánh giá.
      *
-     * <p>Ba điều kiện, kiểm theo dùng thứ tự để thong báo lỗi có nghia:
-     * dòng đơn phải thuộc user hiện tại (404 chứ không 403), đơn phải da DELIVERED,
-     * và mọi dòng đơn chỉ đánh giá một lan.
+     * <p>Ba điều kiện, kiểm theo đúng thứ tự để thông báo lỗi có nghĩa:
+     * dòng đơn phải thuộc user hiện tại (404 chứ không 403), đơn phải đã DELIVERED,
+     * và mỗi dòng đơn chỉ đánh giá một lần.
      *
-     * <p>Dieu kien thu ba được <b>DB báo dam</b> bằng UNIQUE(order_item_id), không chi
-     * bằng câu kiểm ở đây - hai request song song sẽ cũng vượt qua câu kiểm.
+     * <p>Điều kiện thứ ba được <b>DB bảo đảm</b> bằng UNIQUE(order_item_id), không chỉ
+     * bằng câu kiểm ở đây - hai request song song sẽ cùng vượt qua câu kiểm.
      */
     @Transactional
     public ReviewResponse create(AuthPrincipal principal, CreateReviewRequest req) {
@@ -81,8 +81,8 @@ public class ReviewService {
         }
         if (item.getOrder().getStatus() != OrderStatus.DELIVERED) {
             throw new BusinessException(ErrorCode.REVIEW_NOT_ALLOWED,
-                    "Don dang o trang thai " + item.getOrder().getStatus()
-                            + ", chi danh gia duoc sau khi da nhan hang");
+                    "Đơn đang ở trạng thái " + item.getOrder().getStatus()
+                            + ", chỉ đánh giá được sau khi đã nhận hàng");
         }
 
         Review review = new Review(item.getVariant().getProduct(),
@@ -90,7 +90,7 @@ public class ReviewService {
         try {
             return ReviewResponse.from(reviews.saveAndFlush(review));
         } catch (DataIntegrityViolationException e) {
-            // UNIQUE(order_item_id) - da đánh giá lan mua này rồi
+            // UNIQUE(order_item_id) - đã đánh giá lan mua này rồi
             throw new BusinessException(ErrorCode.REVIEW_ALREADY_EXISTS);
         }
     }
@@ -106,7 +106,7 @@ public class ReviewService {
     public void delete(AuthPrincipal principal, Long reviewId) {
         Review review = requireOwnReview(principal, reviewId);
         reviews.delete(review);
-        log.info("User {} da xoa danh gia {}", principal.id(), reviewId);
+        log.info("User {} đã xoá đánh giá {}", principal.id(), reviewId);
     }
 
     private Review requireOwnReview(AuthPrincipal principal, Long reviewId) {

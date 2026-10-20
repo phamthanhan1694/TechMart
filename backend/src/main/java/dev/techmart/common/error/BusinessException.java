@@ -1,11 +1,11 @@
 package dev.techmart.common.error;
 
 /**
- * Goc của mọi ngoại lệ nghiệp vụ. GlobalExceptionHandler bat loai này và dùng envelope lỗi
+ * Gốc của mọi ngoại lệ nghiệp vụ. GlobalExceptionHandler bắt loại này và dùng envelope lỗi
  * theo docs/03-api-contract.md mục 1.
  *
- * <p>Không ke thua từ Exception có checked: logic nghiệp vụ thất bại là chuyen binh thuong,
- * không nên buoc mọi tầng gọi phải khai báo throws.
+ * <p>Không kế thừa từ Exception có checked: logic nghiệp vụ thất bại là chuyện bình thường,
+ * không nên buộc mọi tầng gọi phải khai báo throws.
  */
 public class BusinessException extends RuntimeException {
 
@@ -34,13 +34,13 @@ public class BusinessException extends RuntimeException {
         return details;
     }
 
-    // --- Các lop con đặt ten chờ để đọc o chỗ gọi ---
+    // --- Các lớp con đặt tên cho dễ đọc ở chỗ gọi ---
 
     public static BusinessException notFound(ErrorCode code, Object id) {
         return new BusinessException(code, code.defaultMessage() + ": " + id);
     }
 
-    /** Lỗi trả về kem chi tiết tung variant thieu bao nhiêu - xem docs/04 mục 4. */
+    /** Lỗi trả về kèm chi tiết từng variant thiếu bao nhiêu - xem docs/04 mục 4. */
     public static BusinessException insufficientStock(Object details) {
         return new BusinessException(ErrorCode.INSUFFICIENT_STOCK,
                 ErrorCode.INSUFFICIENT_STOCK.defaultMessage(), details);

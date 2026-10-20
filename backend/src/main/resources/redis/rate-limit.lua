@@ -1,7 +1,7 @@
 -- Token bucket chạy nguyên tử trên Redis.
 --
 -- Vì sao không dùng biến đếm trong JVM: biến đó chỉ sống trong MỘT instance.
--- Deploy hai instance là giới hạn bi nhân đôi ngay. Trạng thái rate limit phải
+-- Deploy hai instance là giới hạn bị nhân đôi ngay. Trạng thái rate limit phải
 -- nằm ở tầng dùng chung - giống hệt lý do không dùng 'synchronized' để chống oversell.
 --
 -- KEYS[1] = rl:{scope}:{identity}

@@ -15,11 +15,11 @@ import java.util.Optional;
 /**
  * Giỏ hàng của một user.
  *
- * <p>Tong tien KHÔNG luu trong DB - tinh dòng mỗi lần doc. Lý do: giá variant có thể đổi,
- * giỏ hàng phải phần anh giá hiện tại. Gia chỉ được "chot" khi tạo đơn hàng.
+ * <p>Tổng tiền KHÔNG lưu trong DB - tính động mỗi lần đọc. Lý do: giá variant có thể đổi,
+ * giỏ hàng phải phản ánh giá hiện tại. Giá chỉ được "chốt" khi tạo đơn hàng.
  *
- * <p>Thêm vào giỏ KHÔNG giữ hàng. Giữ hàng chỉ xay ra ở bước checkout - nếu giữ từ lúc
- * thêm giỏ thì nhưng giỏ bi bo quen hàng tuan sẽ khoá tồn kho vo ich.
+ * <p>Thêm vào giỏ KHÔNG giữ hàng. Giữ hàng chỉ xảy ra ở bước checkout - nếu giữ từ lúc
+ * thêm giỏ thì những giỏ bị bỏ quên hàng tuần sẽ khoá tồn kho vô ích.
  */
 @Entity
 @Table(name = "carts")
@@ -75,7 +75,7 @@ public class Cart {
         return items.stream().filter(i -> i.getId().equals(itemId)).findFirst();
     }
 
-    /** Thêm variant da có trong giỏ thì cong đơn số lượng, không tạo dòng thứ hai. */
+    /** Thêm variant đã có trong giỏ thì cộng dồn số lượng, không tạo dòng thứ hai. */
     public CartItem addOrIncrease(ProductVariant variant, int quantity) {
         return findItemByVariant(variant.getId())
                 .map(existing -> {
@@ -90,7 +90,7 @@ public class Cart {
     }
 
     public void removeItem(CartItem item) {
-        items.remove(item);   // orphanRemoval = true -> bi xoá khoi DB
+        items.remove(item);   // orphanRemoval = true -> bị xoá khỏi DB
     }
 
     public void clear() {

@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/wishlist")
-@Tag(name = "Wishlist", description = "San pham yeu thich. PUT/DELETE deu idempotent.")
+@Tag(name = "Wishlist", description = "Sản phẩm yêu thích. PUT/DELETE đều idempotent.")
 @PreAuthorize("hasRole('CUSTOMER')")
 public class WishlistController {
 
@@ -24,28 +24,28 @@ public class WishlistController {
     }
 
     @GetMapping
-    @Operation(summary = "Danh sach yeu thich", description = "Moi nhat dung dau. San pham ngung ban van hien, kem purchasable=false.")
+    @Operation(summary = "Danh sách yêu thích", description = "Mới nhất đứng đầu. Sản phẩm ngừng bán vẫn hiện, kèm purchasable=false.")
     public List<WishlistItemResponse> list(@AuthenticationPrincipal AuthPrincipal principal) {
         return service.list(principal.id());
     }
 
     @GetMapping("/ids")
-    @Operation(summary = "Chi id san pham trong danh sach", description = "De to trang thai nut tim tren trang danh sach.")
+    @Operation(summary = "Chỉ id sản phẩm trong danh sách", description = "Để tô trạng thái nút tim trên trang danh sách.")
     public List<Long> ids(@AuthenticationPrincipal AuthPrincipal principal) {
         return service.productIds(principal.id());
     }
 
     @PutMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Them vao yeu thich",
-            description = "PUT thay vi POST: goi lai bao nhieu lan ket qua cung nhu mot lan - dung ngu nghia cua nut tim.")
+    @Operation(summary = "Thêm vào yêu thích",
+            description = "PUT thay vì POST: gọi lại bao nhiêu lần kết quả cũng như một lần - đúng ngữ nghĩa của nút tim.")
     public void add(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long productId) {
         service.add(principal.id(), productId);
     }
 
     @DeleteMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Bo khoi yeu thich")
+    @Operation(summary = "Bỏ khỏi yêu thích")
     public void remove(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long productId) {
         service.remove(principal.id(), productId);
     }

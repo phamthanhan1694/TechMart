@@ -13,7 +13,7 @@ public final class AdminDtos {
     private AdminDtos() {
     }
 
-    @Schema(description = "Doanh thu theo mot moc thoi gian")
+    @Schema(description = "Doanh thu theo một mốc thời gian")
     public record RevenuePoint(
             @Schema(example = "2026-08-15") LocalDate period,
             BigDecimal revenue,
@@ -30,14 +30,14 @@ public final class AdminDtos {
             BigDecimal revenue
     ) {}
 
-    @Schema(description = "So lieu tong quan cho man hinh dau tien cua admin")
+    @Schema(description = "Số liệu tổng quan cho màn hình đầu tiên của admin")
     public record DashboardSummary(
             BigDecimal revenueToday,
             BigDecimal revenueThisMonth,
             long ordersToday,
             long ordersThisMonth,
             BigDecimal averageOrderValue,
-            @Schema(description = "So don theo tung trang thai") Map<OrderStatus, Long> ordersByStatus,
+            @Schema(description = "Số đơn theo từng trạng thái") Map<OrderStatus, Long> ordersByStatus,
             long lowStockVariants,
             long pendingOutboxEvents,
             long activeReservations

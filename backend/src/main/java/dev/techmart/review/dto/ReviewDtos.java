@@ -13,7 +13,7 @@ public final class ReviewDtos {
     }
 
     public record CreateReviewRequest(
-            @NotNull @Schema(description = "id cua dong don hang - lay tu GET /orders/{code}")
+            @NotNull @Schema(description = "id của dòng đơn hàng - lấy từ GET /orders/{code}")
             Long orderItemId,
             @NotNull @Min(1) @Max(5) Integer rating,
             @Size(max = 2000) String comment
@@ -27,10 +27,10 @@ public final class ReviewDtos {
     public record ReviewResponse(
             Long id,
             Long productId,
-            @Schema(description = "Chi hien ten, khong lo email") String reviewerName,
+            @Schema(description = "Chỉ hiện tên, không lộ email") String reviewerName,
             int rating,
             String comment,
-            @Schema(description = "Luon true - chi danh gia duoc san pham da mua va da nhan")
+            @Schema(description = "Luôn true - chỉ đánh giá được sản phẩm đã mua và đã nhận")
             boolean verifiedPurchase,
             Instant createdAt
     ) {
@@ -40,10 +40,10 @@ public final class ReviewDtos {
                     true, r.getCreatedAt());
         }
 
-        /** "Nguyen Van A" -> "Nguyen Van A." Che bot họ ten đây du là thoi quen tot. */
+        /** "Nguyễn Văn A" -> "Nguyễn Văn A." Che bớt họ tên đầy đủ là thói quen tốt. */
         private static String maskName(String fullName) {
             if (fullName == null || fullName.isBlank()) {
-                return "Khach hang";
+                return "Khách hàng";
             }
             String[] parts = fullName.trim().split("\\s+");
             if (parts.length == 1) {
@@ -53,11 +53,11 @@ public final class ReviewDtos {
         }
     }
 
-    @Schema(description = "Tong hop danh gia cua mot san pham")
+    @Schema(description = "Tổng hợp đánh giá của một sản phẩm")
     public record RatingSummary(
             double average,
             long total,
-            @Schema(description = "So luot theo tung muc sao, vd {\"5\": 12, \"4\": 3}")
+            @Schema(description = "Số lượt theo từng mức sao, vd {\"5\": 12, \"4\": 3}")
             Map<Integer, Long> distribution
     ) {}
 }

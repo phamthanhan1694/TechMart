@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Catalog - Danh muc & Thuong hieu")
+@Tag(name = "Catalog - Danh mục & Thương hiệu")
 public class TaxonomyController {
 
     private final CategoryService categoryService;
@@ -31,35 +31,35 @@ public class TaxonomyController {
 
     @GetMapping("/categories")
     @SecurityRequirements
-    @Operation(summary = "Danh sach danh muc")
+    @Operation(summary = "Danh sách danh mục")
     public List<CategoryResponse> categories() {
         return categoryService.findAll();
     }
 
     @GetMapping("/categories/{id}")
     @SecurityRequirements
-    @Operation(summary = "Chi tiet danh muc")
+    @Operation(summary = "Chi tiết danh mục")
     public CategoryResponse category(@PathVariable Long id) {
         return categoryService.findById(id);
     }
 
     @PostMapping("/categories")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Tao danh muc")
+    @Operation(summary = "Tạo danh mục")
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.create(req));
     }
 
     @PutMapping("/categories/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Cap nhat danh muc")
+    @Operation(summary = "Cập nhật danh mục")
     public CategoryResponse updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest req) {
         return categoryService.update(id, req);
     }
 
     @DeleteMapping("/categories/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Xoa danh muc", description = "Chi xoa duoc khi khong con san pham va danh muc con.")
+    @Operation(summary = "Xoá danh mục", description = "Chỉ xoá được khi không còn sản phẩm và danh mục con.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCategory(@PathVariable Long id) {
         categoryService.delete(id);
@@ -69,28 +69,28 @@ public class TaxonomyController {
 
     @GetMapping("/brands")
     @SecurityRequirements
-    @Operation(summary = "Danh sach thuong hieu")
+    @Operation(summary = "Danh sách thương hiệu")
     public List<BrandResponse> brands() {
         return brandService.findAll();
     }
 
     @GetMapping("/brands/{id}")
     @SecurityRequirements
-    @Operation(summary = "Chi tiet thuong hieu")
+    @Operation(summary = "Chi tiết thương hiệu")
     public BrandResponse brand(@PathVariable Long id) {
         return brandService.findById(id);
     }
 
     @PostMapping("/brands")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Tao thuong hieu")
+    @Operation(summary = "Tạo thương hiệu")
     public ResponseEntity<BrandResponse> createBrand(@Valid @RequestBody BrandRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(brandService.create(req));
     }
 
     @PutMapping("/brands/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Cap nhat thuong hieu")
+    @Operation(summary = "Cập nhật thương hiệu")
     public BrandResponse updateBrand(@PathVariable Long id, @Valid @RequestBody BrandRequest req) {
         return brandService.update(id, req);
     }

@@ -10,19 +10,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 
 /**
- * Thu hồi toàn bộ refresh token của một user, trong MỘT TRANSACTION RIENG.
+ * Thu hồi toàn bộ refresh token của một user, trong MỘT TRANSACTION RIÊNG.
  *
- * <p><b>Vì sao phải tach ra - lỗi thật đã gặp:</b> khi phát hiện tái sử dụng refresh token,
- * {@code AuthService.refresh()} gọi thu hồi ca chuỗi rồi <b>ném</b>
- * {@code REFRESH_TOKEN_REUSED}. Ngoai le đó làm transaction rollback, và cuon theo ca
- * lệnh thu hồi vua chay - nên tinh nang báo mat quan trọng nhất của module coi như
- * không tồn tại. Token bị đánh cắp vẫn đúng được binh thuong.
+ * <p><b>Vì sao phải tách ra - lỗi thật đã gặp:</b> khi phát hiện tái sử dụng refresh token,
+ * {@code AuthService.refresh()} gọi thu hồi cả chuỗi rồi <b>ném</b>
+ * {@code REFRESH_TOKEN_REUSED}. Ngoại lệ đó làm transaction rollback, và cuốn theo cả
+ * lệnh thu hồi vừa chạy - nên tính năng bảo mật quan trọng nhất của module coi như
+ * không tồn tại. Token bị đánh cắp vẫn dùng được bình thường.
  *
- * <p>{@code REQUIRES_NEW} mo transaction mọi và commit doc lap, nên viec thu hồi song sot
- * qua rollback của transaction gọi. Va phải là <b>bean riêng</b>: Spring AOP hoạt động
- * qua proxy nên gọi nội bộ trong cũng class sẽ bỏ qua annotation hoan toan.
+ * <p>{@code REQUIRES_NEW} mở transaction mới và commit độc lập, nên việc thu hồi sống sót
+ * qua rollback của transaction gọi. Và phải là <b>bean riêng</b>: Spring AOP hoạt động
+ * qua proxy nên gọi nội bộ trong cùng class sẽ bỏ qua annotation hoàn toàn.
  *
- * <p>Test bat được: {@code refresh_reusedToken_revokesEntireChain}.
+ * <p>Test bắt được: {@code refresh_reusedToken_revokesEntireChain}.
  */
 @Component
 public class TokenRevoker {
@@ -40,7 +40,7 @@ public class TokenRevoker {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int revokeAllForUser(Long userId, String reason) {
         int revoked = refreshTokens.revokeAllForUser(userId, clock.instant());
-        log.warn("Da thu hoi {} refresh token cua user {}. Ly do: {}", revoked, userId, reason);
+        log.warn("Đã thu hồi {} refresh token của user {}. Lý do: {}", revoked, userId, reason);
         return revoked;
     }
 }

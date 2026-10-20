@@ -57,7 +57,7 @@ public class AuthService {
                 passwordEncoder.encode(req.password()),
                 req.fullName(),
                 req.phone(),
-                Role.CUSTOMER);          // dạng ky công khai luon là CUSTOMER, không nhận role từ client
+                Role.CUSTOMER);          // đăng ký công khai luôn là CUSTOMER, không nhận role từ client
         return UserResponse.from(users.save(user));
     }
 
@@ -74,7 +74,7 @@ public class AuthService {
         loginAttempts.ensureNotLocked(email);
 
         Optional<User> found = users.findByEmailIgnoreCase(email);
-        // Email không tồn tại vẫn chạy BCrypt với hash giá: không có nhánh này thì trả lời
+        // Email không tồn tại vẫn chạy BCrypt với hash giả: không có nhánh này thì trả lời
         // nhanh hơn ~250ms, và thời gian phản hồi tự tiết lộ email nào đã đăng ký.
         String hash = found.map(User::getPasswordHash).orElse(dummyHash);
         boolean matches = passwordEncoder.matches(req.password(), hash);
@@ -94,11 +94,11 @@ public class AuthService {
     }
 
     /**
-     * Xoay vong refresh token, kem phát hiện tái sử dụng.
+     * Xoay vòng refresh token, kèm phát hiện tái sử dụng.
      *
-     * <p>Một token đã bị thu hồi ma van được gửi lên nghĩa là có hai bên đang giữ nó -
-     * gan nhu chac chặn token da bị đánh cắp. Khi đó thu hồi <b>ca chuỗi</b> của user,
-     * buoc đăng nhập lại (docs/07-security-checklist.md mục 1).
+     * <p>Một token đã bị thu hồi mà vẫn được gửi lên nghĩa là có hai bên đang giữ nó -
+     * gần như chắc chắn token đã bị đánh cắp. Khi đó thu hồi <b>cả chuỗi</b> của user,
+     * buộc đăng nhập lại (docs/07-security-checklist.md mục 1).
      */
     @Transactional
     public TokenResponse refresh(RefreshRequest req) {
@@ -109,11 +109,11 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_INVALID));
 
         if (stored.isRevoked()) {
-            // Thu hồi phải chay o TRANSACTION RIENG: ngay sau đây ta ném ngoại lệ, va
-            // ngoại lệ đó sẽ rollback transaction hiện tại - cuon theo ca lệnh thu hồi.
+            // Thu hồi phải chạy ở TRANSACTION RIÊNG: ngay sau đây ta ném ngoại lệ, và
+            // ngoại lệ đó sẽ rollback transaction hiện tại - cuốn theo cả lệnh thu hồi.
             // Xem TokenRevoker.
             tokenRevoker.revokeAllForUser(stored.getUser().getId(),
-                    "Phat hien tai su dung refresh token da bi thu hoi");
+                    "Phát hiện tái sử dụng refresh token đã bị thu hồi");
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_REUSED);
         }
         if (stored.isExpired(now)) {
@@ -132,7 +132,7 @@ public class AuthService {
                 jwtService.generateAccessToken(user), next.rawValue(), jwtService.accessTokenTtlSeconds());
     }
 
-    /** Logout thu hồi thật o phia server, không chỉ xoá token o client. */
+    /** Logout thu hồi thật ở phía server, không chỉ xoá token ở client. */
     @Transactional
     public void logout(RefreshRequest req) {
         String hash = jwtService.hashRefreshToken(req.refreshToken());
@@ -140,7 +140,7 @@ public class AuthService {
     }
 
     public void logoutAllDevices(Long userId) {
-        tokenRevoker.revokeAllForUser(userId, "Nguoi dung dang xuat khoi moi thiet bi");
+        tokenRevoker.revokeAllForUser(userId, "Người dùng đăng xuất khỏi mọi thiết bị");
     }
 
     @Transactional(readOnly = true)
@@ -163,6 +163,6 @@ public class AuthService {
         return new TokenResult(raw, entity);
     }
 
-    /** Gia tri thô chỉ tồn tại trong bộ nhớ, DB chỉ giữ hash. */
+    /** Giá trị thô chỉ tồn tại trong bộ nhớ, DB chỉ giữ hash. */
     private record TokenResult(String rawValue, RefreshToken entity) {}
 }

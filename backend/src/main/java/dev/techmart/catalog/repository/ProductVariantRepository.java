@@ -25,7 +25,7 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
      * <p><b>ORDER BY v.id là chi tiết quan trọng nhất của cả phương thức này.</b>
      * Đơn A mua [variant 5, variant 9], đơn B mua [variant 9, variant 5]. Nếu khoá theo
      * thứ tự client gửi thì A giữ 5 chờ 9 còn B giữ 9 chờ 5 -> deadlock. Sắp xếp theo id
-     * làm mọi transaction khoá cùng một thứ tự, deadlock biến mat.
+     * làm mọi transaction khoá cùng một thứ tự, deadlock biến mất.
      *
      * <p>Xem docs/02-luồng-nghiep-vu.md mục 3 và ADR-0003.
      */
@@ -50,7 +50,7 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     /**
      * Gom khoảng giá + hàng còn bán được cho CẢ trang sản phẩm trong một query.
-     * Đây là cach chống N+1 o endpoint danh sách - xem docs/01-domain-v2.md mục 7.
+     * Đây là cách chống N+1 ở endpoint danh sách - xem docs/01-domain-v2.md mục 7.
      */
     @Query("""
             SELECT new dev.techmart.catalog.repository.VariantAggregate(

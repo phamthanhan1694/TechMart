@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/account")
-@Tag(name = "Account", description = "Ho so ca nhan va mat khau")
+@Tag(name = "Account", description = "Hồ sơ cá nhân và mật khẩu")
 public class AccountController {
 
     private final AccountService accountService;
@@ -27,13 +27,13 @@ public class AccountController {
     }
 
     @GetMapping("/profile")
-    @Operation(summary = "Ho so cua toi")
+    @Operation(summary = "Hồ sơ của tôi")
     public UserResponse profile(@AuthenticationPrincipal AuthPrincipal principal) {
         return authService.me(principal.id());
     }
 
     @PutMapping("/profile")
-    @Operation(summary = "Cap nhat ho so", description = "Chi doi duoc ho ten va so dien thoai. Email la dinh danh dang nhap.")
+    @Operation(summary = "Cập nhật hồ sơ", description = "Chỉ đổi được họ tên và số điện thoại. Email là định danh đăng nhập.")
     public UserResponse updateProfile(@AuthenticationPrincipal AuthPrincipal principal,
                                       @Valid @RequestBody UpdateProfileRequest req) {
         return accountService.updateProfile(principal.id(), req);
@@ -41,11 +41,11 @@ public class AccountController {
 
     @PostMapping("/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Doi mat khau",
+    @Operation(summary = "Đổi mật khẩu",
             description = """
-                    Sai mat khau hien tai tra `422 CURRENT_PASSWORD_INCORRECT` (khong phai 401 -
-                    client coi 401 la het phien). Thanh cong thi thu hoi MOI refresh token:
-                    moi thiet bi phai dang nhap lai.
+                    Sai mật khẩu hiện tại trả `422 CURRENT_PASSWORD_INCORRECT` (không phải 401 -
+                    client coi 401 là hết phiên). Thành công thì thu hồi MỌI refresh token:
+                    mọi thiết bị phải đăng nhập lại.
                     """)
     public void changePassword(@AuthenticationPrincipal AuthPrincipal principal,
                                @Valid @RequestBody ChangePasswordRequest req) {

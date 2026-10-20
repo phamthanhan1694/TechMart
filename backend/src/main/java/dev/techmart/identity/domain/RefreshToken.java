@@ -6,12 +6,12 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 /**
- * Refresh token có xoay vong (rotation).
+ * Refresh token có xoay vòng (rotation).
  *
- * <p>Luu HASH chứ không luu token thô: DB rò rỉ thì token vẫn không dùng được.
- * {@code replacedBy} tạo thanh chuỗi token - dùng để phát hiện tái sử dụng:
+ * <p>Lưu HASH chứ không lưu token thô: DB rò rỉ thì token vẫn không dùng được.
+ * {@code replacedBy} tạo thành chuỗi token - dùng để phát hiện tái sử dụng:
  * một token đã bị thu hồi mà vẫn được gửi lên nghĩa là có hai bên đang giữ nó,
- * khi đó thu hồi ca chuỗi (docs/07-security-checklist.md mục 1).
+ * khi đó thu hồi cả chuỗi (docs/07-security-checklist.md mục 1).
  */
 @Entity
 @Table(name = "refresh_tokens")

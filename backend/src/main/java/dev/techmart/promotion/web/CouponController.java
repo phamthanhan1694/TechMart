@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/coupons")
-@Tag(name = "Promotion", description = "Ma giam gia")
+@Tag(name = "Promotion", description = "Mã giảm giá")
 public class CouponController {
 
     private final CouponService couponService;
@@ -27,12 +27,12 @@ public class CouponController {
 
     @PostMapping("/validate")
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Kiem tra ma giam gia",
+    @Operation(summary = "Kiểm tra mã giảm giá",
             description = """
-                    Chi de hien thi truoc cho khach - **khong giu cho**. Viec tru luot that su
-                    xay ra trong transaction dat hang, co khoa dong coupon.
+                    Chỉ để hiển thị trước cho khách - **không giữ chỗ**. Việc trừ lượt thật sự
+                    xảy ra trong transaction đặt hàng, có khoá dòng coupon.
 
-                    Thay "hop le" o day roi luc dat hang bi 409 COUPON_USED_UP la hanh vi dung.
+                    Thấy "hợp lệ" ở đây rồi lúc đặt hàng bị 409 COUPON_USED_UP là hành vi đúng.
                     """)
     public ValidateResponse validate(@AuthenticationPrincipal AuthPrincipal principal,
                                      @Valid @RequestBody ValidateRequest req) {
@@ -41,21 +41,21 @@ public class CouponController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Danh sach ma giam gia")
+    @Operation(summary = "Danh sách mã giảm giá")
     public List<CouponResponse> findAll() {
         return couponService.findAll();
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Tao ma giam gia")
+    @Operation(summary = "Tạo mã giảm giá")
     public ResponseEntity<CouponResponse> create(@Valid @RequestBody CreateCouponRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(couponService.create(req));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Vo hieu hoa ma giam gia", description = "Khong xoa cung - ma da dung nam trong lich su don.")
+    @Operation(summary = "Vô hiệu hoá mã giảm giá", description = "Không xoá cứng - mã đã dùng nằm trong lịch sử đơn.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivate(@PathVariable Long id) {
         couponService.deactivate(id);

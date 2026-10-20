@@ -46,7 +46,7 @@ public class ProductService {
         this.clock = clock;
     }
 
-    // ------------------------------------------------------------------ doc
+    // ------------------------------------------------------------------ đọc
 
     private static final TypeReference<PageResponse<ProductSummaryResponse>> LIST_TYPE =
             new TypeReference<>() {};
@@ -91,11 +91,11 @@ public class ProductService {
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.PRODUCT_NOT_FOUND, slug)));
     }
 
-    /** So sánh thông số 2-3 máy. Dùng đúng thế mạnh của JSONB, chỉ phí gần bằng không. */
+    /** So sánh thông số 2-3 máy. Dùng đúng thế mạnh của JSONB, chi phí gần bằng không. */
     @Transactional(readOnly = true)
     public CompareResponse compare(List<Long> ids) {
         if (ids == null || ids.size() < 2 || ids.size() > 3) {
-            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Chi so sanh duoc 2 hoac 3 san pham");
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Chỉ so sánh được 2 hoặc 3 sản phẩm");
         }
         List<Product> found = products.findAllForCompare(ids);
         if (found.size() != ids.size()) {
@@ -103,7 +103,7 @@ public class ProductService {
         }
         Map<Long, VariantAggregate> aggregates = loadAggregates(found);
 
-        // Hợp của mọi key spec, giữ thứ tự xuất hiện để bằng so sánh đọc được
+        // Hợp của mọi key spec, giữ thứ tự xuất hiện để bảng so sánh đọc được
         Set<String> keys = new LinkedHashSet<>();
         found.forEach(p -> keys.addAll(p.getSpec().keySet()));
 
@@ -118,7 +118,7 @@ public class ProductService {
     @Transactional
     public ProductDetailResponse create(CreateProductRequest req) {
         if (products.existsBySlug(req.slug())) {
-            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug da ton tai: " + req.slug());
+            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug đã tồn tại: " + req.slug());
         }
         Category category = requireCategory(req.categoryId());
         Brand brand = requireBrand(req.brandId());
@@ -148,14 +148,14 @@ public class ProductService {
     public ProductDetailResponse update(Long id, UpdateProductRequest req) {
         Product product = requireProduct(id);
         if (!product.getSlug().equals(req.slug()) && products.existsBySlug(req.slug())) {
-            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug da ton tai: " + req.slug());
+            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug đã tồn tại: " + req.slug());
         }
         String previousSlug = product.getSlug();
         Map<String, Object> before = Map.of("name", product.getName(), "slug", previousSlug,
                 "status", product.getStatus().name());
         product.update(requireCategory(req.categoryId()), requireBrand(req.brandId()),
                 req.name(), req.slug(), req.description(), req.thumbnailUrl(), req.spec(), req.status());
-        // Đổi slug thì phải xoá cả khoá cũ, nếu không bản ghi cũ còn sống tới hết TTL
+        // Đổi slug thì phải xoá cả khoá cũ, nếu không bản ghi cũ con sống tới hết TTL
         cache.invalidate(previousSlug);
         cache.invalidate(product.getSlug());
         audit.record(AuditAction.PRODUCT_UPDATED, "PRODUCT", id, Map.of("before", before,
@@ -177,7 +177,7 @@ public class ProductService {
         product.softDelete(clock.instant());
         cache.invalidate(product.getSlug());
         audit.record(AuditAction.PRODUCT_DELETED, "PRODUCT", id, Map.of("slug", product.getSlug()));
-        log.info("Da xoa mem san pham {} ({})", id, product.getSlug());
+        log.info("Đã xoá mềm sản phẩm {} ({})", id, product.getSlug());
     }
 
     @Transactional
@@ -225,7 +225,7 @@ public class ProductService {
         audit.record(AuditAction.STOCK_ADJUSTED, "VARIANT", variantId, Map.of("sku", variant.getSku(),
                 "delta", req.delta(), "stockAfter", variant.getStockQuantity(),
                 "reason", req.reason() != null ? req.reason() : ""));
-        log.info("User {} dieu chinh ton kho variant {} ({}) delta={} ly do='{}'. Ton moi={}",
+        log.info("User {} điều chỉnh tồn kho variant {} ({}) delta={} lý do='{}'. Tồn mới={}",
                 actorId, variantId, variant.getSku(), req.delta(), req.reason(), variant.getStockQuantity());
         return VariantResponse.from(variant);
     }
@@ -276,7 +276,7 @@ public class ProductService {
 
     private void requireSkuAvailable(String sku) {
         if (variants.existsBySku(sku)) {
-            throw new BusinessException(ErrorCode.SKU_ALREADY_EXISTS, "SKU da ton tai: " + sku);
+            throw new BusinessException(ErrorCode.SKU_ALREADY_EXISTS, "SKU đã tồn tại: " + sku);
         }
     }
 }

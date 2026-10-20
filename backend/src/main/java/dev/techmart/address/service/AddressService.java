@@ -44,7 +44,7 @@ public class AddressService {
         long existing = addresses.countByUserId(userId);
         if (existing >= MAX_ADDRESSES) {
             throw new BusinessException(ErrorCode.ADDRESS_LIMIT_EXCEEDED,
-                    "Toi da " + MAX_ADDRESSES + " dia chi");
+                    "Tối đa " + MAX_ADDRESSES + " địa chỉ");
         }
         boolean makeDefault = existing == 0 || req.makeDefault();
         if (makeDefault) {

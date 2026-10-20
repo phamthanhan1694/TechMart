@@ -4,10 +4,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 /**
- * Ép giới hạn kich thuộc trang.
+ * Ép giới hạn kích thước trang.
  *
- * <p>Không có giới hạn thì một request {@code ?size=1000000} du để ha service -
- * DB trả về hàng trieu dòng và app dùng het bộ nhớ khi map sang DTO.
+ * <p>Không có giới hạn thì một request {@code ?size=1000000} đủ để hạ service -
+ * DB trả về hàng triệu dòng và app dùng hết bộ nhớ khi map sang DTO.
  */
 public final class PageableSanitizer {
 

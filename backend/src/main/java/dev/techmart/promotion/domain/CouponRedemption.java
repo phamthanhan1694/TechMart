@@ -10,9 +10,9 @@ import java.time.Instant;
 /**
  * Một lần sử dụng mã giảm giá.
  *
- * <p>Ràng buộc {@code UNIQUE(coupon_id, user_id, order_id)} o DB chặn viec dùng lại
+ * <p>Ràng buộc {@code UNIQUE(coupon_id, user_id, order_id)} ở DB chặn việc dùng lại
  * cùng một mã trên cùng một đơn. Đếm số dòng theo (coupon, user) là cách kiểm
- * {@code per_user_limit} - chính xac hơn là tin vào bộ đếm trên bằng coupon.
+ * {@code per_user_limit} - chính xác hơn là tin vào bộ đếm trên bảng coupon.
  */
 @Entity
 @Table(name = "coupon_redemptions")

@@ -22,7 +22,7 @@ public class RedisConfig {
         return template;
     }
 
-    /** Trừ tồn flash sale - kiểm ton, kiểm giới hạn/user và tru trong một lệnh. */
+    /** Trừ tồn flash sale - kiểm tồn, kiểm giới hạn/user và trừ trong một lệnh. */
     @Bean
     public RedisScript<Long> flashSalePurchaseScript() {
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();

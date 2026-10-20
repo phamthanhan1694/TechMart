@@ -11,15 +11,15 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Metric nghiệp vụ, ben canh các metric hạ tầng có sẵn của Actuator.
+ * Metric nghiệp vụ, bên cạnh các metric hạ tầng có sẵn của Actuator.
  *
- * <p>Metric hạ tầng (CPU, heap, connection pool) trả lỗi câu hỏi "hệ thống có khoe không".
- * Metric nghiệp vụ trả lỗi câu hỏi khác và quan trọng hơn khi vận hành:
+ * <p>Metric hạ tầng (CPU, heap, connection pool) trả lời câu hỏi "hệ thống có khoẻ không".
+ * Metric nghiệp vụ trả lời câu hỏi khác và quan trọng hơn khi vận hành:
  * <i>"có bao nhiêu hàng đang bị giữ treo"</i>, <i>"outbox có bị ùn không"</i>,
  * <i>"có bao nhiêu request bị từ chối vì hết hàng"</i>.
  *
- * <p>Các gauge được cache lai và làm mọi theo chu ky để mỗi lần Prometheus scrape không
- * ban một câu COUNT xuong DB.
+ * <p>Các gauge được cache lại và làm mới theo chu kỳ để mỗi lần Prometheus scrape không
+ * bắn một câu COUNT xuống DB.
  */
 @Component
 public class BusinessMetrics {
@@ -44,13 +44,13 @@ public class BusinessMetrics {
         registry.gauge("techmart.outbox.events.pending", pendingOutboxEvents, AtomicLong::get);
 
         this.oversellPrevented = Counter.builder("techmart.inventory.insufficient_stock")
-                .description("So lan request bi tu choi vi khong du ton kho")
+                .description("Số lần request bị từ chối vi không đủ tồn kho")
                 .register(registry);
         this.flashSaleSoldOut = Counter.builder("techmart.flashsale.sold_out")
-                .description("So lan request flash sale bi tu choi vi het suat")
+                .description("Số lần request flash sale bị từ chối vi hết suất")
                 .register(registry);
         this.rateLimited = Counter.builder("techmart.ratelimit.rejected")
-                .description("So request bi chan boi rate limit")
+                .description("Số request bị chặn bởi rate limit")
                 .register(registry);
     }
 
@@ -66,7 +66,7 @@ public class BusinessMetrics {
         rateLimited.increment();
     }
 
-    /** Làm mới các gauge. Gọi từ {@link MetricsRefreshJob} để tach lịch chạy khoi logic. */
+    /** Làm mới các gauge. Gọi từ {@link MetricsRefreshJob} để tách lịch chạy khỏi logic. */
     public void refreshGauges() {
         activeReservations.set(reservations.countByStatus(ReservationStatus.HELD));
         pendingOutboxEvents.set(outbox.countByStatus(OutboxEvent.Status.PENDING));

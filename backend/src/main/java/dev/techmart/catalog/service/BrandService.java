@@ -34,7 +34,7 @@ public class BrandService {
     @Transactional
     public BrandResponse create(BrandRequest req) {
         if (brands.existsBySlug(req.slug())) {
-            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug da ton tai: " + req.slug());
+            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug đã tồn tại: " + req.slug());
         }
         return BrandResponse.from(brands.save(new Brand(req.name(), req.slug())));
     }
@@ -44,7 +44,7 @@ public class BrandService {
         Brand brand = brands.findById(id)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.BRAND_NOT_FOUND, id));
         if (!brand.getSlug().equals(req.slug()) && brands.existsBySlug(req.slug())) {
-            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug da ton tai: " + req.slug());
+            throw new BusinessException(ErrorCode.SLUG_ALREADY_EXISTS, "Slug đã tồn tại: " + req.slug());
         }
         brand.rename(req.name(), req.slug());
         return BrandResponse.from(brand);

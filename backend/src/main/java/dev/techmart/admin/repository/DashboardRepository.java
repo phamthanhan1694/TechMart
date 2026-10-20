@@ -20,14 +20,14 @@ import java.util.*;
 /**
  * Truy vấn tổng hợp cho dashboard.
  *
- * <p><b>Nhom theo {@code placed_at} chứ không phải {@code created_at}.</b> {@code created_at}
- * là cot kỹ thuật đó {@code @CreationTimestamp} ghi lúc chèn dòng; {@code placed_at} mới là
+ * <p><b>Nhóm theo {@code placed_at} chứ không phải {@code created_at}.</b> {@code created_at}
+ * là cột kỹ thuật do {@code @CreationTimestamp} ghi lúc chèn dòng; {@code placed_at} mới là
  * thời điểm nghiệp vụ - lúc khách đặt hàng. Dùng nhầm thì báo cáo doanh thu của dữ liệu
- * nhap từ hệ thống cũ sẽ dồn het vào ngay import. Triệu chứng đã gặp: 400 đơn rai 90 ngay
+ * nhập từ hệ thống cũ sẽ dồn hết vào ngày import. Triệu chứng đã gặp: 400 đơn rải 90 ngày
  * nhưng biểu đồ chỉ có đúng một cột.
  *
  * <p><b>Nguyên tắc:</b> tính ở DB rồi trả về đúng con số cần hiển thị. Không bao giờ nạp
- * hàng nghìn đơn hàng về ứng dụng rồi cộng bằng Java - cách đó chạy được với 400 đơn va
+ * hàng nghìn đơn hàng về ứng dụng rồi cộng bằng Java - cách đó chạy được với 400 đơn và
  * chết với 400.000 đơn, và là lỗi hay gặp nhất ở màn hình báo cáo.
  *
  * <p>Chỉ tính doanh thu trên các trạng thái đã thu được tiền: PAID trở đi, không tính
@@ -44,7 +44,7 @@ public class DashboardRepository {
 
     /**
      * Gom theo ngày/tháng của {@code zone} chứ không phải UTC: đơn đặt lúc 01:30 sáng giờ
-     * Việt Nam (= 18:30 UTC hôm trước) phải nằm ở cột của hôm này (ADR-0016).
+     * Việt Nam (= 18:30 UTC hôm trước) phải nằm ở cột của hôm nay (ADR-0016).
      */
     public List<RevenuePoint> revenueByPeriod(String groupBy, Instant from, Instant to, java.time.ZoneId zone) {
         // groupBy đã được whitelist ở tầng service - không bao giờ ghép thẳng chuỗi client vào SQL

@@ -39,6 +39,6 @@ public interface WarrantyRequestRepository extends JpaRepository<WarrantyRequest
                                  @Param("status") WarrantyStatus status,
                                  Pageable pageable);
 
-    /** Một serial không nên có hai yêu cầu bảo hành cũng mo. */
+    /** Một serial không nên có hai yêu cầu bảo hành cùng mở. */
     boolean existsBySerialIdAndStatusIn(Long serialId, java.util.Collection<WarrantyStatus> statuses);
 }

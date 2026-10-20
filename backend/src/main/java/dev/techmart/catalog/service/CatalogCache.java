@@ -21,19 +21,19 @@ import java.util.function.Supplier;
 /**
  * Cache-aside cho catalog.
  *
- * <p><b>Bài toán kho nhất của cache không phải đọc nhanh, mà là xoá đúng lúc.</b>
+ * <p><b>Bài toán khó nhất của cache không phải đọc nhanh, mà là xoá đúng lúc.</b>
  * Trang danh sách sản phẩm có vô số biến thể khoá (từ khoá, bộ lọc spec, khoảng giá,
  * sắp xếp, số trang) - admin sửa một sản phẩm thì không thể biết phải xoá những khoá nào.
  *
  * <p>Cách giải ở đây là <b>bộ đếm thế hệ (generation counter)</b>: mọi thay đổi catalog
- * tầng {@code catalog:gen} lên một. Khoá cache danh sách có chứa số thế hệ, nên toàn bộ
+ * tăng {@code catalog:gen} lên một. Khoá cache danh sách có chứa số thế hệ, nên toàn bộ
  * cache cũ trở thành <i>không thể chạm tới</i> ngay lập tức, không cần SCAN hay xoá hàng loạt.
- * Các khoá cũ từ hết hạn theo TTL rồi biến mat.
+ * Các khoá cũ tự hết hạn theo TTL rồi biến mất.
  *
- * <p>Trang chi tiết thì đơn gian hơn: khoá là slug, xoá truc tiep được.
+ * <p>Trang chi tiết thì đơn giản hơn: khoá là slug, xoá trực tiếp được.
  *
  * <p><b>Fail-open:</b> Redis lỗi thì tính lại từ DB. Cache là thứ tăng tốc, không phải
- * nguon su thật - cũng triet ly với reservation (ADR-0004).
+ * nguồn sự thật - cùng triết lý với reservation (ADR-0004).
  */
 @Component
 public class CatalogCache {
@@ -56,9 +56,9 @@ public class CatalogCache {
         this.objectMapper = objectMapper;
         this.props = props;
         this.hits = Counter.builder("techmart.catalog.cache")
-                .tag("result", "hit").description("So lan doc duoc tu cache").register(registry);
+                .tag("result", "hit").description("Số lần đọc được từ cache").register(registry);
         this.misses = Counter.builder("techmart.catalog.cache")
-                .tag("result", "miss").description("So lan phai truy van DB").register(registry);
+                .tag("result", "miss").description("Số lần phải truy vẫn DB").register(registry);
     }
 
     public boolean isEnabled() {
@@ -66,11 +66,11 @@ public class CatalogCache {
     }
 
     /**
-     * Doc từ cache, không có thì gọi {@code loader} và ghi lại.
+     * Đọc từ cache, không có thì gọi {@code loader} và ghi lại.
      *
-     * <p>Đây là toàn bộ pattern cache-aside: ứng dụng từ quản lý cache, DB không biet
-     * cache tồn tại. Khac với read-through (cache từ gọi DB) - cache-aside đơn gian hơn
-     * và không phụ thuộc thư viện cache nao.
+     * <p>Đây là toàn bộ pattern cache-aside: ứng dụng tự quản lý cache, DB không biết
+     * cache tồn tại. Khác với read-through (cache tự gọi DB) - cache-aside đơn giản hơn
+     * và không phụ thuộc thư viện cache nào.
      */
     public <T> T listOrLoad(String rawKey, TypeReference<T> type, Supplier<T> loader) {
         if (!isEnabled()) {
@@ -105,7 +105,7 @@ public class CatalogCache {
     }
 
     /**
-     * Gọi sau MỖI thay đổi catalog. Tầng thế hệ làm mọi khoá danh sách cũ trở thành
+     * Gọi sau MỖI thay đổi catalog. Tăng thế hệ làm mọi khoá danh sách cũ trở thành
      * không thể chạm tới, và xoá thẳng khoá chi tiết của sản phẩm vừa đổi.
      */
     public void invalidate(String slug) {
@@ -118,7 +118,7 @@ public class CatalogCache {
                 redis.delete(DETAIL_PREFIX + slug);
             }
         } catch (DataAccessException e) {
-            log.warn("Khong xoa duoc cache catalog: {}", e.getMessage());
+            log.warn("Không xoá được cache catalog: {}", e.getMessage());
         }
     }
 
@@ -137,11 +137,11 @@ public class CatalogCache {
             String json = redis.opsForValue().get(key);
             return json == null ? Optional.empty() : Optional.of(objectMapper.readValue(json, type));
         } catch (DataAccessException e) {
-            log.warn("Redis khong kha dung, bo qua cache: {}", e.getMessage());
+            log.warn("Redis không khả dụng, bỏ qua cache: {}", e.getMessage());
             return Optional.empty();
         } catch (Exception e) {
             // Đổi định dạng DTO làm bản ghi cũ không đọc được - bỏ qua, coi như cache miss
-            log.warn("Khong doc duoc cache {}: {}", key, e.getMessage());
+            log.warn("Không đọc được cache {}: {}", key, e.getMessage());
             return Optional.empty();
         }
     }
@@ -150,9 +150,9 @@ public class CatalogCache {
         try {
             redis.opsForValue().set(key, objectMapper.writeValueAsString(value), ttl);
         } catch (DataAccessException e) {
-            log.warn("Redis khong kha dung, khong ghi duoc cache: {}", e.getMessage());
+            log.warn("Redis không khả dụng, không ghi được cache: {}", e.getMessage());
         } catch (Exception e) {
-            log.warn("Khong ghi duoc cache {}: {}", key, e.getMessage());
+            log.warn("Không ghi được cache {}: {}", key, e.getMessage());
         }
     }
 

@@ -15,14 +15,14 @@ public final class AddressDtos {
 
     /** Ràng buộc giống hệt {@code OrderDtos.ShippingAddress}: địa chỉ lưu được thì đặt hàng được. */
     public record AddressRequest(
-            @Size(max = 50) @Schema(example = "Nha rieng") String label,
+            @Size(max = 50) @Schema(example = "Nhà riêng") String label,
             @NotBlank @Size(max = 150) String receiverName,
-            @NotBlank @Pattern(regexp = "^0\\d{9}$", message = "So dien thoai phai co 10 chu so") String phone,
+            @NotBlank @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số") String phone,
             @NotBlank @Size(max = 255) String street,
             @NotBlank @Size(max = 100) String ward,
             @NotBlank @Size(max = 100) String district,
             @NotBlank @Size(max = 100) String province,
-            @Schema(description = "Dat lam dia chi mac dinh") boolean makeDefault
+            @Schema(description = "Đặt làm địa chỉ mặc định") boolean makeDefault
     ) {}
 
     public record AddressResponse(

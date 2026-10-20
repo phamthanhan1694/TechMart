@@ -11,12 +11,12 @@ import java.time.Instant;
 /**
  * Đánh giá sản phẩm, gắn với một dòng đơn hàng cụ thể.
  *
- * <p><b>Gắn với {@code order_item} chứ không phải {@code product}</b> - đây là diem thiet ke
- * chính. Ràng buộc {@code UNIQUE(order_item_id)} o DB biến "chi đánh giá được sản phẩm
- * đã mua, và mỗi lần mua chỉ đánh giá một lan" thanh một bất biến của dữ liệu, không phải
- * một điều kiện if trong code có thể quen.
+ * <p><b>Gắn với {@code order_item} chứ không phải {@code product}</b> - đây là điểm thiết kế
+ * chính. Ràng buộc {@code UNIQUE(order_item_id)} ở DB biến "chỉ đánh giá được sản phẩm
+ * đã mua, và mỗi lần mua chỉ đánh giá một lần" thành một bất biến của dữ liệu, không phải
+ * một điều kiện if trong code có thể quên.
  *
- * <p>Mua lai lan hai thì được đánh giá lai - dùng, vì đó là một trải nghiệm mua hàng khac.
+ * <p>Mua lại lần hai thì được đánh giá lại - dùng, vì đó là một trải nghiệm mua hàng khác.
  */
 @Entity
 @Table(name = "reviews")
@@ -53,7 +53,7 @@ public class Review {
 
     public Review(Product product, User user, OrderItem orderItem, int rating, String comment) {
         if (rating < 1 || rating > 5) {
-            throw new IllegalArgumentException("Diem danh gia phai tu 1 den 5");
+            throw new IllegalArgumentException("Điểm đánh giá phải từ 1 đến 5");
         }
         this.product = product;
         this.user = user;
@@ -76,7 +76,7 @@ public class Review {
 
     public void edit(int rating, String comment) {
         if (rating < 1 || rating > 5) {
-            throw new IllegalArgumentException("Diem danh gia phai tu 1 den 5");
+            throw new IllegalArgumentException("Điểm đánh giá phải từ 1 đến 5");
         }
         this.rating = rating;
         this.comment = comment;

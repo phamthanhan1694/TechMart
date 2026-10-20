@@ -8,15 +8,15 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 /**
- * Một lan giữ hàng.
+ * Một lần giữ hàng.
  *
- * <p>Bằng này là <b>nguon su thật</b> của viec giữ hàng; Redis chỉ là đường nhanh.
- * Lý do chon nhu vay: Redis keyspace notification là at-most-once - mat một event la
- * hàng bi giữ vinh vien; Redis restart là mat sach reservation. Job quet DB mỗi 30 giây
- * cham hơn nhưng không bao giờ mat. Xem ADR-0004.
+ * <p>Bảng này là <b>nguồn sự thật</b> của việc giữ hàng; Redis chỉ là đường nhanh.
+ * Lý do chọn như vậy: Redis keyspace notification là at-most-once - mất một event là
+ * hàng bị giữ vĩnh viễn; Redis restart là mất sạch reservation. Job quét DB mỗi 30 giây
+ * chậm hơn nhưng không bao giờ mất. Xem ADR-0004.
  *
- * <p>{@code orderId} luu dạng Long chứ không phải quan he JPA: reservation được tạo
- * TRUOC khi có đơn hàng, và module inventory không nên phụ thuộc nguoc vào module order.
+ * <p>{@code orderId} lưu dạng Long chứ không phải quan hệ JPA: reservation được tạo
+ * Trước khi có đơn hàng, và module inventory không nên phụ thuộc ngược vào module order.
  */
 @Entity
 @Table(name = "inventory_reservations")
@@ -37,7 +37,7 @@ public class InventoryReservation {
     @Column(name = "order_id")
     private Long orderId;
 
-    /** Gom các reservation của cùng một lan checkout lai với nhau. */
+    /** Gom các reservation của cùng một lần checkout lại với nhau. */
     @Column(name = "session_id", nullable = false, length = 64)
     private String sessionId;
 

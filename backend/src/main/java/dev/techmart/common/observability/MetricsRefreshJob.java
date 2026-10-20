@@ -7,14 +7,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Làm mới các gauge nghiệp vụ theo chu ky.
+ * Làm mới các gauge nghiệp vụ theo chu kỳ.
  *
  * <p>Tách thành bean riêng thay vì để {@code @Scheduled} trong {@link BusinessMetrics}:
- * lịch chạy là một mối quan tâm khác với việc định nghĩa metric, và tach ra thì test
- * gọi thẳng {@code refreshGauges()} được mà không dinh den scheduler.
+ * lịch chạy là một mối quan tâm khác với việc định nghĩa metric, và tách ra thì test
+ * gọi thẳng {@code refreshGauges()} được mà không dính đến scheduler.
  *
  * <p>{@code @Transactional} đặt ngay trên method {@code @Scheduled} - gọi nội bộ sang
- * method {@code @Transactional} khác trong cũng class sẽ không di qua proxy.
+ * method {@code @Transactional} khác trong cùng class sẽ không đi qua proxy.
  */
 @Component
 public class MetricsRefreshJob {
@@ -33,8 +33,8 @@ public class MetricsRefreshJob {
         try {
             metrics.refreshGauges();
         } catch (RuntimeException e) {
-            // Metric hong không được làm sắp ứng dụng
-            log.warn("Khong lam moi duoc gauge nghiep vu: {}", e.getMessage());
+            // Metric hỏng không được làm sập ứng dụng
+            log.warn("Không làm mới được gauge nghiệp vụ: {}", e.getMessage());
         }
     }
 }

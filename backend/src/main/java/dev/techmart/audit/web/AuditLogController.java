@@ -22,7 +22,7 @@ import java.time.ZoneId;
 
 @RestController
 @RequestMapping("/api/v1/admin/audit-logs")
-@Tag(name = "Admin - Audit log", description = "Nhat ky hanh dong quan tri, chi them khong sua")
+@Tag(name = "Admin - Audit log", description = "Nhật ký hành động quản trị, chỉ thêm không sửa")
 @PreAuthorize("hasRole('ADMIN')")
 public class AuditLogController {
 
@@ -36,8 +36,8 @@ public class AuditLogController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    @Operation(summary = "Tra cuu nhat ky",
-            description = "Loc theo hanh dong, doi tuong, nguoi thuc hien va khoang ngay (gio Viet Nam).")
+    @Operation(summary = "Tra cứu nhật ký",
+            description = "Lọc theo hành động, đối tượng, người thực hiện và khoảng ngày (giờ Việt Nam).")
     public PageResponse<AuditLogResponse> search(
             @RequestParam(required = false) AuditAction action,
             @RequestParam(required = false) String targetType,
@@ -56,7 +56,7 @@ public class AuditLogController {
     }
 
     @GetMapping("/actions")
-    @Operation(summary = "Danh sach hanh dong co the loc")
+    @Operation(summary = "Danh sách hành động có thể lọc")
     public AuditAction[] actions() {
         return AuditAction.values();
     }

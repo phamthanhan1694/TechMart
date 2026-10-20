@@ -14,8 +14,8 @@ import java.util.Map;
 /**
  * Biến event vòng đời đơn hàng thành thông báo cho chủ đơn.
  *
- * <p>Trả chủ đơn từ bảng orders thay vì đọc {@code userId} trong payload: chỉ ORDER_PLACED
- * mạng userId, các event đổi trạng thái thì không - và thêm userId vào mọi payload chỉ để
+ * <p>Tra chủ đơn từ bảng orders thay vì đọc {@code userId} trong payload: chỉ ORDER_PLACED
+ * mang userId, các event đổi trạng thái thì không - và thêm userId vào mọi payload chỉ để
  * phục vụ một consumer là để consumer định hình producer.
  */
 @Component
@@ -61,7 +61,7 @@ public class OrderNotificationHandler implements OutboxEventHandler {
                 "SELECT user_id, code FROM orders WHERE id = :id", Map.of("id", event.getAggregateId()));
         if (rows.isEmpty()) {
             // Không ném: xem hợp đồng ở OutboxEventHandler
-            log.warn("Outbox event {}: khong tim thay don {}, bo qua thong bao", event.getId(), event.getAggregateId());
+            log.warn("Outbox event {}: không tìm thấy đơn {}, bỏ qua thông báo", event.getId(), event.getAggregateId());
             return;
         }
         long userId = ((Number) rows.get(0).get("user_id")).longValue();

@@ -64,7 +64,7 @@ public class AccountService {
         }
         user.changePassword(passwordEncoder.encode(req.newPassword()));
         int revoked = refreshTokens.revokeAllForUser(userId, clock.instant());
-        log.info("User {} doi mat khau, thu hoi {} refresh token", userId, revoked);
+        log.info("User {} đổi mật khẩu, thu hồi {} refresh token", userId, revoked);
     }
 
     private User require(Long userId) {

@@ -25,7 +25,7 @@ public final class CatalogDtos {
     public record BrandRequest(
             @NotBlank @Size(max = 100) String name,
             @NotBlank @Size(max = 120) @Pattern(regexp = "^[a-z0-9-]+$",
-                    message = "Slug chi gom chu thuong, so va dau gach ngang") String slug
+                    message = "Slug chỉ gồm chữ thường, số và dấu gạch ngang") String slug
     ) {}
 
     public record CategoryResponse(Long id, String name, String slug, Long parentId, String parentName) {
@@ -44,14 +44,14 @@ public final class CatalogDtos {
 
     // ------------------------------------------------------------- Variant
 
-    @Schema(description = "Phien ban ban duoc cua san pham")
+    @Schema(description = "Phiên bản bán được của sản phẩm")
     public record VariantResponse(
             Long id,
             String sku,
             String name,
             BigDecimal price,
             BigDecimal compareAtPrice,
-            @Schema(description = "Hang thuc su mua duoc = ton kho - dang giu") int availableQuantity,
+            @Schema(description = "Hàng thực sự mua được = tồn kho - đang giữ") int availableQuantity,
             Map<String, Object> attributes
     ) {
         public static VariantResponse from(ProductVariant v) {
@@ -62,22 +62,22 @@ public final class CatalogDtos {
 
     public record VariantRequest(
             @NotBlank @Size(max = 64) String sku,
-            @NotBlank @Size(max = 150) @Schema(example = "256GB - Titan den") String name,
+            @NotBlank @Size(max = 150) @Schema(example = "256GB - Titan đen") String name,
             @NotNull @DecimalMin(value = "0.01") BigDecimal price,
             @DecimalMin(value = "0.01") BigDecimal compareAtPrice,
             @NotNull @Min(0) Integer stockQuantity,
-            @Schema(example = "{\"color\": \"Titan den\", \"storage\": \"256GB\"}")
+            @Schema(example = "{\"color\": \"Titan đen\", \"storage\": \"256GB\"}")
             Map<String, Object> attributes
     ) {}
 
     public record AdjustStockRequest(
-            @NotNull @Schema(example = "-5", description = "Am la giam, duong la tang") Integer delta,
+            @NotNull @Schema(example = "-5", description = "Âm là giảm, dương là tăng") Integer delta,
             @NotBlank @Size(max = 255) String reason
     ) {}
 
     // ------------------------------------------------------------- Product
 
-    @Schema(description = "San pham rut gon - dung o trang danh sach")
+    @Schema(description = "Sản phẩm rút gọn - dùng ở trang danh sách")
     public record ProductSummaryResponse(
             Long id,
             String name,
@@ -91,7 +91,7 @@ public final class CatalogDtos {
             Map<String, Object> spec
     ) {}
 
-    @Schema(description = "San pham day du - dung o trang chi tiet")
+    @Schema(description = "Sản phẩm đầy đủ - dùng ở trang chi tiết")
     public record ProductDetailResponse(
             Long id,
             String name,
@@ -124,7 +124,7 @@ public final class CatalogDtos {
             @Size(max = 500) String thumbnailUrl,
             @Schema(example = "{\"ram\": \"8GB\", \"storage\": \"256GB\", \"chipset\": \"A17 Pro\"}")
             Map<String, Object> spec,
-            @Valid @NotEmpty(message = "San pham phai co it nhat mot phien ban")
+            @Valid @NotEmpty(message = "Sản phẩm phải có ít nhất một phiên bản")
             List<VariantRequest> variants,
             List<@Size(max = 500) String> images
     ) {}
@@ -140,7 +140,7 @@ public final class CatalogDtos {
             ProductStatus status
     ) {}
 
-    @Schema(description = "So sanh thong so nhieu san pham. specKeys la hop cua moi key xuat hien.")
+    @Schema(description = "So sánh thông số nhiều sản phẩm. specKeys là hợp của mọi key xuất hiện.")
     public record CompareResponse(
             List<String> specKeys,
             List<ProductSummaryResponse> products,

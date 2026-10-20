@@ -19,7 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/payments")
-@Tag(name = "Payment", description = "Thanh toan qua cong gia, co webhook ky HMAC")
+@Tag(name = "Payment", description = "Thanh toán qua cổng giả, có webhook ký HMAC")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -30,35 +30,35 @@ public class PaymentController {
 
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Khoi tao giao dich thanh toan",
+    @Operation(summary = "Khởi tạo giao dịch thanh toán",
             description = """
-                    **Bat buoc** header `Idempotency-Key`. Goi lai cung key tra ve dung giao dich cu.
+                    **Bắt buộc** header `Idempotency-Key`. Gọi lại cùng key trả về đúng giao dịch cũ.
 
-                    Giao dich tao ra o trang thai INITIATED. Ket qua that den qua webhook -
-                    dung `POST /payments/{id}/simulate-callback` de lay san body da ky.
+                    Giao dịch tạo ra ở trạng thái INITIATED. Kết quả thật đến qua webhook -
+                    dùng `POST /payments/{id}/simulate-callback` để lấy sẵn body đã ký.
                     """)
     public PaymentResponse initiate(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Parameter(description = "UUID do client sinh, bat buoc", required = true)
+            @Parameter(description = "UUID do client sinh, bắt buộc", required = true)
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody InitiatePaymentRequest req) {
 
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_REQUIRED,
-                    "Thieu header Idempotency-Key. Client phai sinh mot UUID cho moi lan thanh toan.");
+                    "Thiếu header Idempotency-Key. Client phải sinh một UUID cho mỗi lần thanh toán.");
         }
         return paymentService.initiate(principal, req, idempotencyKey);
     }
 
     @PostMapping("/webhook")
     @SecurityRequirements
-    @Operation(summary = "Callback tu cong thanh toan",
+    @Operation(summary = "Callback từ cổng thanh toán",
             description = """
-                    Endpoint cong khai (cong thanh toan khong co token cua he thong), nhung
-                    **bat buoc co chu ky HMAC hop le**. Ngoai ra con doi chieu so tien voi
-                    tong don truoc khi danh dau da tra - khong bao gio tin so tien webhook gui len.
+                    Endpoint công khai (cổng thanh toán không có token của hệ thống), nhưng
+                    **bắt buộc có chữ ký HMAC hợp lệ**. Ngoài ra còn đối chiếu số tiền với
+                    tổng đơn trước khi đánh dấu đã trả - không bao giờ tin số tiền webhook gửi lên.
 
-                    Idempotent: gui lai cung transactionRef tra ket qua cu, khong doi trang thai lan hai.
+                    Idempotent: gửi lại cùng transactionRef trả kết quả cũ, không đổi trạng thái lần hai.
                     """)
     public PaymentResponse webhook(@Valid @RequestBody WebhookRequest req) {
         return paymentService.handleWebhook(req);
@@ -66,9 +66,9 @@ public class PaymentController {
 
     @PostMapping("/{id}/simulate-callback")
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
-    @Operation(summary = "[Demo] Sinh san body callback da ky",
-            description = "Chi de tien demo - tra ve body kem chu ky HMAC hop le "
-                    + "de dan thang vao POST /payments/webhook.")
+    @Operation(summary = "[Demo] Sinh sẵn body callback đã ký",
+            description = "Chỉ để tiện demo - trả về body kèm chữ ký HMAC hợp lệ "
+                    + "để dán thẳng vào POST /payments/webhook.")
     public SimulatedCallback simulate(@AuthenticationPrincipal AuthPrincipal principal,
                                       @PathVariable Long id,
                                       @RequestParam(defaultValue = "SUCCEEDED") PaymentStatus outcome) {
@@ -76,7 +76,7 @@ public class PaymentController {
     }
 
     @GetMapping("/by-order/{orderCode}")
-    @Operation(summary = "Danh sach giao dich cua mot don")
+    @Operation(summary = "Danh sách giao dịch của một đơn")
     public List<PaymentResponse> byOrder(@AuthenticationPrincipal AuthPrincipal principal,
                                          @PathVariable String orderCode) {
         return paymentService.findByOrder(orderCode, principal);

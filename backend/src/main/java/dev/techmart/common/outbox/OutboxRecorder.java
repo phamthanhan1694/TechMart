@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
-/** Ghi event vào outbox. Luon được gọi TRONG transaction nghiệp vụ dạng chay. */
+/** Ghi event vào outbox. Luôn được gọi TRONG transaction nghiệp vụ đang chạy. */
 @Service
 public class OutboxRecorder {
 

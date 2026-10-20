@@ -11,11 +11,11 @@ import java.time.format.DateTimeFormatter;
  * Sinh mã đơn hàng dạng {@code TM-20260901-K7M2QX}.
  *
  * <p>Phần dưới là 6 ký tự ngẫu nhiên chứ không phải số thứ tự trong ngày. Đánh đổi:
- * mất tính "đơn thứ mấy trong ngày" (van tra cứu được bằng created_at), đổi lại mà không
- * đoán được và không lo sản lượng đơn hàng của cửa hàng ra bên ngoài.
+ * mất tính "đơn thứ mấy trong ngày" (vẫn tra cứu được bằng created_at), đổi lại mà không
+ * đoán được và không lộ sản lượng đơn hàng của cửa hàng ra bên ngoài.
  *
  * <p>Và không cần bộ đếm dùng chung -> không có điểm tranh chấp khi nhiều đơn được tạo
- * cùng lúc. Ràng buộc UNIQUE(code) o DB bat truong hop trung hiem hoi.
+ * cùng lúc. Ràng buộc UNIQUE(code) ở DB bắt trường hợp trùng hiếm hoi.
  */
 @Component
 public class OrderCodeGenerator {

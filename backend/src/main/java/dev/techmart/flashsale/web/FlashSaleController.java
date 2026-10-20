@@ -22,7 +22,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/flash-sales")
-@Tag(name = "Flash Sale", description = "Mo ban gioi han - tru ton bang Redis Lua nguyen tu")
+@Tag(name = "Flash Sale", description = "Mở bán giới hạn - trừ tồn bằng Redis Lua nguyên tử")
 public class FlashSaleController {
 
     private final FlashSaleService flashSaleService;
@@ -33,42 +33,42 @@ public class FlashSaleController {
 
     @GetMapping("/active")
     @SecurityRequirements
-    @Operation(summary = "Cac phien dang chay",
-            description = "So suat con lai doc tu Redis khi phien dang chay, tu DB khi da ket thuc.")
+    @Operation(summary = "Các phiên đang chạy",
+            description = "Số suất còn lại đọc từ Redis khi phiên đang chạy, từ DB khi đã kết thúc.")
     public List<FlashSaleResponse> active() {
         return flashSaleService.findActive();
     }
 
     @GetMapping("/upcoming")
     @SecurityRequirements
-    @Operation(summary = "Cac phien sap dien ra", description = "Kem so giay con lai truoc gio mo ban.")
+    @Operation(summary = "Các phiên sắp diễn ra", description = "Kèm số giây còn lại trước giờ mở bán.")
     public List<FlashSaleResponse> upcoming() {
         return flashSaleService.findUpcoming();
     }
 
     @PostMapping("/items/{itemId}/purchase")
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Mua mot suat flash sale",
+    @Operation(summary = "Mua một suất flash sale",
             description = """
-                    **Bat buoc** header `Idempotency-Key`.
+                    **Bắt buộc** header `Idempotency-Key`.
 
-                    Duong di: rate limit (10 req/phut/user, 100/phut/IP) -> cua Redis
-                    (Lua nguyen tu kiem ton + gioi han/user + tru trong MOT lenh) -> ghi don o DB.
-                    Chi nguoi thang o cua Redis moi cham vao DB.
+                    Đường đi: rate limit (10 req/phút/user, 100/phút/IP) -> cửa Redis
+                    (Lua nguyên tử kiểm tồn + giới hạn/user + trừ trong MỘT lệnh) -> ghi đơn ở DB.
+                    Chỉ người thắng ở cửa Redis mới chạm vào DB.
 
-                    Ma loi: `409 SOLD_OUT` het suat, `409 FLASH_SALE_LIMIT_EXCEEDED` vuot gioi han,
-                    `429` vuot rate limit, `503` Redis chet (fail-closed - khong dam bao duoc thi khong ban).
+                    Mã lỗi: `409 SOLD_OUT` hết suất, `409 FLASH_SALE_LIMIT_EXCEEDED` vượt giới hạn,
+                    `429` vượt rate limit, `503` Redis chết (fail-closed - không đảm bảo được thì không bán).
                     """)
     public ResponseEntity<OrderResponse> purchase(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long itemId,
-            @Parameter(description = "UUID do client sinh, bat buoc", required = true)
+            @Parameter(description = "UUID do client sinh, bắt buộc", required = true)
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody PurchaseRequest req) {
 
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_REQUIRED,
-                    "Thieu header Idempotency-Key.");
+                    "Thiếu header Idempotency-Key.");
         }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(flashSaleService.purchase(principal.id(), itemId, req, idempotencyKey));
@@ -78,16 +78,16 @@ public class FlashSaleController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Tao phien mo ban")
+    @Operation(summary = "Tạo phiên mở bán")
     public ResponseEntity<FlashSaleResponse> create(@Valid @RequestBody CreateFlashSaleRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(flashSaleService.create(req));
     }
 
     @PostMapping("/{id}/warmup")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Nap san ton kho vao Redis truoc gio mo ban",
-            description = "Khong nap truoc thi dung giay mo ban se co hang nghin request "
-                    + "cung nap mot luc - cache stampede. Nap truoc la cach chan re nhat.")
+    @Operation(summary = "Nạp sẵn tồn kho vào Redis trước giờ mở bán",
+            description = "Không nạp trước thì đúng giây mở bán sẽ có hàng nghìn request "
+                    + "cùng nạp một lúc - cache stampede. Nạp trước là cách chặn rẻ nhất.")
     public Map<String, Object> warmUp(@PathVariable Long id) {
         int items = flashSaleService.warmUp(id);
         return Map.of("flashSaleId", id, "warmedUpItems", items, "status", "RUNNING");
@@ -95,10 +95,10 @@ public class FlashSaleController {
 
     @PostMapping("/{id}/reconcile")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Doi soat Redis voi DB sau khi phien ket thuc",
-            description = "Lech thi ghi canh bao vao log - day la cai gia phai tra cho nhat quan cuoi.")
+    @Operation(summary = "Đối soát Redis với DB sau khi phiên kết thúc",
+            description = "Lệch thì ghi cảnh báo vào log - đây là cái giá phải trả cho nhất quán cuối.")
     public Map<String, String> reconcile(@PathVariable Long id) {
         flashSaleService.reconcile(id);
-        return Map.of("status", "Da doi soat, xem log de biet chi tiet");
+        return Map.of("status", "Đã đối soát, xem log để biết chi tiết");
     }
 }

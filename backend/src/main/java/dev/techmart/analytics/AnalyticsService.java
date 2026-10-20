@@ -103,7 +103,7 @@ public class AnalyticsService {
     public Breakdown breakdown(String dimension, LocalDate from, LocalDate to, int limit) {
         if (!DIMENSIONS.contains(dimension)) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED,
-                    "dimension phai la mot trong " + DIMENSIONS);
+                    "dimension phải là một trong " + DIMENSIONS);
         }
         ReportRange range = range(from, to);
         List<RawBreakdown> raw = switch (dimension) {

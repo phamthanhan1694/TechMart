@@ -44,7 +44,7 @@ public class CartItem {
     public ProductVariant getVariant() { return variant; }
     public Integer getQuantity() { return quantity; }
 
-    /** Gia hiện tại x số lượng. Không phải giá đã chốt - viec chot xay ra o Order. */
+    /** Giá hiện tại x số lượng. Không phải giá đã chốt - việc chốt xảy ra ở Order. */
     public BigDecimal lineTotal() {
         return variant.getPrice().multiply(BigDecimal.valueOf(quantity));
     }
@@ -55,7 +55,7 @@ public class CartItem {
 
     public void changeQuantity(int quantity) {
         if (quantity < 1) {
-            throw new IllegalArgumentException("So luong phai >= 1");
+            throw new IllegalArgumentException("Số lượng phải >= 1");
         }
         this.quantity = quantity;
     }

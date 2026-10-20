@@ -79,14 +79,14 @@ public class OrderCsvExporter {
                 "SELECT COUNT(*) FROM orders o " + WHERE, params(range, status), Long.class));
         if (rows > maxRows) {
             throw new BusinessException(ErrorCode.EXPORT_TOO_LARGE,
-                    rows + " dong, toi da " + maxRows + ". Hay thu hep khoang ngay.");
+                    rows + " dòng, tối đa " + maxRows + ". Hãy thu hẹp khoảng ngày.");
         }
         return new ExportPlan(range, status, rows);
     }
 
     /**
      * Bước 2: stream CSV. Không readOnly: phải ghi audit log cho chính lần xuất này - dữ liệu
-     * khách hàng vừa rời khỏi hệ thống, và đó đúng là loại sự kiện audit log sinh ra để ghi.
+     * khách hàng vừa rời khỏi hệ thống, và đó đúng là lộại sự kiện audit log sinh ra để ghi.
      */
     @Transactional
     public void write(ExportPlan plan, Writer out) {
@@ -165,7 +165,7 @@ public class OrderCsvExporter {
         try {
             out.write(s);
         } catch (IOException e) {
-            throw new UncheckedIOException("Client ngat ket noi khi dang tai file", e);
+            throw new UncheckedIOException("Client ngắt kết nối khi đang tải file", e);
         }
     }
 }

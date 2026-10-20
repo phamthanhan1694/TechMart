@@ -13,7 +13,7 @@ import java.util.List;
 
 public final class CartDtos {
 
-    /** Giới hạn số lượng mọi dòng: chặn một request quet sach kho. */
+    /** Giới hạn số lượng mỗi dòng: chặn một request quét sạch kho. */
     public static final int MAX_QUANTITY_PER_ITEM = 10;
 
     private CartDtos() {
@@ -28,7 +28,7 @@ public final class CartDtos {
             @NotNull @Min(1) @Max(MAX_QUANTITY_PER_ITEM) Integer quantity
     ) {}
 
-    @Schema(description = "Mot dong trong gio hang")
+    @Schema(description = "Một dòng trong giỏ hàng")
     public record CartItemResponse(
             Long id,
             Long variantId,
@@ -39,8 +39,8 @@ public final class CartDtos {
             BigDecimal unitPrice,
             int quantity,
             BigDecimal lineTotal,
-            @Schema(description = "Hang con mua duoc ngay bay gio") int availableQuantity,
-            @Schema(description = "true khi so luong trong gio vuot qua hang con lai") boolean exceedsAvailable
+            @Schema(description = "Hàng còn mua được ngay bây giờ") int availableQuantity,
+            @Schema(description = "true khi số lượng trong giỏ vượt quá hàng còn lại") boolean exceedsAvailable
     ) {
         public static CartItemResponse from(CartItem item) {
             ProductVariant v = item.getVariant();
@@ -57,7 +57,7 @@ public final class CartDtos {
             List<CartItemResponse> items,
             int totalItems,
             BigDecimal subtotal,
-            @Schema(description = "true khi co it nhat mot dong vuot qua hang con lai") boolean hasStockIssue
+            @Schema(description = "true khi có ít nhất một dòng vượt quá hàng còn lại") boolean hasStockIssue
     ) {
         public static CartResponse from(Cart cart) {
             List<CartItemResponse> items = cart.getItems().stream()

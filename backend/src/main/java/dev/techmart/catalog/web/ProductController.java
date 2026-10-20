@@ -28,7 +28,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Catalog", description = "San pham, phien ban, tim kiem va loc")
+@Tag(name = "Catalog", description = "Sản phẩm, phiên bản, tìm kiếm và lọc")
 public class ProductController {
 
     private static final String SPEC_PREFIX = "spec.";
@@ -41,16 +41,16 @@ public class ProductController {
 
     @GetMapping("/products")
     @SecurityRequirements
-    @Operation(summary = "Tim kiem san pham",
+    @Operation(summary = "Tìm kiếm sản phẩm",
             description = """
-                    Phan trang, sap xep, loc theo danh muc / hang / khoang gia / con hang,
-                    va loc theo thong so ky thuat qua tham so dang `spec.<key>`.
+                    Phân trang, sắp xếp, lọc theo danh mục / hãng / khoảng giá / còn hàng,
+                    và lọc theo thông số kỹ thuật qua tham số dạng `spec.<key>`.
 
-                    Vi du: `/api/v1/products?keyword=iphone&spec.ram=8GB&spec.storage=256GB&sort=price,asc`
+                    Ví dụ: `/api/v1/products?keyword=iphone&spec.ram=8GB&spec.storage=256GB&sort=price,asc`
 
-                    Cac key spec duoc phep: ram, storage, cpu, chipset, gpu, screen, os,
+                    Các key spec được phép: ram, storage, cpu, chipset, gpu, screen, os,
                     camera, battery, refreshRate, weight, releaseYear.
-                    Sap xep duoc theo: name, price, createdAt. `size` toi da 100.
+                    Sắp xếp được theo: name, price, createdAt. `size` tối đa 100.
                     """)
     public PageResponse<ProductSummaryResponse> search(
             @RequestParam(required = false) String keyword,
@@ -70,15 +70,15 @@ public class ProductController {
 
     @GetMapping("/products/compare")
     @SecurityRequirements
-    @Operation(summary = "So sanh thong so 2-3 san pham")
+    @Operation(summary = "So sánh thông số 2-3 sản phẩm")
     public CompareResponse compare(@RequestParam List<Long> ids) {
         return productService.compare(ids);
     }
 
     @GetMapping("/products/{slug}")
     @SecurityRequirements
-    @Operation(summary = "Chi tiet san pham theo slug",
-            description = "Tra kem tat ca phien ban va so hang thuc su mua duoc cua tung phien ban.")
+    @Operation(summary = "Chi tiết sản phẩm theo slug",
+            description = "Tra kèm tất cả phiên bản và số hàng thực sự mua được của từng phiên bản.")
     public ProductDetailResponse getBySlug(@PathVariable String slug) {
         return productService.getBySlug(slug);
     }
@@ -87,22 +87,22 @@ public class ProductController {
 
     @PostMapping("/products")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Tao san pham kem phien ban dau tien")
+    @Operation(summary = "Tạo sản phẩm kèm phiên bản đầu tiên")
     public ResponseEntity<ProductDetailResponse> create(@Valid @RequestBody CreateProductRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(req));
     }
 
     @PutMapping("/products/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Cap nhat san pham")
+    @Operation(summary = "Cập nhật sản phẩm")
     public ProductDetailResponse update(@PathVariable Long id, @Valid @RequestBody UpdateProductRequest req) {
         return productService.update(id, req);
     }
 
     @DeleteMapping("/products/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Xoa san pham (xoa mem)",
-            description = "Set deleted_at chu khong xoa cung: san pham co the dang nam trong don hang cu.")
+    @Operation(summary = "Xoá sản phẩm (xoá mềm)",
+            description = "Set deleted_at chứ không xoá cứng: sản phẩm có thể đang nằm trong đơn hàng cũ.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         productService.softDelete(id);
@@ -110,7 +110,7 @@ public class ProductController {
 
     @PostMapping("/products/{id}/variants")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Them phien ban cho san pham")
+    @Operation(summary = "Thêm phiên bản cho sản phẩm")
     public ResponseEntity<VariantResponse> addVariant(@PathVariable Long id,
                                                       @Valid @RequestBody VariantRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.addVariant(id, req));
@@ -118,15 +118,15 @@ public class ProductController {
 
     @PutMapping("/variants/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Cap nhat phien ban")
+    @Operation(summary = "Cập nhật phiên bản")
     public VariantResponse updateVariant(@PathVariable Long id, @Valid @RequestBody VariantRequest req) {
         return productService.updateVariant(id, req);
     }
 
     @PatchMapping("/variants/{id}/stock")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    @Operation(summary = "Dieu chinh ton kho thu cong",
-            description = "delta am la giam, duong la tang. Moi lan dieu chinh deu duoc ghi log kem ly do.")
+    @Operation(summary = "Điều chỉnh tồn kho thủ công",
+            description = "delta âm là giảm, dương là tăng. Mỗi lần điều chỉnh đều được ghi log kèm lý do.")
     public VariantResponse adjustStock(@PathVariable Long id,
                                        @Valid @RequestBody AdjustStockRequest req,
                                        @AuthenticationPrincipal AuthPrincipal principal) {
@@ -134,8 +134,8 @@ public class ProductController {
     }
 
     /**
-     * Tach các tham sở dạng {@code spec.<key>} ra khoi query string.
-     * Chi giữ key nằm trong whitelist - key là từ đó từ client, không được để di thang xuong SQL.
+     * Tách các tham số dạng {@code spec.<key>} ra khỏi query string.
+     * Chỉ giữ key nằm trong whitelist - key là tự do từ client, không được để đi thẳng xuống SQL.
      */
     private Map<String, String> extractSpecFilter(Map<String, String> allParams) {
         Map<String, String> spec = new HashMap<>();

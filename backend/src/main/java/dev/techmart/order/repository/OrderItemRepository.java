@@ -12,7 +12,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     /**
      * Nạp kèm đơn + variant + product để kiểm điều kiện đánh giá trong một query:
-     * dòng này có thuộc user đó không, đơn da DELIVERED chưa, sản phẩm nao.
+     * dòng này có thuộc user đó không, đơn đã DELIVERED chưa, sản phẩm nao.
      */
     @Query("""
             SELECT i FROM OrderItem i

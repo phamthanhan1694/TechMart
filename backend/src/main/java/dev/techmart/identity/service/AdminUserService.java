@@ -73,7 +73,7 @@ public class AdminUserService {
     // =================================================================== đọc
 
     /**
-     * Danh sách người dùng kèm tổng chỉ tiêu - một câu SQL, không nạp đơn về Java.
+     * Danh sách người dùng kèm tổng chi tiêu - một câu SQL, không nạp đơn về Java.
      *
      * <p>Đánh đổi: sắp theo {@code totalSpent} buộc DB tính tổng cho MỌI người dùng khớp bộ
      * lọc trước khi cắt trang. Với vài nghìn khách là vài chục ms; tới hàng triệu khách thì
@@ -156,8 +156,8 @@ public class AdminUserService {
      *
      * <p>Khoá thì thu hồi mọi refresh token ngay trong transaction. Đánh đổi của JWT
      * stateless: access token đã phát vẫn dùng được tới khi hết hạn (tối đa 15 phút), vì
-     * filter không trả DB mỗi request. Muốn chặn tức thì phải thêm danh sách chặn trong
-     * Redis và trả ở mỗi request - một lần gọi mạng cho MỌI request để phục vụ một thao tác
+     * filter không tra DB mỗi request. Muốn chặn tức thì phải thêm danh sách chặn trong
+     * Redis và tra ở mỗi request - một lần gọi mạng cho MỌI request để phục vụ một thao tác
      * hiếm. Ghi ở docs/13-trade-off.md.
      */
     @Transactional
@@ -191,7 +191,7 @@ public class AdminUserService {
     }
 
     /**
-     * Đổi vai trò. Thu hồi refresh token để lần làm mới kế tiếp phát token mạng vai trò mới -
+     * Đổi vai trò. Thu hồi refresh token để lần làm mới kế tiếp phát token mang vai trò mới -
      * vai trò nằm trong JWT, không đọc lại từ DB mỗi request.
      */
     @Transactional

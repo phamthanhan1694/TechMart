@@ -12,11 +12,11 @@ import java.util.List;
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> {
 
     /**
-     * Lấy lo event chưa xu ly, khoá dòng da lấy.
+     * Lấy lô event chưa xử lý, khoá dòng đã lấy.
      *
-     * <p>{@code SKIP LOCKED} cho phép chay nhiều instance worker song song mà không gianh
-     * nhau cùng một dòng - mọi worker bỏ qua dòng dạng bi khoá và lấy dòng tiep theo.
-     * Đây là cach scale ngang phần xu ly bat dòng bo mà không cần message broker.
+     * <p>{@code SKIP LOCKED} cho phép chạy nhiều instance worker song song mà không giành
+     * nhau cùng một dòng - mọi worker bỏ qua dòng đang bị khoá và lấy dòng tiếp theo.
+     * Đây là cách scale ngang phần xử lý bất đồng bộ mà không cần message broker.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@jakarta.persistence.QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))

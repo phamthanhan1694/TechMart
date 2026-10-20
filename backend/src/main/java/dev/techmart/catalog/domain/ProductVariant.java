@@ -14,18 +14,18 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Phiên ban bán được của sản phẩm - đơn vị thực sự của giá và tồn kho.
+ * Phiên bản bán được của sản phẩm - đơn vị thực sự của giá và tồn kho.
  *
- * <p>Hai truong tồn kho:
+ * <p>Hai trường tồn kho:
  * <ul>
- *   <li>{@code stockQuantity} - so hàng thực sự con trong kho</li>
- *   <li>{@code reservedQuantity} - bộ đếm phi chuẩn hoá của so hàng đang bị giữ</li>
+ *   <li>{@code stockQuantity} - số hàng thực sự còn trong kho</li>
+ *   <li>{@code reservedQuantity} - bộ đếm phi chuẩn hoá của số hàng đang bị giữ</li>
  * </ul>
- * {@code available = stock - reserved} là con so hiển thị cho khách. Giữ bộ đếm ở đây
- * thay vì SUM bằng inventory_reservations mỗi lần xem sản phẩm; đổi lại phải cập nhật
+ * {@code available = stock - reserved} là con số hiển thị cho khách. Giữ bộ đếm ở đây
+ * thay vì SUM bảng inventory_reservations mỗi lần xem sản phẩm; đổi lại phải cập nhật
  * hai chỗ trong cùng một transaction và có job đối soát (docs/01-domain-v2.md mục 5.1).
  *
- * <p>{@code version} phuc vu optimistic lock.
+ * <p>{@code version} phục vụ optimistic lock.
  */
 @Entity
 @Table(name = "product_variants")
@@ -46,7 +46,7 @@ public class ProductVariant {
     @Column(nullable = false)
     private String name;
 
-    /** Tien luon BigDecimal, cot NUMERIC(15,2). Không bao giờ double. */
+    /** Tiền luôn BigDecimal, cột NUMERIC(15,2). Không bao giờ double. */
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal price;
 
@@ -104,7 +104,7 @@ public class ProductVariant {
     public Long getVersion() { return version; }
     public Instant getDeletedAt() { return deletedAt; }
 
-    /** So hàng khách thực sự mua được ngay bay giỏ. */
+    /** Số hàng khách thực sự mua được ngay bây giờ. */
     public int availableQuantity() {
         return stockQuantity - reservedQuantity;
     }
@@ -126,17 +126,17 @@ public class ProductVariant {
         this.deletedAt = now;
     }
 
-    // --- Thao tac tồn kho ---
+    // --- Thao tác tồn kho ---
     // Tất cả đều kiểm tra bất biến tại chỗ. Đây là lớp bảo vệ thứ hai;
-    // lop thu nhat là khoá o tầng service, lop thu ba là CHECK constraint o DB.
+    // lớp thứ nhất là khoá ở tầng service, lớp thứ ba là CHECK constraint ở DB.
 
     public void hold(int quantity) {
         if (quantity < 1) {
-            throw new IllegalArgumentException("So luong giu phai >= 1");
+            throw new IllegalArgumentException("Số lượng giữ phải >= 1");
         }
         if (availableQuantity() < quantity) {
             throw new IllegalStateException(
-                    "Khong du hang de giu: con " + availableQuantity() + ", can " + quantity);
+                    "Không đủ hàng để giữ: còn " + availableQuantity() + ", cần " + quantity);
         }
         this.reservedQuantity += quantity;
     }
@@ -145,10 +145,10 @@ public class ProductVariant {
         this.reservedQuantity = Math.max(0, this.reservedQuantity - quantity);
     }
 
-    /** Chot đơn: hàng đã giữ chuyen thanh hàng đã bán. */
+    /** Chốt đơn: hàng đã giữ chuyển thành hàng đã bán. */
     public void commitHold(int quantity) {
         if (reservedQuantity < quantity || stockQuantity < quantity) {
-            throw new IllegalStateException("Trang thai ton kho khong nhat quan khi chot don variant " + id);
+            throw new IllegalStateException("Trạng thái tồn kho không nhất quán khi chốt đơn variant " + id);
         }
         this.reservedQuantity -= quantity;
         this.stockQuantity -= quantity;
@@ -158,12 +158,12 @@ public class ProductVariant {
     public void deduct(int quantity) {
         if (availableQuantity() < quantity) {
             throw new IllegalStateException(
-                    "Khong du ton kho: con " + availableQuantity() + ", can " + quantity);
+                    "Không đủ tồn kho: còn " + availableQuantity() + ", cần " + quantity);
         }
         this.stockQuantity -= quantity;
     }
 
-    /** Hoan kho khi huỷ đơn. Phải được gọi đúng một lần cho mỗi đơn (idempotent o tầng trên). */
+    /** Hoàn kho khi huỷ đơn. Phải được gọi đúng một lần cho mỗi đơn (idempotent ở tầng trên). */
     public void restock(int quantity) {
         this.stockQuantity += quantity;
     }
@@ -172,7 +172,7 @@ public class ProductVariant {
         int next = this.stockQuantity + delta;
         if (next < reservedQuantity) {
             throw new IllegalStateException(
-                    "Khong the ha ton kho xuong duoi so dang giu (" + reservedQuantity + ")");
+                    "Không thể ha tồn kho xuống dưới số đang giữ (" + reservedQuantity + ")");
         }
         this.stockQuantity = next;
     }

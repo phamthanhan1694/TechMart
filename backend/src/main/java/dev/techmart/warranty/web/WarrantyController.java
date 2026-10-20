@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Warranty", description = "Ton kho theo serial/IMEI va bao hanh")
+@Tag(name = "Warranty", description = "Tồn kho theo serial/IMEI và bảo hành")
 public class WarrantyController {
 
     private final SerialService serialService;
@@ -38,12 +38,12 @@ public class WarrantyController {
 
     @GetMapping("/serials/{serialNo}/warranty")
     @SecurityRequirements
-    @Operation(summary = "Tra cuu bao hanh theo serial/IMEI",
+    @Operation(summary = "Tra cứu bảo hành theo serial/IMEI",
             description = """
-                    Cong khai, khong can dang nhap - giong moi trang tra bao hanh that.
+                    Công khai, không cần đăng nhập - giống mọi trang tra bảo hành thật.
 
-                    Thoi han bao hanh tinh tu luc **xuat kho** (khi don chuyen sang PACKED),
-                    khong phai tu luc nhap kho.
+                    Thời hạn bảo hành tính từ lúc **xuất kho** (khi đơn chuyển sang PACKED),
+                    không phải từ lúc nhập kho.
                     """)
     public WarrantyLookupResponse lookup(@PathVariable String serialNo) {
         return serialService.lookup(serialNo);
@@ -51,15 +51,15 @@ public class WarrantyController {
 
     @PostMapping("/admin/serials/bulk")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    @Operation(summary = "Nhap lo serial khi nhan hang tu nha cung cap",
-            description = "Serial da ton tai se bi bo qua va liet ke lai, khong lam hong ca lo.")
+    @Operation(summary = "Nhập lô serial khi nhận hàng từ nhà cung cấp",
+            description = "Serial đã tồn tại sẽ bị bỏ qua và liệt kê lại, không làm hỏng cả lô.")
     public BulkSerialResponse importBulk(@Valid @RequestBody BulkSerialRequest req) {
         return serialService.importBulk(req);
     }
 
     @GetMapping("/admin/order-items/{orderItemId}/serials")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    @Operation(summary = "Cac serial da gan cho mot dong don hang")
+    @Operation(summary = "Các serial đã gán cho một dòng đơn hàng")
     public List<SerialResponse> serialsOfOrderItem(@PathVariable Long orderItemId) {
         return serialService.findByOrderItem(orderItemId);
     }
@@ -68,13 +68,13 @@ public class WarrantyController {
 
     @PostMapping("/warranty-requests")
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Tao yeu cau bao hanh",
+    @Operation(summary = "Tạo yêu cầu bảo hành",
             description = """
-                    Kiem quyen so huu qua chuoi `serial -> order_item -> order -> user`:
-                    chi nguoi da mua dung don vi hang do moi yeu cau duoc.
-                    Serial cua nguoi khac tra `404`, khong phai `403`.
+                    Kiểm quyền sở hữu qua chuỗi `serial -> order_item -> order -> user`:
+                    chỉ người đã mua đúng đơn vị hàng đó mới yêu cầu được.
+                    Serial của người khác trả `404`, không phải `403`.
 
-                    Mot serial chi co mot yeu cau dang mo tai mot thoi diem.
+                    Một serial chỉ có một yêu cầu đang mở tại một thời điểm.
                     """)
     public ResponseEntity<WarrantyRequestResponse> create(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -84,8 +84,8 @@ public class WarrantyController {
 
     @GetMapping("/warranty-requests")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Danh sach yeu cau bao hanh",
-            description = "Khach chi thay yeu cau cua minh; STAFF/ADMIN thay tat ca.")
+    @Operation(summary = "Danh sách yêu cầu bảo hành",
+            description = "Khách chỉ thấy yêu cầu của mình; STAFF/ADMIN thấy tất cả.")
     public PageResponse<WarrantyRequestResponse> search(
             @AuthenticationPrincipal AuthPrincipal principal,
             @RequestParam(required = false) WarrantyStatus status,
@@ -95,7 +95,7 @@ public class WarrantyController {
 
     @GetMapping("/warranty-requests/{id}")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Chi tiet mot yeu cau bao hanh")
+    @Operation(summary = "Chi tiết một yêu cầu bảo hành")
     public WarrantyRequestResponse findById(@AuthenticationPrincipal AuthPrincipal principal,
                                             @PathVariable Long id) {
         return warrantyService.findById(principal, id);
@@ -103,13 +103,13 @@ public class WarrantyController {
 
     @PatchMapping("/warranty-requests/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    @Operation(summary = "Duyet, tu choi hoac hoan tat yeu cau bao hanh",
+    @Operation(summary = "Duyệt, từ chối hoặc hoàn tất yêu cầu bảo hành",
             description = """
                     REQUESTED → APPROVED / REJECTED, APPROVED → COMPLETED.
-                    Chuyen doi khac tra `409 INVALID_STATE_TRANSITION`.
+                    Chuyển đổi khác trả `409 INVALID_STATE_TRANSITION`.
 
-                    Duyet bao hanh dong nghia may co loi that, nen serial duoc danh dau
-                    DEFECTIVE de khong quay lai kho ban tiep.
+                    Duyệt bảo hành đồng nghĩa máy có lỗi thật, nên serial được đánh dấu
+                    DEFECTIVE để không quay lại kho bán tiếp.
                     """)
     public WarrantyRequestResponse resolve(@AuthenticationPrincipal AuthPrincipal principal,
                                            @PathVariable Long id,

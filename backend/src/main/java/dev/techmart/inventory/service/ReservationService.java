@@ -26,9 +26,9 @@ import java.time.Instant;
 import java.util.*;
 
 /**
- * Giữ hàng có hạn dùng khi khách vàở bước thanh toán.
+ * Giữ hàng có hạn dùng khi khách vào bước thanh toán.
  *
- * <p>Bài toán: khách vào trang thanh toán, đăng nhập địa chỉ thì hàng bi người khác mua mất
+ * <p>Bài toán: khách vào trang thanh toán, đang nhập địa chỉ thì hàng bị người khác mua mất
  * -> báo "hết hàng" giữa chừng, trải nghiệm tệ và mất đơn.
  *
  * <p>Cách giải: tạo bản ghi giữ hàng trong 10 phút. {@code available = stock - reserved}.
@@ -68,9 +68,9 @@ public class ReservationService {
     /**
      * Giữ hàng cho toàn bộ giỏ hàng của user.
      *
-     * <p>Khoá bi quan tắt ca variant lien quan, <b>theo thứ tự id</b> - xem
+     * <p>Khoá bi quan tất cả variant liên quan, <b>theo thứ tự id</b> - xem
      * {@link VariantLocker#lockAndRefresh}. Kiểm đủ hàng cho TẤT CẢ trước,
-     * nếu thiếu bất kỳ món nao thì ném lỗi và rollback toàn bộ: giữ được một nửa giỏ hàng
+     * nếu thiếu bất kỳ món nào thì ném lỗi và rollback toàn bộ: giữ được một nửa giỏ hàng
      * là trạng thái vô nghĩa với khách.
      */
     @Transactional
@@ -92,10 +92,10 @@ public class ReservationService {
         List<ProductVariant> locked = variantLocker.lockAndRefresh(wanted.keySet());
         if (locked.size() != wanted.size()) {
             throw new BusinessException(ErrorCode.VARIANT_NOT_FOUND,
-                    "Mot so san pham trong gio khong con ton tai");
+                    "Một số sản phẩm trong giỏ không còn tồn tại");
         }
 
-        // Kiểm đủ hàng cho TẤT CẢ trước khi thay đổi bất cứ thu gi
+        // Kiểm đủ hàng cho TẤT CẢ trước khi thay đổi bất cứ thứ gì
         List<StockShortage> shortages = new ArrayList<>();
         for (ProductVariant v : locked) {
             int need = wanted.get(v.getId());
@@ -127,7 +127,7 @@ public class ReservationService {
                     v.getName(), v.getPrice(), quantity, lineTotal));
         }
 
-        log.info("Da giu hang phien {} cho user {}: {} dong, het han luc {}",
+        log.info("Đã giữ hàng phiên {} cho user {}: {} dòng, hết hạn lúc {}",
                 sessionId, userId, lines.size(), expiresAt);
 
         return new CheckoutSessionResponse(sessionId, expiresAt,
@@ -168,12 +168,12 @@ public class ReservationService {
         }
         held.forEach(InventoryReservation::release);
 
-        log.info("User {} da huy phien giu hang {}", userId, sessionId);
+        log.info("User {} đã huỷ phiên giữ hàng {}", userId, sessionId);
     }
 
     /**
-     * Lấy các reservation còn hiệu lực của một phiên, để OrderService chot đơn.
-     * Kiểm ca quyền sở hữu và han dùng tại đây.
+     * Lấy các reservation còn hiệu lực của một phiên, để OrderService chốt đơn.
+     * Kiểm cả quyền sở hữu và hạn dùng tại đây.
      */
     @Transactional(readOnly = true)
     public List<InventoryReservation> requireOwnedSession(Long userId, String sessionId) {

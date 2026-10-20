@@ -18,15 +18,15 @@ public final class CouponDtos {
             @NotNull @DecimalMin("0") @Schema(example = "25000000") BigDecimal subtotal
     ) {}
 
-    @Schema(description = "Ket qua kiem tra ma. Chi de hien thi truoc - KHONG giu cho.")
+    @Schema(description = "Kết quả kiểm tra mã. Chỉ để hiển thị trước - KHÔNG giữ chỗ.")
     public record ValidateResponse(
             boolean valid,
             BigDecimal discountAmount,
-            @Schema(description = "Ma loi khi khong hop le, vd COUPON_EXPIRED") String reason,
+            @Schema(description = "Mã lỗi khi không hợp lệ, vd COUPON_EXPIRED") String reason,
             String message
     ) {
         public static ValidateResponse ok(BigDecimal discount) {
-            return new ValidateResponse(true, discount, null, "Ma hop le");
+            return new ValidateResponse(true, discount, null, "Mã hợp le");
         }
 
         public static ValidateResponse invalid(String reason, String message) {
@@ -36,13 +36,13 @@ public final class CouponDtos {
 
     public record CreateCouponRequest(
             @NotBlank @Size(max = 50) @Pattern(regexp = "^[A-Z0-9_-]+$",
-                    message = "Ma chi gom chu hoa, so, gach ngang va gach duoi") String code,
+                    message = "Mã chỉ gồm chữ hoa, số, gạch ngang và gạch dưới") String code,
             @NotNull DiscountType type,
             @NotNull @DecimalMin("0.01") BigDecimal value,
             @DecimalMin("0") BigDecimal minOrderAmount,
-            @DecimalMin("0.01") @Schema(description = "Tran giam gia, chi ap dung cho PERCENT")
+            @DecimalMin("0.01") @Schema(description = "Trần giảm giá, chỉ áp dụng cho PERCENT")
             BigDecimal maxDiscount,
-            @Min(1) @Schema(description = "Tong so luot, bo trong = khong gioi han") Integer usageLimit,
+            @Min(1) @Schema(description = "Tổng số lượt, bỏ trống = không giới hạn") Integer usageLimit,
             @Min(1) Integer perUserLimit,
             @NotNull Instant startsAt,
             @NotNull Instant endsAt

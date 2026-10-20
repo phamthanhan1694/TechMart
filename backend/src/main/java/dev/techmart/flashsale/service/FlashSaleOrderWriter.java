@@ -28,16 +28,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Ghi "so cai" cho một suat flash sale đã thắng o cửa Redis.
+ * Ghi "sổ cái" cho một suất flash sale đã thắng ở cửa Redis.
  *
- * <p><b>Vì sao tach thanh bean riêng thay vì để trong FlashSaleService:</b> Spring AOP hoạt động
- * qua proxy, nên một method gọi sang method {@code @Transactional} <i>trong cũng class</i>
- * sẽ không di qua proxy và annotation bi bỏ qua hoan toan. Buoc gọi Redis phải nằm ngoai
- * transaction, con buoc ghi DB phải nằm trong - hai yêu cầu này chỉ thoa man được khi
- * chung ở hai bean khác nhau.
+ * <p><b>Vì sao tách thành bean riêng thay vì để trong FlashSaleService:</b> Spring AOP hoạt động
+ * qua proxy, nên một method gọi sang method {@code @Transactional} <i>trong cùng class</i>
+ * sẽ không đi qua proxy và annotation bị bỏ qua hoàn toàn. Bước gọi Redis phải nằm ngoài
+ * transaction, còn bước ghi DB phải nằm trong - hai yêu cầu này chỉ thoả mãn được khi
+ * chúng ở hai bean khác nhau.
  *
- * <p>Cũng một bay da làm job nhả hàng quá hạn ném TransactionRequiredException mỗi 30 giây
- * o giai doan trước.
+ * <p>Cùng một bẫy đã làm job nhả hàng quá hạn ném TransactionRequiredException mỗi 30 giây
+ * ở giai đoạn trước.
  */
 @Component
 public class FlashSaleOrderWriter {
@@ -72,7 +72,7 @@ public class FlashSaleOrderWriter {
             return OrderResponse.from(replay.get());
         }
 
-        // Khoá suất bán trước, rồi khoá variant - luon cùng một thứ tự để không deadlock
+        // Khoá suất bán trước, rồi khoá variant - luôn cùng một thứ tự để không deadlock
         FlashSaleItem item = items.lockById(itemId)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.SOLD_OUT, itemId));
         ProductVariant variant = variantLocker.lockAndRefresh(List.of(item.getVariant().getId()))
@@ -106,7 +106,7 @@ public class FlashSaleOrderWriter {
         outbox.recordOrderEvent(saved.getId(), OutboxRecorder.ORDER_PLACED, Map.of(
                 "orderCode", saved.getCode(), "flashSaleItemId", itemId, "userId", userId));
 
-        log.info("Flash sale: user {} mua {} suat cua item {} -> don {}",
+        log.info("Flash sale: user {} mua {} suất của item {} -> đơn {}",
                 userId, req.quantity(), itemId, saved.getCode());
         return OrderResponse.from(saved);
     }
