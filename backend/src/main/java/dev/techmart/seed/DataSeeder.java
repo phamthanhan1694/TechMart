@@ -48,11 +48,11 @@ import java.util.*;
 /**
  * Dựng dữ liệu demo.
  *
- * <p>Không đặt trong migration Flyway: migration là schema, chay o mọi mọi truong kể cả
- * production, con dữ liệu demo thì không nên có o production. Tach ra đây để bat/tắt
+ * <p>Không đặt trong migration Flyway: migration là schema, chạy ở mọi môi trường kể cả
+ * production, còn dữ liệu demo thì không nên có ở production. Tách ra đây để bật/tắt
  * bằng một biến môi trường (docs/08-seed-data.md mục 5).
  *
- * <p>Idempotent: da có dữ liệu thì bỏ qua, chay lai không nhân đôi.
+ * <p>Idempotent: đã có dữ liệu thì bỏ qua, chạy lại không nhân đôi.
  */
 @Component
 @Profile({"dev", "demo"})
@@ -82,7 +82,7 @@ public class DataSeeder implements CommandLineRunner {
     @PersistenceContext
     private EntityManager em;
 
-    private final Random random = new Random(20260901L);   // có dinh seed -> dữ liệu tai lap được
+    private final Random random = new Random(20260901L);   // cố định seed -> dữ liệu tái lập được
 
     public DataSeeder(BrandRepository brands, CategoryRepository categories, ProductRepository products,
                       UserRepository users, OrderRepository orders, CouponRepository coupons,
@@ -110,11 +110,11 @@ public class DataSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         if (!props.seed().enabled()) {
-            log.info("app.seed.enabled=false -> bo qua seed du lieu demo");
+            log.info("app.seed.enabled=false -> bỏ qua seed dữ liệu demo");
             return;
         }
         if (products.count() > 0) {
-            log.info("Da co du lieu, bo qua seed");
+            log.info("Đã có dữ liệu, bỏ qua seed");
             return;
         }
         long start = System.currentTimeMillis();
@@ -130,8 +130,8 @@ public class DataSeeder implements CommandLineRunner {
         enrichForAnalytics();
 
         verifyInvariants();
-        log.info("Seed xong trong {} ms: {} san pham, {} variant, {} user, {} don hang, "
-                        + "{} ma giam gia, {} phien flash sale, {} serial, {} danh gia",
+        log.info("Seed xong trong {} ms: {} sản phẩm, {} variant, {} user, {} đơn hàng, "
+                        + "{} mã giảm giá, {} phiên flash sale, {} serial, {} đánh giá",
                 System.currentTimeMillis() - start, products.count(), allVariants.size(),
                 users.count(), orders.count(), coupons.count(), flashSales.count(),
                 serials.count(), reviews.count());
@@ -149,16 +149,16 @@ public class DataSeeder implements CommandLineRunner {
 
     private Map<String, Category> seedCategories() {
         Map<String, Category> result = new LinkedHashMap<>();
-        Category phone = categories.save(new Category("Dien thoai", "dien-thoai", null));
+        Category phone = categories.save(new Category("Điện thoại", "dien-thoai", null));
         Category laptop = categories.save(new Category("Laptop", "laptop", null));
         result.put("dien-thoai", phone);
         result.put("laptop", laptop);
 
-        for (String child : List.of("Flagship", "Tam trung", "Pho thong")) {
-            result.put(slugify("dien thoai " + child),
+        for (String child : List.of("Flagship", "Tầm trung", "Phổ thông")) {
+            result.put(slugify("điện thoại " + child),
                     categories.save(new Category(child, slugify("dien-thoai-" + child), phone)));
         }
-        for (String child : List.of("Gaming", "Van phong", "Do hoa")) {
+        for (String child : List.of("Gaming", "Văn phòng", "Đồ hoạ")) {
             result.put(slugify("laptop " + child),
                     categories.save(new Category(child, slugify("laptop-" + child), laptop)));
         }
@@ -170,15 +170,15 @@ public class DataSeeder implements CommandLineRunner {
         Set<String> usedSlugs = new HashSet<>();
         int sku = 1000;
 
-        // Dien thoai: mọi hat giong là MỘT sản phẩm có thật, không nhận hau to.
-        // Phiên ban sinh từ các mục dùng luồng thật của chính may đó.
+        // Điện thoại: mỗi hạt giống là MỘT sản phẩm có thật, không nhân hậu tố.
+        // Phiên bản sinh từ các mức dung lượng thật của chính máy đó.
         for (PhoneSeed seed : SeedCatalog.PHONES) {
             String slug = uniqueSlug(seed.name(), usedSlugs);
             Category category = catBySlug.get(categoryForPrice(seed.basePrice(), true));
 
             Product product = new Product(category, brandByName.get(seed.brand()), seed.name(), slug,
-                    "Dien thoai " + seed.brand() + " " + seed.name() + ". Chip " + seed.chipset()
-                            + ", man hinh " + seed.screen() + " " + seed.refreshRate()
+                    "Điện thoại " + seed.brand() + " " + seed.name() + ". Chip " + seed.chipset()
+                            + ", màn hình " + seed.screen() + " " + seed.refreshRate()
                             + ", RAM " + seed.ram() + ", pin " + seed.battery() + ".",
                     null, SeedCatalog.phoneSpec(seed, seed.storages().get(0)));
 
@@ -195,15 +195,15 @@ public class DataSeeder implements CommandLineRunner {
             products.save(product);
         }
 
-        // Laptop: phiên ban = các câu hinh RAM/SSD thật của may đó.
+        // Laptop: phiên bản = các cấu hình RAM/SSD thật của máy đó.
         for (LaptopSeed seed : SeedCatalog.LAPTOPS) {
             String slug = uniqueSlug(seed.name(), usedSlugs);
             Category category = catBySlug.get(categoryForLaptop(seed));
 
             Product product = new Product(category, brandByName.get(seed.brand()), seed.name(), slug,
                     "Laptop " + seed.brand() + " " + seed.name() + ". CPU " + seed.cpu()
-                            + ", GPU " + seed.gpu() + ", man hinh " + seed.screen()
-                            + ", nang " + seed.weight() + ".",
+                            + ", GPU " + seed.gpu() + ", màn hình " + seed.screen()
+                            + ", nặng " + seed.weight() + ".",
                     null, SeedCatalog.laptopSpec(seed, seed.rams().get(0), seed.ssds().get(0)));
 
             int config = 0;
@@ -229,29 +229,29 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<User> seedUsers() {
         users.save(new User("admin@techmart.dev", passwordEncoder.encode("Admin@123"),
-                "Quan tri vien", "0900000001", Role.ADMIN));
+                "Quản trị viên", "0900000001", Role.ADMIN));
         users.save(new User("staff@techmart.dev", passwordEncoder.encode("Staff@123"),
-                "Nhan vien kho", "0900000002", Role.STAFF));
+                "Nhân viên kho", "0900000002", Role.STAFF));
 
-        // Tai khoan này PHAI có sẵn đơn hàng: interviewer đăng nhập, gọi GET /orders
-        // ma trả mạng rỗng thì mọi endpoint phia sau deu mat y nghia.
+        // Tài khoản này PHẢI có sẵn đơn hàng: interviewer đăng nhập, gọi GET /orders
+        // mà trả mảng rỗng thì mọi endpoint phía sau đều mất ý nghĩa.
         User demo = users.save(new User("customer@techmart.dev", passwordEncoder.encode("Customer@123"),
-                "Khach hang demo", "0901234567", Role.CUSTOMER));
+                "Khách hàng demo", "0901234567", Role.CUSTOMER));
 
         users.save(new User("new@techmart.dev", passwordEncoder.encode("Customer@123"),
-                "Khach hang moi", "0901234568", Role.CUSTOMER));
+                "Khách hàng mới", "0901234568", Role.CUSTOMER));
 
         List<User> customers = new ArrayList<>();
         customers.add(demo);
 
-        // BCrypt strength 12 ton ~250ms mỗi lần hash. Hash riêng chờ 500 user là ~2 phút,
-        // qua lau cho một buoc seed - và giữ connection du lau để Hikari canh báo leak.
-        // 500 user này dùng chung một mật khẩu nên hash MỘT lan rồi dùng lại.
-        // Chi làm vay với dữ liệu demo: các user này sẽ chừng salt, không được làm o thật.
+        // BCrypt strength 12 tốn ~250ms mỗi lần hash. Hash riêng cho 500 user là ~2 phút,
+        // quá lâu cho một bước seed - và giữ connection đủ lâu để Hikari cảnh báo leak.
+        // 500 user này dùng chung một mật khẩu nên hash MỘT lần rồi dùng lại.
+        // Chỉ làm vậy với dữ liệu demo: các user này sẽ chung salt, không được làm ở môi trường thật.
         String sharedHash = passwordEncoder.encode("Customer@123");
         for (int i = 1; i <= LOAD_TEST_USERS; i++) {
             customers.add(users.save(new User("buyer" + i + "@techmart.dev",
-                    sharedHash, "Khach hang " + i,
+                    sharedHash, "Khách hàng " + i,
                     "09" + String.format("%08d", i), Role.CUSTOMER)));
         }
         return customers;
@@ -259,7 +259,7 @@ public class DataSeeder implements CommandLineRunner {
 
     // ---------------------------------------------------------------- coupon
 
-    /** Du mọi tinh huong để demo và test được tung nhanh lỗi, không chỉ nhanh hop le. */
+    /** Đủ mọi tình huống để demo và test được từng nhánh lỗi, không chỉ nhánh hợp lệ. */
     private void seedCoupons() {
         Instant now = clock.instant();
         Instant past = now.minus(60, ChronoUnit.DAYS);
@@ -274,7 +274,7 @@ public class DataSeeder implements CommandLineRunner {
         coupons.save(new Coupon("NEWUSER20", DiscountType.PERCENT, new BigDecimal("20.00"),
                 BigDecimal.ZERO, new BigDecimal("1000000.00"), 200, 1, past, future));
 
-        // Các ma "hong" có chu dich: để demo tung nhanh lỗi
+        // Các mã "hỏng" có chủ đích: để demo từng nhánh lỗi
         Coupon expired = new Coupon("HETHAN", DiscountType.PERCENT, new BigDecimal("15.00"),
                 BigDecimal.ZERO, null, 100, 1, past, now.minus(1, ChronoUnit.DAYS));
         coupons.save(expired);
@@ -290,57 +290,57 @@ public class DataSeeder implements CommandLineRunner {
     // ---------------------------------------------------------------- flash sale
 
     /**
-     * Ba phiên o ba trạng thái khác nhau - để demo được ca /active lan /upcoming
-     * mà không phải chờ đổi giỏ.
+     * Ba phiên ở ba trạng thái khác nhau - để demo được cả /active lẫn /upcoming
+     * mà không phải chờ đổi giờ.
      *
-     * <p>Phiên dạng chay được nạp sẵn tồn kho vào Redis luon: nếu để request dau tien
-     * từ nạp thì dùng giây mo ban sẽ có hàng nghìn request cũng nạp - cache stampede.
+     * <p>Phiên đang chạy được nạp sẵn tồn kho vào Redis luôn: nếu để request đầu tiên
+     * tự nạp thì đúng giây mở bán sẽ có hàng nghìn request cùng nạp - cache stampede.
      */
     /**
-     * Lich flash sale kieu của hàng thật: mọi ngay một khung giỏ, không phải ba dòng có dinh.
+     * Lịch flash sale kiểu cửa hàng thật: mỗi ngày một khung giờ, không phải ba dòng cố định.
      *
-     * <p><b>Lỗi của ban trước:</b> chỉ có dùng một phiên RUNNING với khung
-     * {@code now-1h -> now+6h}. Sau 6 giỏ ke từ lúc seed là trang flash sale trong tron,
-     * và no không bao giờ từ đây lai - mo demo hom sau chỉ thay một trang rỗng.
+     * <p><b>Lỗi của bản trước:</b> chỉ có đúng một phiên RUNNING với khung
+     * {@code now-1h -> now+6h}. Sau 6 giờ kể từ lúc seed là trang flash sale trống trơn,
+     * và nó không bao giờ tự đầy lại - mở demo hôm sau chỉ thấy một trang rỗng.
      *
-     * <p>Bay giỏ: 3 ngay da qua (để dashboard có lich su), một phiên dạng chay keo dai
-     * het ngay, và 7 ngay sắp toi theo khung 09:00-23:00 giờ Việt Nam. Muon thêm nửa thì
-     * tạo o khu quan tri - trong hệ thống thật, khuyen mai đó người làm thuong mai len
-     * lich chứ không phải đó cron từ để ra.
+     * <p>Bây giờ: 3 ngày đã qua (để dashboard có lịch sử), một phiên đang chạy kéo dài
+     * hết ngày, và 7 ngày sắp tới theo khung 09:00-23:00 giờ Việt Nam. Muốn thêm nữa thì
+     * tạo ở khu quản trị - trong hệ thống thật, khuyến mại do người làm thương mại lên
+     * lịch chứ không phải do cron tự đẻ ra.
      */
     private void seedFlashSales(List<ProductVariant> allVariants) {
         Instant now = clock.instant();
         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
         LocalDate today = now.atZone(zone).toLocalDate();
 
-        // --- 3 ngay da ket thuc: hàng ban gan het, để báo cáo có so lieu thật ---
+        // --- 3 ngày đã kết thúc: hàng bán gần hết, để báo cáo có số liệu thật ---
         for (int d = 3; d >= 1; d--) {
             LocalDate day = today.minusDays(d);
             FlashSale sale = new FlashSale("Flash Sale " + day.getDayOfMonth() + "/" + day.getMonthValue(),
                     day.atTime(9, 0).atZone(zone).toInstant(),
                     day.atTime(23, 0).atZone(zone).toInstant());
             addFlashItems(sale, allVariants, d * 13, 4);
-            // Phiên da ket thực thì phải da bán được gi đó - 70-100% so suat.
+            // Phiên đã kết thúc thì phải đã bán được gì đó - 70-100% số suất.
             sale.getItems().forEach(item ->
                     item.recordSold(percentOf(item.getSaleQuantity(), 70 + random.nextInt(31))));
             sale.markEnded();
             flashSales.save(sale);
         }
 
-        // --- Dạng chay: keo dai den het ngay hom nay, không phải 6 tieng ---
-        FlashSale running = new FlashSale("Flash Sale hom nay",
+        // --- Đang chạy: kéo dài đến hết ngày hôm nay, không phải 6 tiếng ---
+        FlashSale running = new FlashSale("Flash Sale hôm nay",
                 now.minus(1, ChronoUnit.HOURS),
                 today.atTime(23, 59).atZone(zone).toInstant());
         addFlashItems(running, allVariants, 5, 6);
-        // Ban san 20-60% để thanh tien đó không nằm im o 0% ngay từ dau.
+        // Bán sẵn 20-60% để thanh tiến độ không nằm im ở 0% ngay từ đầu.
         running.getItems().forEach(item ->
                 item.recordSold(percentOf(item.getSaleQuantity(), 20 + random.nextInt(41))));
         running.markRunning();
         FlashSale savedRunning = flashSales.save(running);
-        // Nạp Redis SAU khi da ghi so đã bán, vì warmUp doc remaining() = saleQuantity - soldQuantity.
+        // Nạp Redis sau khi đã ghi số đã bán, vì warmUp đọc remaining() = saleQuantity - soldQuantity.
         savedRunning.getItems().forEach(stockCounter::warmUp);
 
-        // --- 7 ngay sắp toi ---
+        // --- 7 ngày sắp tới ---
         for (int d = 1; d <= 7; d++) {
             LocalDate day = today.plusDays(d);
             FlashSale sale = new FlashSale("Flash Sale " + day.getDayOfMonth() + "/" + day.getMonthValue(),
@@ -349,23 +349,23 @@ public class DataSeeder implements CommandLineRunner {
             addFlashItems(sale, allVariants, 40 + d * 11, 5);
             FlashSale saved = flashSales.save(sale);
 
-            // Nạp Redis cho cả các phiên SAP TOI, không chỉ phiên dạng chay.
+            // Nạp Redis cho cả các phiên SẮP TỚI, không chỉ phiên đang chạy.
             //
-            // `findActive` lọc THUAN theo khung giỏ, không theo status - nên dùng 09:00
-            // ngay mai là phiên đó từ len song mà không cần ai bam gi. Nhưng nếu Redis
-            // chưa được nạp thì script Lua trả NOT_WARMED_UP và mỗi lần mua deu 503
-            // (fail-closed): phiên hien ra nhưng không ai mua được.
+            // `findActive` lọc THUẦN theo khung giờ, không theo status - nên đúng 09:00
+            // ngày mai là phiên đó tự lên sóng mà không cần ai bấm gì. Nhưng nếu Redis
+            // chưa được nạp thì script Lua trả NOT_WARMED_UP và mỗi lần mua đều 503
+            // (fail-closed): phiên hiện ra nhưng không ai mua được.
             //
-            // Key tồn kho không đặt TTL nên nạp trước bay giỏ van con nguyen den lúc mo ban.
+            // Key tồn kho không đặt TTL nên nạp trước bây giờ vẫn còn nguyên đến lúc mở bán.
             saved.getItems().forEach(stockCounter::warmUp);
         }
     }
 
     /**
-     * Chon sản phẩm cho một phiên mo ban.
+     * Chọn sản phẩm cho một phiên mở bán.
      *
-     * <p>Muc giam thay đổi 12-40% chứ không phải 30% dòng loat: khuyen mai thật không
-     * báo giờ deu tap nhu vay, và deu tap thì nhin ra ngay là dữ liệu bia.
+     * <p>Mức giảm thay đổi 12-40% chứ không phải 30% đồng loạt: khuyến mại thật không
+     * bao giờ đều tăm tắp như vậy, và đều tăm tắp thì nhìn ra ngay là dữ liệu bịa.
      */
     private void addFlashItems(FlashSale sale, List<ProductVariant> allVariants, int offset, int count) {
         for (int i = 0; i < count; i++) {
@@ -378,7 +378,7 @@ public class DataSeeder implements CommandLineRunner {
                     .longValue();
             BigDecimal salePrice = money(retailRound(raw));
 
-            // So suat it hơn han tồn kho - đó mọi là lý do phải tranh nhau.
+            // Số suất ít hơn hẳn tồn kho - đó mới là lý do phải tranh nhau.
             int saleQuantity = Math.max(5, Math.min(60, variant.availableQuantity() / 2));
             sale.addItem(new FlashSaleItem(variant, salePrice, saleQuantity, 2));
         }
@@ -389,24 +389,24 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     /**
-     * Làm tron ve mục giá bán le: 24.833.100 -> 24.790.000.
+     * Làm tròn về mức giá bán lẻ: 24.833.100 -> 24.790.000.
      *
-     * <p>Không của hàng nao niem yet 24.833.100 d. Gia thực tệ luon ket thực bằng
-     * 90.000 hoac 00.000 - để nguyen so le sinh ra từ phep nhận phần tram là lo
-     * ngay rang giả đó đó may tinh.
+     * <p>Không cửa hàng nào niêm yết 24.833.100 đ. Giá thực tế luôn kết thúc bằng
+     * 90.000 hoặc 00.000 - để nguyên số lẻ sinh ra từ phép nhân phần trăm là lộ
+     * ngay rằng giá do máy tính tạo ra tạo ra.
      */
     private static long retailRound(long amount) {
         long rounded = Math.round(amount / 100_000.0) * 100_000L - 10_000L;
         return Math.max(100_000L, rounded);
     }
 
-    // ---------------------------------------------------------------- lich su đơn hàng
+    // ---------------------------------------------------------------- lịch sử đơn hàng
 
     /**
-     * Đơn hàng rai theo 90 ngay, mat đó tầng dan ve hiện tại, cuoi tuan cao hơn.
+     * Đơn hàng rải theo 90 ngày, mật độ tăng dần về hiện tại, cuối tuần cao hơn.
      *
-     * <p>Đây là phần hay bi bo sot nhat: không có dữ liệu lich su thì dashboard doanh thu
-     * ve ra duong thang bằng 0 và mất luôn có hoi demo query aggregate.
+     * <p>Đây là phần hay bị bỏ sót nhất: không có dữ liệu lịch sử thì dashboard doanh thu
+    thu đường thang bằng 0 và mất luôn cơ hội demo query aggregate.
      */
     private void seedHistoricalOrders(List<User> customers, List<ProductVariant> variants) {
         Instant now = clock.instant();
@@ -414,7 +414,7 @@ public class DataSeeder implements CommandLineRunner {
 
         for (int i = 0; i < HISTORICAL_ORDERS; i++) {
             // Mật độ tăng TUYẾN TÍNH về hiện tại (shop đang lớn): mật độ ~ (1 - daysAgo/90).
-            // Bản trước dùng random^2.2 - hàm mật độ đó vọt lên vô hạn ở 0, nên ~13% số đơn
+            // Bản trước dùng random^2.2 - hàm mật độ đổ vọt lên vô hạn ở 0, nên ~13% số đơn
             // (≈52 đơn) dồn vào đúng một ngày và biểu đồ doanh thu có một cột dựng đứng giả.
             int daysAgo = (int) (HISTORY_DAYS * (1 - Math.sqrt(random.nextDouble())));
             // Giờ đặt theo nhịp mua sắm thật (trưa và tối), không rải đều 24 giờ -
@@ -431,7 +431,7 @@ public class DataSeeder implements CommandLineRunner {
                 placedAt = midnight.plusMillis((long) (random.nextDouble() * span));
             }
 
-            // 15 đơn đầu dành cho tài khoản demo để no luon có lich su
+            // 15 đơn đầu dành cho tài khoản demo để nó luôn có lịch sử
             User buyer = i < 15 ? demoCustomer : customers.get(random.nextInt(customers.size()));
 
             Order order = new Order(orderCode(placedAt, i), buyer, shippingAddress(),
@@ -448,7 +448,7 @@ public class DataSeeder implements CommandLineRunner {
             OrderStatus status = randomStatus();
             replayStatusChain(order, status, placedAt, buyer.getId());
 
-            // Đơn không bi huỷ thì hàng da rồi kho -> tru ton chờ nhat quan
+            // Đơn không bị huỷ thì hàng đã rời kho -> trừ tồn cho nhất quán
             if (status != OrderStatus.CANCELLED) {
                 order.getItems().forEach(item -> {
                     try {
@@ -462,7 +462,7 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    /** Ghi lai đây du duong di trạng thái để GET /orders/{code}/history demo được từ tệ. */
+    /** Ghi lại đầy đủ đường đi trạng thái để GET /orders/{code}/history demo được tử tế. */
     private void replayStatusChain(Order order, OrderStatus target, Instant placedAt, Long actorId) {
         List<OrderStatus> chain = switch (target) {
             case PENDING_PAYMENT -> List.of();
@@ -473,7 +473,7 @@ public class DataSeeder implements CommandLineRunner {
             default -> List.of(OrderStatus.PAID, OrderStatus.PACKED,
                     OrderStatus.SHIPPED, OrderStatus.DELIVERED);
         };
-        order.logTransition(null, OrderStatus.PENDING_PAYMENT, actorId, "Dat hang", placedAt);
+        order.logTransition(null, OrderStatus.PENDING_PAYMENT, actorId, "Đặt hàng", placedAt);
 
         OrderStatus from = OrderStatus.PENDING_PAYMENT;
         Instant at = placedAt;
@@ -563,7 +563,7 @@ public class DataSeeder implements CommandLineRunner {
                 """);
         sql.update("UPDATE coupons c SET used_count = (SELECT COUNT(*) FROM coupon_redemptions r WHERE r.coupon_id = c.id)");
 
-        // 2. Giao dịch thanh toán: thành công đúng lúc đơn sang PAID; thất bại chờ đơn chưa trả,
+        // 2. Giao dịch thanh toán: thành công đúng lúc đơn sang PAID; thất bại cho đơn chưa trả,
         //    đơn huỷ và ~7% đơn thẻ phải thử lần hai
         sql.update("""
                 INSERT INTO payments (order_id, method, status, amount, transaction_ref, idempotency_key, paid_at, created_at)
@@ -577,7 +577,7 @@ public class DataSeeder implements CommandLineRunner {
                 INSERT INTO payments (order_id, method, status, amount, transaction_ref, idempotency_key,
                                       failure_reason, created_at)
                 SELECT o.id, 'MOCK_CARD', 'FAILED', o.total_amount, 'SEED-TXF-' || o.id, 'seed-payf-' || o.id,
-                       'The bi tu choi', o.placed_at + interval '5 minutes'
+                       'Thẻ bị từ chối', o.placed_at + interval '5 minutes'
                   FROM orders o
                  WHERE o.idempotency_key LIKE 'seed-%'
                    AND (o.status IN ('PENDING_PAYMENT', 'CANCELLED') OR random() < 0.07)
@@ -598,8 +598,8 @@ public class DataSeeder implements CommandLineRunner {
                 Map.of(), Long.class);
         sql.update("""
                 INSERT INTO user_addresses (user_id, label, receiver_name, phone, street, ward, district, province, is_default)
-                VALUES (?, 'Nhà riêng', 'Khách hàng demo', '0901234567', '12 Nguyễn Trãi', 'Phường Bến Thành', 'Quận 1', 'TP. Hồ Chí Minh', TRUE),
-                       (?, 'Công ty', 'Khách hàng demo', '0901234567', '285 Cách Mạng Tháng Tám', 'Phường 12', 'Quận 10', 'TP. Hồ Chí Minh', FALSE)
+                VALUES (?, 'Nhà riêng', 'Khách hàng demo', '0901234567', '12 Nguyễn Trãi', 'Phường Bến Thành', 'Quận 1', 'TP. Hồ Chí Mình', TRUE),
+                       (?, 'Công ty', 'Khách hàng demo', '0901234567', '285 Cách Mạng Tháng Tám', 'Phường 12', 'Quận 10', 'TP. Hồ Chí Mình', FALSE)
                 """, demoId, demoId);
         sql.update("""
                 INSERT INTO wishlist_items (user_id, product_id)
@@ -624,15 +624,15 @@ public class DataSeeder implements CommandLineRunner {
     // ---------------------------------------------------------------- serial + đánh giá
 
     /**
-     * Serial cho một phần variant, và đánh giá cho các đơn da giao.
+     * Serial cho một phần variant, và đánh giá cho các đơn đã giao.
      *
-     * <p>Chi một phần variant có serial - dùng nhu thực tệ: không phải mat hàng nao cũng
-     * được theo đổi theo tung đơn vị. Phan còn lại chỉ quản lý theo số lượng.
+     * <p>Chỉ một phần variant có serial - đúng như thực tế: không phải mặt hàng nào cũng
+     * được theo dõi theo từng đơn vị. Phần còn lại chỉ quản lý theo số lượng.
      */
     private void seedSerialsAndReviews(List<ProductVariant> allVariants) {
         Instant now = clock.instant();
 
-        // 20 variant dau tien được theo đổi theo serial
+        // 20 variant đầu tiên được theo dõi theo serial
         List<ProductVariant> tracked = allVariants.subList(0, Math.min(20, allVariants.size()));
         Map<Long, List<ProductSerial>> pool = new LinkedHashMap<>();
         for (ProductVariant variant : tracked) {
@@ -644,7 +644,7 @@ public class DataSeeder implements CommandLineRunner {
             pool.put(variant.getId(), new ArrayList<>(serials.saveAll(created)));
         }
 
-        // Gắn serial cho các đơn DA GIAO, và viet đánh giá cho một phần trong so đó
+        // Gắn serial cho các đơn ĐÃ GIAO, và viết đánh giá cho một phần trong số đó
         int reviewCount = 0;
         for (Order order : orders.findAll()) {
             if (order.getStatus() != OrderStatus.DELIVERED) {
@@ -657,7 +657,7 @@ public class DataSeeder implements CommandLineRunner {
                         available.remove(0).assignTo(item, order.getPlacedAt().plus(2, ChronoUnit.DAYS));
                     }
                 }
-                // Khoang một nửa đơn da giao có đánh giá
+                // Khoảng một nửa đơn đã giao có đánh giá
                 if (random.nextBoolean() && reviewCount < 250) {
                     reviews.save(new Review(item.getVariant().getProduct(), order.getUser(), item,
                             randomRating(), pick(REVIEW_COMMENTS)));
@@ -665,13 +665,13 @@ public class DataSeeder implements CommandLineRunner {
                 }
             }
         }
-        log.info("Da tao {} serial va {} danh gia", serials.count(), reviewCount);
+        log.info("Đã tạo {} serial và {} đánh giá", serials.count(), reviewCount);
     }
 
     /**
-     * Diem đánh giá lech ve phia tich cuc, giong dữ liệu thật: người hai lỏng thì chờ
-     * 4-5 sao, người rat không hai lỏng mọi bo cong viet 1 sao. Phan bo deu 1-5 cho ra
-     * trung binh 3.0 - trong không giong một của hàng thật đang hoạt động.
+     * Điểm đánh giá lệch về phía tích cực, giống dữ liệu thật: người hài lòng thì cho
+     * 4-5 sao, người rất không hài lòng mới bỏ công viết 1 sao. Phân bố đều 1-5 cho ra
+     * trung bình 3.0 - trông không giống một cửa hàng thật đang hoạt động.
      */
     private int randomRating() {
         int roll = random.nextInt(100);
@@ -683,20 +683,20 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private static final List<String> REVIEW_COMMENTS = List.of(
-            "May dung tot, pin trau hon minh nghi.",
-            "Giao hang nhanh, dong goi can than.",
-            "Man hinh dep, nhung hoi nong khi choi game lau.",
-            "Dung duoc, gia hop ly so voi cau hinh.",
-            "Am thanh nho hon mong doi, con lai on.",
-            "Rat hai long, se quay lai mua lan sau.",
-            "Hang chinh hang, co day du phu kien.",
-            "Sac hoi cham nhung khong dang ke.");
+            "Máy dùng tốt, pin trâu hơn mình nghĩ.",
+            "Giao hàng nhanh, đóng gói cẩn thận.",
+            "Màn hình đẹp, nhưng hơi nóng khi chơi game lâu.",
+            "Dùng được, giá hợp lý so với cấu hình.",
+            "Âm thanh nhỏ hơn mong đợi, còn lại ổn.",
+            "Rất hài lòng, sẽ quay lại mua lần sau.",
+            "Hàng chính hãng, có đầy đủ phụ kiện.",
+            "Sạc hơi chậm nhưng không đáng kể.");
 
     // ---------------------------------------------------------------- kiểm tra
 
     /**
-     * Đổi soat sau khi seed. Du lieu demo từ mau thuan thì người tinh y sẽ thay ngay,
-     * và đây cũng là ban nhap của job đối soát noi o docs/01-domain-v2.md mục 5.1.
+     * Đối soát sau khi seed. Dữ liệu demo tự mâu thuẫn thì người tinh ý sẽ thấy ngay,
+     * và đây cũng là bản nháp của job đối soát nói ở docs/01-domain-v2.md mục 5.1.
      */
     private void verifyInvariants() {
         long negative = products.findAll().stream()
@@ -704,23 +704,23 @@ public class DataSeeder implements CommandLineRunner {
                 .filter(v -> v.getStockQuantity() < 0 || v.getReservedQuantity() != 0)
                 .count();
         if (negative > 0) {
-            throw new IllegalStateException("Seed sai: " + negative + " variant co ton kho am hoac dang bi giu");
+            throw new IllegalStateException("Seed sai: " + negative + " variant có tồn kho âm hoặc đang bị giữ");
         }
     }
 
-    // ---------------------------------------------------------------- tien ich
+    // ---------------------------------------------------------------- tiện ích
 
     /**
-     * Khoang chenh giữa giả niem yet và giá bán, để hien "giả gach ngang".
+     * Khoảng chênh giữa giá niêm yết và giá bán, để hiện "giá gạch ngang".
      *
-     * <p>Dùng ty le chứ không phải so có dinh: bot 2 trieu trên may 7 trieu là giam
-     * 29% (không hop ly cho hàng chính hãng), con trên may 60 trieu thì không ai
-     * để y. Khoang 6-9% mọi giong khuyen mai thật.
+     * <p>Dùng tỉ lệ chứ không phải số cố định: bớt 2 triệu trên máy 7 triệu là giảm
+     * 29% (không hợp lý cho hàng chính hãng), còn trên máy 60 triệu thì không ai
+     * để ý. Khoảng 6-9% mới giống khuyến mại thật.
      */
     private long listPriceGap(long price) {
         long percent = 6 + random.nextInt(4);          // 6-9%
         long gap = price * percent / 100;
-        return Math.round(gap / 100_000.0) * 100_000L; // làm tròn ve tram nghin
+        return Math.round(gap / 100_000.0) * 100_000L; // làm tròn về trăm nghìn
     }
 
     private String orderCode(Instant at, int index) {
@@ -728,13 +728,13 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private Map<String, Object> shippingAddress() {
-        List<String> districts = List.of("Quan 1", "Quan 3", "Quan 7", "Cau Giay", "Dong Da", "Hai Chau");
-        List<String> provinces = List.of("TP Ho Chi Minh", "Ha Noi", "Da Nang");
+        List<String> districts = List.of("Quận 1", "Quận 3", "Quận 7", "Cầu Giấy", "Đống Đa", "Hải Châu");
+        List<String> provinces = List.of("TP Hồ Chí Minh", "Hà Nội", "Đà Nẵng");
         Map<String, Object> address = new LinkedHashMap<>();
-        address.put("receiverName", "Nguoi nhan " + (1 + random.nextInt(500)));
+        address.put("receiverName", "Người nhận " + (1 + random.nextInt(500)));
         address.put("phone", "09" + String.format("%08d", random.nextInt(100_000_000)));
-        address.put("street", (1 + random.nextInt(200)) + " Duong so " + (1 + random.nextInt(30)));
-        address.put("ward", "Phuong " + (1 + random.nextInt(20)));
+        address.put("street", (1 + random.nextInt(200)) + " Đường số " + (1 + random.nextInt(30)));
+        address.put("ward", "Phường " + (1 + random.nextInt(20)));
         address.put("district", pick(districts));
         address.put("province", pick(provinces));
         return address;
