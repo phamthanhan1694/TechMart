@@ -149,6 +149,20 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
 
+      <!-- Sinh metadata để IDE nhận diện các khóa app.* trong application.yml. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-configuration-processor</artifactId>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
       <!-- Mockito phai duoc nap nhu mot java agent; JDK moi khong cho self-attach -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

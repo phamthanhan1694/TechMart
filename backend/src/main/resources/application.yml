@@ -17,14 +17,11 @@ spring:
     hibernate:
       ddl-auto: validate         # schema do Flyway quản lý, Hibernate chỉ kiểm tra
     properties:
-      hibernate:
-        jdbc:
-          batch_size: 50
-          time_zone: UTC
-        order_inserts: true
-        order_updates: true
-        query:
-          in_clause_parameter_padding: true
+      "[hibernate.jdbc.batch_size]": 50
+      "[hibernate.jdbc.time_zone]": UTC
+      "[hibernate.order_inserts]": true
+      "[hibernate.order_updates]": true
+      "[hibernate.query.in_clause_parameter_padding]": true
 
   flyway:
     enabled: true
@@ -45,13 +42,15 @@ spring:
     # dòng "serialization.write-dates-as-timestamps: false" - khoá đó đã chuyển sang
     # DateTimeFeature và để ở đây thì Boot không bind được, app không khởi động.
 
+  web:
+    error:
+      # Không bao giờ lộ chi tiết nội bộ ra response (docs/07-security-checklist.md mục 4)
+      include-stacktrace: never
+      include-message: never
+      include-binding-errors: never
+
 server:
   port: 8080
-  error:
-    # Không bao giờ lộ chi tiết nội bộ ra response (docs/07-security-checklist.md mục 4)
-    include-stacktrace: never
-    include-message: never
-    include-binding-errors: never
 
 app:
   jwt:
@@ -69,7 +68,7 @@ app:
   cors:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
   cache:
-    # Tat được bằng biến môi trường để đó hiệu năng trước/sau khi có cache
+    # Tắt được bằng biến môi trường để đo hiệu năng trước/sau khi có cache
     products-enabled: ${APP_CACHE_PRODUCTS_ENABLED:true}
     list-ttl: PT60S
     detail-ttl: PT10M
@@ -96,12 +95,12 @@ management:
     tags:
       application: techmart
     # Bật histogram để Prometheus tính được p95/p99. Không bật thì chỉ có count/sum
-    # và mọi truy vấn phân vị deu trả về rỗng.
+    # và mọi truy vấn phân vị đều trả về rỗng.
     distribution:
       percentiles-histogram:
-        http.server.requests: true
+        "[http.server.requests]": true
       slo:
-        http.server.requests: 50ms,100ms,200ms,500ms,1s,2s
+        "[http.server.requests]": 50ms,100ms,200ms,500ms,1s,2s
   prometheus:
     metrics:
       export:
@@ -117,8 +116,8 @@ springdoc:
 
 logging:
   level:
-    dev.techmart: INFO
-    org.hibernate.SQL: WARN
+    "[dev.techmart]": INFO
+    "[org.hibernate.SQL]": WARN
 
 ---
 spring:
@@ -127,13 +126,12 @@ spring:
       on-profile: dev
   jpa:
     properties:
-      hibernate:
-        generate_statistics: true    # để đếm số query trong test chống N+1
+      "[hibernate.generate_statistics]": true    # để đếm số query trong test chống N+1
 logging:
   level:
-    dev.techmart: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
+    "[dev.techmart]": DEBUG
+    "[org.hibernate.SQL]": DEBUG
+    "[org.hibernate.orm.jdbc.bind]": TRACE
 
 ---
 spring:
