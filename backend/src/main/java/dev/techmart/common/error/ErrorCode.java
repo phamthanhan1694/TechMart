@@ -25,16 +25,16 @@ public enum ErrorCode {
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "Chua dang nhap"),
     LOGIN_TEMPORARILY_LOCKED(HttpStatus.TOO_MANY_REQUESTS, "Dang nhap sai qua nhieu lan, thu lai sau"),
     // 422 chứ không phải 401: client coi mọi 401 là "phiên hết hạn" và sẽ đăng xuất người dùng
-    CURRENT_PASSWORD_INCORRECT(HttpStatus.UNPROCESSABLE_ENTITY, "Mat khau hien tai khong dung"),
-    PASSWORD_UNCHANGED(HttpStatus.UNPROCESSABLE_ENTITY, "Mat khau moi phai khac mat khau hien tai"),
+    CURRENT_PASSWORD_INCORRECT(HttpStatus.UNPROCESSABLE_CONTENT, "Mat khau hien tai khong dung"),
+    PASSWORD_UNCHANGED(HttpStatus.UNPROCESSABLE_CONTENT, "Mat khau moi phai khac mat khau hien tai"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay nguoi dung"),
     CANNOT_MODIFY_SELF(HttpStatus.CONFLICT, "Khong the tu khoa hoac tu doi vai tro cua chinh minh"),
     LAST_ADMIN(HttpStatus.CONFLICT, "Phai con it nhat mot ADMIN dang hoat dong"),
 
     // --- Tài khoản: địa chỉ, yêu thích, thông báo ---
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay dia chi"),
-    ADDRESS_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "Da dat so dia chi toi da"),
-    WISHLIST_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "Danh sach yeu thich da day"),
+    ADDRESS_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_CONTENT, "Da dat so dia chi toi da"),
+    WISHLIST_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_CONTENT, "Danh sach yeu thich da day"),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay thong bao"),
 
     // --- Catalog ---
@@ -45,13 +45,13 @@ public enum ErrorCode {
     SLUG_ALREADY_EXISTS(HttpStatus.CONFLICT, "Slug da ton tai"),
     SKU_ALREADY_EXISTS(HttpStatus.CONFLICT, "SKU da ton tai"),
     CATEGORY_NOT_EMPTY(HttpStatus.CONFLICT, "Danh muc van con san pham"),
-    INVALID_SPEC_SCHEMA(HttpStatus.UNPROCESSABLE_ENTITY, "Thong so ky thuat khong dung dinh dang"),
+    INVALID_SPEC_SCHEMA(HttpStatus.UNPROCESSABLE_CONTENT, "Thong so ky thuat khong dung dinh dang"),
 
     // --- Cart & Checkout ---
-    CART_EMPTY(HttpStatus.UNPROCESSABLE_ENTITY, "Gio hang dang trong"),
+    CART_EMPTY(HttpStatus.UNPROCESSABLE_CONTENT, "Gio hang dang trong"),
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay san pham trong gio"),
     INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "San pham khong du so luong"),
-    QUANTITY_EXCEEDS_LIMIT(HttpStatus.UNPROCESSABLE_ENTITY, "Vuot qua so luong toi da moi don"),
+    QUANTITY_EXCEEDS_LIMIT(HttpStatus.UNPROCESSABLE_CONTENT, "Vuot qua so luong toi da moi don"),
     RESERVATION_EXPIRED(HttpStatus.CONFLICT, "Phien giu hang da het han"),
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay phien giu hang"),
 
@@ -60,12 +60,12 @@ public enum ErrorCode {
     INVALID_STATE_TRANSITION(HttpStatus.CONFLICT, "Khong the chuyen trang thai nhu vay"),
     ORDER_NOT_CANCELLABLE(HttpStatus.CONFLICT, "Don hang khong the huy o trang thai nay"),
     CONCURRENT_MODIFICATION(HttpStatus.CONFLICT, "Don hang vua duoc nguoi khac cap nhat, thu lai"),
-    REFUND_WINDOW_EXPIRED(HttpStatus.UNPROCESSABLE_ENTITY, "Da qua han yeu cau hoan tra"),
+    REFUND_WINDOW_EXPIRED(HttpStatus.UNPROCESSABLE_CONTENT, "Da qua han yeu cau hoan tra"),
 
     // --- Payment ---
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay giao dich"),
     ORDER_ALREADY_PAID(HttpStatus.CONFLICT, "Don hang da duoc thanh toan"),
-    PAYMENT_AMOUNT_MISMATCH(HttpStatus.UNPROCESSABLE_ENTITY, "So tien khong khop voi don hang"),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.UNPROCESSABLE_CONTENT, "So tien khong khop voi don hang"),
     PAYMENT_FAILED(HttpStatus.PAYMENT_REQUIRED, "Thanh toan that bai"),
     INVALID_WEBHOOK_SIGNATURE(HttpStatus.UNAUTHORIZED, "Chu ky webhook khong hop le"),
     IDEMPOTENCY_KEY_REQUIRED(HttpStatus.BAD_REQUEST, "Thieu header Idempotency-Key"),
@@ -73,10 +73,10 @@ public enum ErrorCode {
 
     // --- Promotion & Flash sale ---
     COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay ma giam gia"),
-    COUPON_EXPIRED(HttpStatus.UNPROCESSABLE_ENTITY, "Ma giam gia het hieu luc"),
+    COUPON_EXPIRED(HttpStatus.UNPROCESSABLE_CONTENT, "Ma giam gia het hieu luc"),
     COUPON_USED_UP(HttpStatus.CONFLICT, "Ma giam gia da het luot su dung"),
     COUPON_USER_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "Ban da dung het luot cho ma nay"),
-    COUPON_MIN_ORDER_NOT_MET(HttpStatus.UNPROCESSABLE_ENTITY, "Chua dat gia tri don toi thieu"),
+    COUPON_MIN_ORDER_NOT_MET(HttpStatus.UNPROCESSABLE_CONTENT, "Chua dat gia tri don toi thieu"),
     FLASH_SALE_NOT_STARTED(HttpStatus.CONFLICT, "Phien ban chua bat dau"),
     FLASH_SALE_ENDED(HttpStatus.CONFLICT, "Phien ban da ket thuc"),
     SOLD_OUT(HttpStatus.CONFLICT, "Da het suat"),
@@ -84,13 +84,13 @@ public enum ErrorCode {
     RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "Qua nhieu yeu cau, thu lai sau"),
 
     // --- Review & Warranty ---
-    REVIEW_NOT_ALLOWED(HttpStatus.UNPROCESSABLE_ENTITY, "Chi danh gia duoc san pham da mua va da nhan"),
+    REVIEW_NOT_ALLOWED(HttpStatus.UNPROCESSABLE_CONTENT, "Chi danh gia duoc san pham da mua va da nhan"),
     REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "Ban da danh gia san pham nay"),
     SERIAL_NOT_FOUND(HttpStatus.NOT_FOUND, "Khong tim thay so serial"),
 
     // --- Báo cáo ---
     INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "Khoang ngay khong hop le"),
-    EXPORT_TOO_LARGE(HttpStatus.UNPROCESSABLE_ENTITY, "Qua nhieu dong de xuat, hay thu hep khoang ngay"),
+    EXPORT_TOO_LARGE(HttpStatus.UNPROCESSABLE_CONTENT, "Qua nhieu dong de xuat, hay thu hep khoang ngay"),
 
     // --- He thong ---
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "Du lieu gui len khong hop le"),
