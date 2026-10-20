@@ -226,7 +226,7 @@ class AnalyticsTest extends IntegrationTestBase {
         assertThat(OrderCsvExporter.cell("=HYPERLINK(\"http://x\",\"bam\")"))
                 .startsWith("\"'=HYPERLINK");
         assertThat(OrderCsvExporter.cell("+84901234567")).isEqualTo("'+84901234567");
-        assertThat(OrderCsvExporter.cell("Quận 1, TP HCM")).isEqualTo("\"Quan 1, TP HCM\"");
+        assertThat(OrderCsvExporter.cell("Quận 1, TP HCM")).isEqualTo("\"Quận 1, TP HCM\"");
         assertThat(OrderCsvExporter.cell("bình thường")).isEqualTo("bình thường");
     }
 

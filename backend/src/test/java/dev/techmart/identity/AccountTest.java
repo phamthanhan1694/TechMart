@@ -85,7 +85,7 @@ class AccountTest extends IntegrationTestBase {
     @Test
     @DisplayName("Cập nhật hồ sơ: số điện thoại rỗng lưu thành null")
     void updateProfile() {
-        var updated = accountService.updateProfile(user.getId(), new UpdateProfileRequest("  Ten Moi ", ""));
+        var updated = accountService.updateProfile(user.getId(), new UpdateProfileRequest("  Tên Mới ", ""));
         assertThat(updated.fullName()).isEqualTo("Tên Mới");
         assertThat(updated.phone()).isNull();
     }
